@@ -18,14 +18,27 @@ services:
       timeout: 5s
       retries: 5
 
-   auth-service:
+  auth-service:
     build:
       context: ..
       dockerfile: deployments/Dockerfile.auth-service
     container_name: hackathon-auth-service
     environment:
       ENV: dev
-      AUTH_SERVICE_GRPC_PORT: 50057 
+      AUTH_SERVICE_GRPC_PORT: 50057
+      DB_DSN: postgres://hackathon:hackathon_dev_password@postgres:5432/hackathon?sslmode=disable
+      DB_MAX_CONNS: 25
+      DB_MIN_CONNS: 5
+      DB_MAX_CONN_LIFETIME: 1h
+      DB_MAX_CONN_IDLE_TIME: 30m
+      DB_HEALTH_CHECK_PERIOD: 1m
+      RS256_PRIVATE_KEY_PATH: /app/keys/private_key.pem
+      JWT_KEY_ID: key-1
+      JWT_ISSUER: hackaton-platform
+      JWT_AUDIENCE: hackaton-platform
+      ACCESS_TOKEN_TTL: 15m
+      REFRESH_TOKEN_TTL: 720h
+      IDEMPOTENCY_TTL: 24h
     ports:
       - "50057:50057"
     depends_on:

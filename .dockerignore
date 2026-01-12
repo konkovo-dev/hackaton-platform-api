@@ -38,8 +38,8 @@ docker-compose*.yml
 .env
 .env.local
 
-# Generated
-api/
+# Generated (commented out - we need api/ for builds)
+# api/
 
 # Documentation
 README.md

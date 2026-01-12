@@ -13,7 +13,28 @@ help:
 
 run:
 	@echo "starting $(SERVICE_NAME) on port $(SERVICE_PORT)"
-	@ENV=local AUTH_SERVICE_GRPC_PORT=$(SERVICE_PORT) go run $(CMD_DIR)/main.go
+	@if [ ! -f $(ROOT_DIR)/.keys/private_key.pem ]; then \
+		echo "Error: RS256 keys not found. Run 'make generate-keys' first"; \
+		exit 1; \
+	fi
+	@ENV=local \
+		AUTH_SERVICE_GRPC_PORT=$(SERVICE_PORT) \
+		DB_DSN="postgres://hackathon:hackathon_dev_password@localhost:5432/hackathon?sslmode=disable" \
+		RS256_PRIVATE_KEY_PATH=$(ROOT_DIR)/.keys/private_key.pem \
+		JWT_KEY_ID=key-1 \
+		JWT_ISSUER=hackaton-platform \
+		JWT_AUDIENCE=hackaton-platform \
+		ACCESS_TOKEN_TTL=15m \
+		REFRESH_TOKEN_TTL=720h \
+		IDEMPOTENCY_TTL=24h \
+		go run $(CMD_DIR)/main.go
+
+generate-keys:
+	@echo "generating RS256 keys"
+	@mkdir -p $(ROOT_DIR)/.keys
+	@openssl genrsa -out $(ROOT_DIR)/.keys/private_key.pem 2048
+	@openssl rsa -in $(ROOT_DIR)/.keys/private_key.pem -pubout -out $(ROOT_DIR)/.keys/public_key.pem
+	@echo "keys generated in .keys/"
 
 build:
 	@echo "building $(SERVICE_NAME)"

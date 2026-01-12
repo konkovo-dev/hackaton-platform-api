@@ -1,29 +1,38 @@
-/bin/
+# Binaries
+bin/
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
 
+# Test binary
 *.test
 
+# Output of the go coverage tool
 *.out
 
+# Dependency directories
 vendor/
 
+# Go workspace file
 go.work
 
+# IDE
 .idea/
 .vscode/
 *.swp
 *.swo
 *~
 
+# OS
 .DS_Store
 
-gen/
-*.pb.go
-*.pb.gw.go
+# Keys (sensitive)
+.keys/
+*.pem
+*.key
 
+# Environment
 .env
 .env.local

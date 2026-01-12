@@ -24,10 +24,11 @@ func NewListener(cfg *Config) (net.Listener, error) {
 	return listener, nil
 }
 
-func NewGRPCServer(pingService *pingservice.PingService) *grpc.Server {
+func NewGRPCServer(pingService *pingservice.PingService, authService authv1.AuthServiceServer) *grpc.Server {
 	grpcServer := grpc.NewServer()
 
 	authv1.RegisterPingServiceServer(grpcServer, pingService)
+	authv1.RegisterAuthServiceServer(grpcServer, authService)
 
 	healthServer := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)

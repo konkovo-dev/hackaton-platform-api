@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 
+	authv1 "github.com/belikoooova/hackaton-platform-api/api/auth/v1"
 	identityv1 "github.com/belikoooova/hackaton-platform-api/api/identity/v1"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/fx"
@@ -45,9 +46,18 @@ func Run(lc fx.Lifecycle, s *http.Server, lis net.Listener, mux *runtime.ServeMu
 				return fmt.Errorf("failed to register identity gateway handlers: %v", err)
 			}
 
+			if err := authv1.RegisterAuthServiceHandlerFromEndpoint(ctx, mux, cfg.AuthGRPCEndpoint, opts); err != nil {
+				return fmt.Errorf("failed to register auth gateway handlers: %v", err)
+			}
+
+			if err := authv1.RegisterPingServiceHandlerFromEndpoint(ctx, mux, cfg.AuthGRPCEndpoint, opts); err != nil {
+				return fmt.Errorf("failed to register auth ping gateway handlers: %v", err)
+			}
+
 			logger.Info("starting http gateway",
 				slog.String("addr", lis.Addr().String()),
-				slog.String("grpc_endpoint", cfg.IdentityGRPCEndpoint),
+				slog.String("identity_grpc_endpoint", cfg.IdentityGRPCEndpoint),
+				slog.String("auth_grpc_endpoint", cfg.AuthGRPCEndpoint),
 			)
 
 			go func() {
