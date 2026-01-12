@@ -40,3 +40,4 @@ go.work
 # Generated files
 *.pb.go
 *.pb.gw.go
+*.sql.go
