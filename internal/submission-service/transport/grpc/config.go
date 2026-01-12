@@ -2,7 +2,6 @@ package grpc
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/belikoooova/hackaton-platform-api/pkg/env"
 )
@@ -12,9 +11,7 @@ type Config struct {
 }
 
 func NewConfig() (*Config, error) {
-	portStr := env.GetEnv("SUBMISSION_SERVICE_GRPC_PORT", "50054")
-
-	port, err := strconv.Atoi(portStr)
+	port, err := env.GetEnvInt("SUBMISSION_SERVICE_GRPC_PORT", 50054)
 	if err != nil {
 		return nil, fmt.Errorf("invalid SUBMISSION_SERVICE_GRPC_PORT: %w", err)
 	}
@@ -31,4 +28,3 @@ func MustNewConfig() *Config {
 	}
 	return cfg
 }
-

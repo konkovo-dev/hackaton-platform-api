@@ -4,6 +4,7 @@ go 1.25.4
 
 require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.4
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	go.uber.org/fx v1.24.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20251222181119-0a764e51fe1b
 	google.golang.org/grpc v1.78.0

@@ -2,7 +2,6 @@ package grpc
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/belikoooova/hackaton-platform-api/pkg/env"
 )
@@ -12,9 +11,7 @@ type Config struct {
 }
 
 func NewConfig() (*Config, error) {
-	portStr := env.GetEnv("HACKATON_SERVICE_GRPC_PORT", "50052")
-
-	port, err := strconv.Atoi(portStr)
+	port, err := env.GetEnvInt("HACKATON_SERVICE_GRPC_PORT", 50052)
 	if err != nil {
 		return nil, fmt.Errorf("invalid HACKATON_SERVICE_GRPC_PORT: %w", err)
 	}
