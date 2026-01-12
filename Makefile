@@ -1,6 +1,6 @@
 .PHONY: help run-all build-all clean test lint deps
 
-SERVICES := identity core teams submission mentorship jury
+SERVICES := identity-service hackaton-service team-service submission-service participation-and-roles-service support-and-judging-service
 
 help:
 	@echo "Hackathon Platform API - Monorepo"
@@ -9,21 +9,21 @@ help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -v "Services:" | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "Service commands (use: make <service>-<command>):"
-	@echo "  identity-run        run identity service"
-	@echo "  identity-build      build identity binary"
-	@echo "  identity-test       test identity"
-	@echo "  identity-health     health check"
+	@echo "  identity-service-run        run identity service"
+	@echo "  identity-service-build      build identity binary"
+	@echo "  identity-service-test       test identity"
+	@echo "  identity-service-health     health check"
 	@echo ""
-	@echo "  core-run           run core service"
-	@echo "  core-build         build core binary"
+	@echo "  hackaton-service-run        run hackaton service"
+	@echo "  hackaton-service-build      build hackaton binary"
 	@echo "  ..."
 	@echo ""
-	@echo "use 'make -C cmd/identity help' for details"
+	@echo "use 'make -C cmd/identity-service help' for details"
 
 run-all:
 	@echo "run each service in separate terminal:"
-	@echo "  terminal 1: make identity-run"
-	@echo "  terminal 2: make core-run"
+	@echo "  terminal 1: make identity-service-run"
+	@echo "  terminal 2: make hackaton-service-run"
 	@echo "  ..."
 
 build-all:
@@ -78,23 +78,23 @@ restart:
 ps:
 	@docker-compose ps
 
-identity-%:
-	@$(MAKE) -C cmd/identity $*
+identity-service-%:
+	@$(MAKE) -C cmd/identity-service $*
 
-core-%:
-	@$(MAKE) -C cmd/core $*
+hackaton-service-%:
+	@$(MAKE) -C cmd/hackaton-service $*
 
-teams-%:
-	@$(MAKE) -C cmd/teams $*
+team-service-%:
+	@$(MAKE) -C cmd/team-service $*
 
-submission-%:
-	@$(MAKE) -C cmd/submission $*
+submission-service-%:
+	@$(MAKE) -C cmd/submission-service $*
 
-mentorship-%:
-	@$(MAKE) -C cmd/mentorship $*
+participation-and-roles-service-%:
+	@$(MAKE) -C cmd/participation-and-roles-service $*
 
-jury-%:
-	@$(MAKE) -C cmd/jury $*
+support-and-judging-service-%:
+	@$(MAKE) -C cmd/support-and-judging-service $*
 
 gateway-%:
 	@$(MAKE) -C cmd/gateway $*
