@@ -4,13 +4,14 @@ import (
 	authv1 "github.com/belikoooova/hackaton-platform-api/api/auth/v1"
 	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/transport/grpc/authservice"
 	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/transport/grpc/pingservice"
+	commongrpc "github.com/belikoooova/hackaton-platform-api/pkg/grpc"
 	"go.uber.org/fx"
 )
 
 var Module = fx.Module("grpc",
 	fx.Provide(
 		MustNewConfig,
-		NewListener,
+		commongrpc.NewListener,
 		pingservice.New,
 		authservice.NewAuthService,
 		fx.Annotate(
@@ -19,5 +20,5 @@ var Module = fx.Module("grpc",
 		),
 		NewGRPCServer,
 	),
-	fx.Invoke(Run),
+	fx.Invoke(commongrpc.RunServer),
 )

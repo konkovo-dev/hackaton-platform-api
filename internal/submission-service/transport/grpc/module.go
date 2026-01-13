@@ -1,12 +1,15 @@
 package grpc
 
-import "go.uber.org/fx"
+import (
+	commongrpc "github.com/belikoooova/hackaton-platform-api/pkg/grpc"
+	"go.uber.org/fx"
+)
 
 var Module = fx.Module("grpc",
 	fx.Provide(
 		MustNewConfig,
-		NewListener,
+		commongrpc.NewListener,
 		NewGRPCServer,
 	),
-	fx.Invoke(Run),
+	fx.Invoke(commongrpc.RunServer),
 )

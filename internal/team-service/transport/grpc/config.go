@@ -1,30 +1,21 @@
 package grpc
 
 import (
-	"fmt"
-
-	"github.com/belikoooova/hackaton-platform-api/pkg/env"
+	commongrpc "github.com/belikoooova/hackaton-platform-api/pkg/grpc"
 )
 
-type Config struct {
-	Port int
+// NewConfig creates a new gRPC configuration for team-service
+func NewConfig() (*commongrpc.Config, error) {
+	return commongrpc.NewConfig(commongrpc.ConfigOptions{
+		EnvVarName:  "TEAM_SERVICE_GRPC_PORT",
+		DefaultPort: 50053,
+	})
 }
 
-func NewConfig() (*Config, error) {
-	port, err := env.GetEnvInt("TEAM_SERVICE_GRPC_PORT", 50053)
-	if err != nil {
-		return nil, fmt.Errorf("invalid TEAM_SERVICE_GRPC_PORT: %w", err)
-	}
-
-	return &Config{
-		Port: port,
-	}, nil
-}
-
-func MustNewConfig() *Config {
-	cfg, err := NewConfig()
-	if err != nil {
-		panic(fmt.Sprintf("failed to load grpc config: %v", err))
-	}
-	return cfg
+// MustNewConfig creates a new gRPC configuration and panics on error
+func MustNewConfig() *commongrpc.Config {
+	return commongrpc.MustNewConfig(commongrpc.ConfigOptions{
+		EnvVarName:  "TEAM_SERVICE_GRPC_PORT",
+		DefaultPort: 50053,
+	})
 }
