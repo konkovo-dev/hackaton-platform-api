@@ -45,22 +45,12 @@ func (r *IdempotencyRepository) Get(ctx context.Context, key, scope string) (*id
 }
 
 func (r *IdempotencyRepository) Set(ctx context.Context, key, scope, requestHash string, responseBlob []byte, expiresAt time.Time) error {
-	rowsAffected, err := r.queries.SetIdempotencyKey(ctx, queries.SetIdempotencyKeyParams{
+	_, err := r.queries.SetIdempotencyKey(ctx, queries.SetIdempotencyKeyParams{
 		Key:          key,
 		Scope:        scope,
 		RequestHash:  requestHash,
 		ResponseBlob: responseBlob,
 		ExpiresAt:    expiresAt,
 	})
-
-	if err != nil {
-		return err
-	}
-
-	if rowsAffected == 0 {
-		return nil
-	}
-
-	return nil
+	return err
 }
-

@@ -5,7 +5,9 @@ import (
 	"time"
 
 	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/domain/entity"
+	"github.com/belikoooova/hackaton-platform-api/pkg/outbox"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 type UserRepository interface {
@@ -14,12 +16,14 @@ type UserRepository interface {
 	GetByUsername(ctx context.Context, username string) (*entity.User, error)
 	GetByEmail(ctx context.Context, email string) (*entity.User, error)
 	Update(ctx context.Context, user *entity.User) error
+	WithTx(tx pgx.Tx) UserRepository
 }
 
 type CredentialsRepository interface {
 	Create(ctx context.Context, creds *entity.Credentials) error
 	GetByUserID(ctx context.Context, userID uuid.UUID) (*entity.Credentials, error)
 	Update(ctx context.Context, creds *entity.Credentials) error
+	WithTx(tx pgx.Tx) CredentialsRepository
 }
 
 type RefreshTokenRepository interface {
@@ -27,6 +31,15 @@ type RefreshTokenRepository interface {
 	GetByTokenHash(ctx context.Context, tokenHash string) (*entity.RefreshToken, error)
 	Revoke(ctx context.Context, tokenHash string, revokedAt time.Time) error
 	RevokeAllByUserID(ctx context.Context, userID uuid.UUID, revokedAt time.Time) error
+}
+
+type OutboxRepository interface {
+	Create(ctx context.Context, event *outbox.Event) error
+	WithTx(tx pgx.Tx) OutboxRepository
+}
+
+type TxManager interface {
+	WithTx(ctx context.Context, fn func(tx pgx.Tx) error) error
 }
 
 type PasswordService interface {

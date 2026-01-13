@@ -39,6 +39,9 @@ services:
       ACCESS_TOKEN_TTL: 15m
       REFRESH_TOKEN_TTL: 720h
       IDEMPOTENCY_TTL: 24h
+      IDENTITY_SERVICE_URL: identity-service:50051
+      OUTBOX_POLL_INTERVAL: 1s
+      OUTBOX_MAX_ATTEMPTS: 3
     ports:
       - "50057:50057"
     depends_on:
@@ -56,6 +59,16 @@ services:
     environment:
       ENV: dev
       IDENTITY_SERVICE_GRPC_PORT: 50051
+      DB_DSN: postgres://hackathon:hackathon_dev_password@postgres:5432/hackathon?sslmode=disable
+      DB_MAX_CONNS: 25
+      DB_MIN_CONNS: 5
+      DB_MAX_CONN_LIFETIME: 1h
+      DB_MAX_CONN_IDLE_TIME: 30m
+      DB_HEALTH_CHECK_PERIOD: 1m
+      AUTH_CLIENT_SERVICE_URL: auth-service:50057
+      AUTH_CLIENT_MAX_CACHE_TTL: 60s
+      AUTH_CLIENT_CACHE_CLEANUP_INTERVAL: 1m
+      IDEMPOTENCY_TTL: 24h
     ports:
       - "50051:50051"
     depends_on:

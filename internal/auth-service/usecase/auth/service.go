@@ -5,38 +5,47 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/domain/entity"
+	"github.com/belikoooova/hackaton-platform-api/pkg/outbox"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 type Service struct {
 	cfg              *Config
+	txManager        TxManager
 	userRepo         UserRepository
 	credentialsRepo  CredentialsRepository
 	refreshTokenRepo RefreshTokenRepository
 	passwordService  PasswordService
 	jwtService       JWTService
+	outboxRepo       OutboxRepository
 }
 
 func NewService(
 	cfg *Config,
+	txManager TxManager,
 	userRepo UserRepository,
 	credentialsRepo CredentialsRepository,
 	refreshTokenRepo RefreshTokenRepository,
 	passwordService PasswordService,
 	jwtService JWTService,
+	outboxRepo OutboxRepository,
 ) *Service {
 	return &Service{
 		cfg:              cfg,
+		txManager:        txManager,
 		userRepo:         userRepo,
 		credentialsRepo:  credentialsRepo,
 		refreshTokenRepo: refreshTokenRepo,
 		passwordService:  passwordService,
 		jwtService:       jwtService,
+		outboxRepo:       outboxRepo,
 	}
 }
 
@@ -57,7 +66,6 @@ type RegisterOutput struct {
 }
 
 func (s *Service) Register(ctx context.Context, input RegisterInput) (*RegisterOutput, error) {
-	// Валидация
 	if err := s.validateRegisterInput(input); err != nil {
 		return nil, err
 	}
@@ -73,39 +81,62 @@ func (s *Service) Register(ctx context.Context, input RegisterInput) (*RegisterO
 		return nil, ErrUserAlreadyExists
 	}
 
-	// Хешируем пароль
 	passwordHash, err := s.passwordService.Hash(input.Password)
 	if err != nil {
 		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
 
 	user := &entity.User{
-		ID:        uuid.New(),
-		Username:  username,
-		Email:     input.Email,
-		FirstName: input.FirstName,
-		LastName:  input.LastName,
-		Timezone:  input.Timezone,
+		ID:       uuid.New(),
+		Username: username,
+		Email:    input.Email,
 	}
+	err = s.txManager.WithTx(ctx, func(tx pgx.Tx) error {
+		userRepoTx := s.userRepo.WithTx(tx)
+		credRepoTx := s.credentialsRepo.WithTx(tx)
+		outboxRepoTx := s.outboxRepo.WithTx(tx)
 
-	if err := s.userRepo.Create(ctx, user); err != nil {
-		return nil, fmt.Errorf("failed to create user: %w", err)
-	}
+		if err := userRepoTx.Create(ctx, user); err != nil {
+			return fmt.Errorf("failed to create user: %w", err)
+		}
 
-	// Создаём credentials
-	credentials := &entity.Credentials{
-		UserID:       user.ID,
-		PasswordHash: passwordHash,
-	}
+		credentials := &entity.Credentials{
+			UserID:       user.ID,
+			PasswordHash: passwordHash,
+		}
 
-	if err := s.credentialsRepo.Create(ctx, credentials); err != nil {
-		return nil, fmt.Errorf("failed to create credentials: %w", err)
+		if err := credRepoTx.Create(ctx, credentials); err != nil {
+			return fmt.Errorf("failed to create credentials: %w", err)
+		}
+
+		payload := map[string]string{
+			"user_id":    user.ID.String(),
+			"username":   user.Username,
+			"first_name": input.FirstName,
+			"last_name":  input.LastName,
+			"timezone":   input.Timezone,
+		}
+		payloadBytes, err := json.Marshal(payload)
+		if err != nil {
+			return fmt.Errorf("failed to marshal outbox payload: %w", err)
+		}
+
+		event := outbox.NewEvent(user.ID.String(), "user", "user.registered", payloadBytes)
+
+		if err := outboxRepoTx.Create(ctx, event); err != nil {
+			return fmt.Errorf("failed to create outbox event: %w", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
 	}
 
 	return s.generateTokens(ctx, user.ID)
 }
 
-// IntrospectToken проверяет access token и возвращает user info
 func (s *Service) IntrospectToken(ctx context.Context, accessToken string) (active bool, userID uuid.UUID, expiresAt time.Time, err error) {
 	if accessToken == "" {
 		return false, uuid.Nil, time.Time{}, ErrTokenInvalid
@@ -123,7 +154,6 @@ func (s *Service) IntrospectToken(ctx context.Context, accessToken string) (acti
 	return true, userID, expiresAt, nil
 }
 
-// Login аутентифицирует пользователя по email/username и паролю
 func (s *Service) Login(ctx context.Context, login, password string) (*RegisterOutput, error) {
 	if login == "" {
 		return nil, ErrEmptyLogin
@@ -133,7 +163,6 @@ func (s *Service) Login(ctx context.Context, login, password string) (*RegisterO
 		return nil, ErrEmptyPassword
 	}
 
-	// Ищем user по email или username
 	var user *entity.User
 	var err error
 
@@ -147,79 +176,62 @@ func (s *Service) Login(ctx context.Context, login, password string) (*RegisterO
 		return nil, ErrInvalidCredentials
 	}
 
-	// Получаем credentials
 	credentials, err := s.credentialsRepo.GetByUserID(ctx, user.ID)
 	if err != nil {
 		return nil, ErrInvalidCredentials
 	}
 
-	// Проверяем пароль
 	if err := s.passwordService.Verify(password, credentials.PasswordHash); err != nil {
 		return nil, ErrInvalidCredentials
 	}
 
-	// Генерируем токены
 	return s.generateTokens(ctx, user.ID)
 }
 
-// Refresh обновляет access token используя refresh token
 func (s *Service) Refresh(ctx context.Context, refreshToken string) (*RegisterOutput, error) {
 	if refreshToken == "" {
 		return nil, ErrTokenInvalid
 	}
 
-	// Хешируем refresh token
 	tokenHash := s.hashRefreshToken(refreshToken)
 
-	// Получаем токен из БД
 	storedToken, err := s.refreshTokenRepo.GetByTokenHash(ctx, tokenHash)
 	if err != nil {
 		return nil, ErrTokenInvalid
 	}
 
-	// Проверяем, что токен не отозван
 	if storedToken.RevokedAt != nil {
 		return nil, ErrTokenRevoked
 	}
-
-	// Проверяем, что токен не истёк
 	if time.Now().UTC().After(storedToken.ExpiresAt) {
 		return nil, ErrTokenExpired
 	}
 
-	// Получаем user
 	user, err := s.userRepo.GetByID(ctx, storedToken.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
-	// Отзываем старый refresh token
 	if err := s.refreshTokenRepo.Revoke(ctx, tokenHash, time.Now().UTC()); err != nil {
 		return nil, fmt.Errorf("failed to revoke old refresh token: %w", err)
 	}
 
-	// Генерируем новые токены
 	return s.generateTokens(ctx, user.ID)
 }
 
-// Logout отзывает refresh token
 func (s *Service) Logout(ctx context.Context, refreshToken string) error {
 	if refreshToken == "" {
 		return ErrTokenInvalid
 	}
 
-	// Хешируем refresh token
 	tokenHash := s.hashRefreshToken(refreshToken)
 
-	// Отзываем токен
 	if err := s.refreshTokenRepo.Revoke(ctx, tokenHash, time.Now().UTC()); err != nil {
 		return fmt.Errorf("failed to revoke refresh token: %w", err)
 	}
 
 	return nil
 }
-
-// Внутренние методы
 
 func (s *Service) validateRegisterInput(input RegisterInput) error {
 	if input.Username == "" {
@@ -235,11 +247,11 @@ func (s *Service) validateRegisterInput(input RegisterInput) error {
 	}
 
 	if input.FirstName == "" {
-		return fmt.Errorf("first_name cannot be empty")
+		return ErrEmptyFirstName
 	}
 
 	if input.LastName == "" {
-		return fmt.Errorf("last_name cannot be empty")
+		return ErrEmptyLastName
 	}
 
 	if input.Timezone == "" {

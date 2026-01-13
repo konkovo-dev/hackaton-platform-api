@@ -17,7 +17,13 @@ service MeService {
     option (google.api.http) = { get: "/v1/users/me" };
   }
 
-  // One endpoint to update "public user fields" for myself.
+  rpc CreateMe(CreateMeRequest) returns (CreateMeResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/me"
+      body: "*"
+    };
+  }
+
   rpc UpdateMe(UpdateMeRequest) returns (UpdateMeResponse) {
     option (google.api.http) = {
       put: "/v1/users/me"
@@ -25,7 +31,6 @@ service MeService {
     };
   }
 
-  // Updates my skills AND global skills visibility.
   rpc UpdateMySkills(UpdateMySkillsRequest) returns (UpdateMySkillsResponse) {
     option (google.api.http) = {
       put: "/v1/users/me/skills"
@@ -33,7 +38,6 @@ service MeService {
     };
   }
 
-  // Updates my contacts AND global contacts visibility + per-contact visibility.
   rpc UpdateMyContacts(UpdateMyContactsRequest) returns (UpdateMyContactsResponse) {
     option (google.api.http) = {
       put: "/v1/users/me/contacts"
@@ -49,11 +53,23 @@ message GetMeResponse {
 
   repeated Skill skills = 2;
 
-  // My contacts include per-contact visibility.
   repeated MyContact contacts = 3;
 
-  // Global visibility (skills + contacts).
   VisibilitySettings visibility = 4;
+}
+
+message CreateMeRequest {
+  string user_id = 1;
+  string first_name = 2;
+  string last_name = 3;
+  string username = 4;
+  string timezone = 5;
+
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message CreateMeResponse {
+  User user = 1;
 }
 
 message UpdateMeRequest {
@@ -84,11 +100,10 @@ message UpdateMySkillsRequest {
 
 message UpdateMySkillsResponse {
   repeated Skill skills = 1;
-  VisibilitySettings visibility = 2; // return updated global visibility
+  VisibilitySettings visibility = 2; 
 }
 
 message UpdateMyContactsRequest {
-  // Replace-all semantics:
   repeated MyContact contacts = 1;
 
   VisibilityLevel contacts_visibility = 2;
@@ -98,5 +113,5 @@ message UpdateMyContactsRequest {
 
 message UpdateMyContactsResponse {
   repeated MyContact contacts = 1;
-  VisibilitySettings visibility = 2; // return updated global visibility
+  VisibilitySettings visibility = 2;
 }

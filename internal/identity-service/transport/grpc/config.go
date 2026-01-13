@@ -1,30 +1,19 @@
 package grpc
 
 import (
-	"fmt"
-
-	"github.com/belikoooova/hackaton-platform-api/pkg/env"
+	commongrpc "github.com/belikoooova/hackaton-platform-api/pkg/grpc"
 )
 
-type Config struct {
-	Port int
+func NewConfig() (*commongrpc.Config, error) {
+	return commongrpc.NewConfig(commongrpc.ConfigOptions{
+		EnvVarName:  "IDENTITY_SERVICE_GRPC_PORT",
+		DefaultPort: 50051,
+	})
 }
 
-func NewConfig() (*Config, error) {
-	port, err := env.GetEnvInt("IDENTITY_SERVICE_GRPC_PORT", 50051)
-	if err != nil {
-		return nil, fmt.Errorf("invalid IDENTITY_SERVICE_GRPC_PORT: %w", err)
-	}
-
-	return &Config{
-		Port: port,
-	}, nil
-}
-
-func MustNewConfig() *Config {
-	cfg, err := NewConfig()
-	if err != nil {
-		panic(fmt.Sprintf("failed to load grpc config: %v", err))
-	}
-	return cfg
+func MustNewConfig() *commongrpc.Config {
+	return commongrpc.MustNewConfig(commongrpc.ConfigOptions{
+		EnvVarName:  "IDENTITY_SERVICE_GRPC_PORT",
+		DefaultPort: 50051,
+	})
 }

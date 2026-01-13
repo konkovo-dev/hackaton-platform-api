@@ -26,6 +26,19 @@ type AuthIdempotencyKey struct {
 	ExpiresAt    time.Time `json:"expires_at"`
 }
 
+type AuthOutboxEvent struct {
+	ID            pgtype.UUID `json:"id"`
+	AggregateID   string      `json:"aggregate_id"`
+	AggregateType string      `json:"aggregate_type"`
+	EventType     string      `json:"event_type"`
+	Payload       []byte      `json:"payload"`
+	Status        string      `json:"status"`
+	AttemptCount  int32       `json:"attempt_count"`
+	LastError     string      `json:"last_error"`
+	CreatedAt     time.Time   `json:"created_at"`
+	UpdatedAt     time.Time   `json:"updated_at"`
+}
+
 type AuthRefreshToken struct {
 	ID        pgtype.UUID        `json:"id"`
 	UserID    pgtype.UUID        `json:"user_id"`
@@ -39,9 +52,6 @@ type AuthUser struct {
 	ID        pgtype.UUID `json:"id"`
 	Username  string      `json:"username"`
 	Email     string      `json:"email"`
-	FirstName string      `json:"first_name"`
-	LastName  string      `json:"last_name"`
-	Timezone  string      `json:"timezone"`
 	CreatedAt time.Time   `json:"created_at"`
 	UpdatedAt time.Time   `json:"updated_at"`
 }
