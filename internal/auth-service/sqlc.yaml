@@ -1,6 +1,8 @@
 version: "2"
 sql:
-  - schema: "migrations/00001_init.sql"
+  - schema:
+      - "migrations/00001_init.sql"
+      - "migrations/00002_outbox.sql"
     queries: "repository/postgres/queries"
     engine: "postgresql"
     gen:

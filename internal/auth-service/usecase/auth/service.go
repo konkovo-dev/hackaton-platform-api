@@ -5,38 +5,47 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/domain/entity"
+	"github.com/belikoooova/hackaton-platform-api/pkg/outbox"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 type Service struct {
 	cfg              *Config
+	txManager        TxManager
 	userRepo         UserRepository
 	credentialsRepo  CredentialsRepository
 	refreshTokenRepo RefreshTokenRepository
 	passwordService  PasswordService
 	jwtService       JWTService
+	outboxRepo       OutboxRepository
 }
 
 func NewService(
 	cfg *Config,
+	txManager TxManager,
 	userRepo UserRepository,
 	credentialsRepo CredentialsRepository,
 	refreshTokenRepo RefreshTokenRepository,
 	passwordService PasswordService,
 	jwtService JWTService,
+	outboxRepo OutboxRepository,
 ) *Service {
 	return &Service{
 		cfg:              cfg,
+		txManager:        txManager,
 		userRepo:         userRepo,
 		credentialsRepo:  credentialsRepo,
 		refreshTokenRepo: refreshTokenRepo,
 		passwordService:  passwordService,
 		jwtService:       jwtService,
+		outboxRepo:       outboxRepo,
 	}
 }
 
@@ -57,7 +66,6 @@ type RegisterOutput struct {
 }
 
 func (s *Service) Register(ctx context.Context, input RegisterInput) (*RegisterOutput, error) {
-	// Валидация
 	if err := s.validateRegisterInput(input); err != nil {
 		return nil, err
 	}
@@ -73,33 +81,58 @@ func (s *Service) Register(ctx context.Context, input RegisterInput) (*RegisterO
 		return nil, ErrUserAlreadyExists
 	}
 
-	// Хешируем пароль
 	passwordHash, err := s.passwordService.Hash(input.Password)
 	if err != nil {
 		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
 
 	user := &entity.User{
-		ID:        uuid.New(),
-		Username:  username,
-		Email:     input.Email,
-		FirstName: input.FirstName,
-		LastName:  input.LastName,
-		Timezone:  input.Timezone,
+		ID:       uuid.New(),
+		Username: username,
+		Email:    input.Email,
 	}
 
-	if err := s.userRepo.Create(ctx, user); err != nil {
-		return nil, fmt.Errorf("failed to create user: %w", err)
-	}
+	err = s.txManager.WithTx(ctx, func(tx pgx.Tx) error {
+		userRepoTx := s.userRepo.WithTx(tx)
+		credRepoTx := s.credentialsRepo.WithTx(tx)
+		outboxRepoTx := s.outboxRepo.WithTx(tx)
 
-	// Создаём credentials
-	credentials := &entity.Credentials{
-		UserID:       user.ID,
-		PasswordHash: passwordHash,
-	}
+		if err := userRepoTx.Create(ctx, user); err != nil {
+			return fmt.Errorf("failed to create user: %w", err)
+		}
 
-	if err := s.credentialsRepo.Create(ctx, credentials); err != nil {
-		return nil, fmt.Errorf("failed to create credentials: %w", err)
+		credentials := &entity.Credentials{
+			UserID:       user.ID,
+			PasswordHash: passwordHash,
+		}
+
+		if err := credRepoTx.Create(ctx, credentials); err != nil {
+			return fmt.Errorf("failed to create credentials: %w", err)
+		}
+
+		payload := map[string]string{
+			"user_id":    user.ID.String(),
+			"username":   user.Username,
+			"first_name": input.FirstName,
+			"last_name":  input.LastName,
+			"timezone":   input.Timezone,
+		}
+		payloadBytes, err := json.Marshal(payload)
+		if err != nil {
+			return fmt.Errorf("failed to marshal outbox payload: %w", err)
+		}
+
+		event := outbox.NewEvent(user.ID.String(), "user", "user.registered", payloadBytes)
+
+		if err := outboxRepoTx.Create(ctx, event); err != nil {
+			return fmt.Errorf("failed to create outbox event: %w", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
 	}
 
 	return s.generateTokens(ctx, user.ID)
@@ -235,11 +268,11 @@ func (s *Service) validateRegisterInput(input RegisterInput) error {
 	}
 
 	if input.FirstName == "" {
-		return fmt.Errorf("first_name cannot be empty")
+		return ErrEmptyFirstName
 	}
 
 	if input.LastName == "" {
-		return fmt.Errorf("last_name cannot be empty")
+		return ErrEmptyLastName
 	}
 
 	if input.Timezone == "" {

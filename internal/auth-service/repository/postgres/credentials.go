@@ -8,6 +8,7 @@ import (
 
 	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/domain/entity"
 	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/repository/postgres/queries"
+	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/usecase/auth"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -20,6 +21,12 @@ type CredentialsRepository struct {
 func NewCredentialsRepository(pool *pgxpool.Pool) *CredentialsRepository {
 	return &CredentialsRepository{
 		queries: queries.New(pool),
+	}
+}
+
+func (r *CredentialsRepository) WithTx(tx pgx.Tx) auth.CredentialsRepository {
+	return &CredentialsRepository{
+		queries: queries.New(tx),
 	}
 }
 

@@ -4,6 +4,8 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/usecase/auth"
+	"github.com/belikoooova/hackaton-platform-api/pkg/outbox"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/fx"
 )
@@ -11,10 +13,14 @@ import (
 var Module = fx.Module("postgres",
 	fx.Provide(
 		MustNewConfig,
+		NewTxManager,
 		NewUserRepository,
 		NewCredentialsRepository,
 		NewRefreshTokenRepository,
 		NewIdempotencyRepository,
+		NewOutboxRepository,
+		func(r *OutboxRepository) outbox.EventRepository { return r },
+		func(r *OutboxRepository) auth.OutboxRepository { return r },
 	),
 	fx.Provide(
 		func(lc fx.Lifecycle, cfg *Config, logger *slog.Logger) (*pgxpool.Pool, error) {

@@ -8,4 +8,3 @@ var Module = fx.Module("jwt",
 		NewService,
 	),
 )
-

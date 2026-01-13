@@ -18,6 +18,14 @@ service MeService {
   }
 
   // One endpoint to update "public user fields" for myself.
+  rpc CreateMe(CreateMeRequest) returns (CreateMeResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/me"
+      body: "*"
+    };
+  }
+
+  // One endpoint to update "public user fields" for myself.
   rpc UpdateMe(UpdateMeRequest) returns (UpdateMeResponse) {
     option (google.api.http) = {
       put: "/v1/users/me"
@@ -54,6 +62,20 @@ message GetMeResponse {
 
   // Global visibility (skills + contacts).
   VisibilitySettings visibility = 4;
+}
+
+message CreateMeRequest {
+  string user_id = 1;
+  string first_name = 2;
+  string last_name = 3;
+  string username = 4;
+  string timezone = 5;
+
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message CreateMeResponse {
+  User user = 1;
 }
 
 message UpdateMeRequest {

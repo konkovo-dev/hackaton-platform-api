@@ -7,4 +7,3 @@ var Module = fx.Module("password",
 		NewService,
 	),
 )
-

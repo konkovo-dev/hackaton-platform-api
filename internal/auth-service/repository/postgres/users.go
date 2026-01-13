@@ -9,6 +9,7 @@ import (
 
 	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/domain/entity"
 	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/repository/postgres/queries"
+	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/usecase/auth"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -24,6 +25,12 @@ func NewUserRepository(pool *pgxpool.Pool) *UserRepository {
 	}
 }
 
+func (r *UserRepository) WithTx(tx pgx.Tx) auth.UserRepository {
+	return &UserRepository{
+		queries: queries.New(tx),
+	}
+}
+
 func (r *UserRepository) Create(ctx context.Context, user *entity.User) error {
 	now := time.Now().UTC()
 	user.CreatedAt = now
@@ -34,9 +41,6 @@ func (r *UserRepository) Create(ctx context.Context, user *entity.User) error {
 		ID:        uuidToPgtype(user.ID),
 		Username:  user.Username,
 		Email:     user.Email,
-		FirstName: user.FirstName,
-		LastName:  user.LastName,
-		Timezone:  user.Timezone,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 	})
@@ -64,9 +68,6 @@ func (r *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (*entity.Use
 		ID:        pgtypeToUUID(row.ID),
 		Username:  row.Username,
 		Email:     row.Email,
-		FirstName: row.FirstName,
-		LastName:  row.LastName,
-		Timezone:  row.Timezone,
 		CreatedAt: row.CreatedAt,
 		UpdatedAt: row.UpdatedAt,
 	}, nil
@@ -87,9 +88,6 @@ func (r *UserRepository) GetByUsername(ctx context.Context, username string) (*e
 		ID:        pgtypeToUUID(row.ID),
 		Username:  row.Username,
 		Email:     row.Email,
-		FirstName: row.FirstName,
-		LastName:  row.LastName,
-		Timezone:  row.Timezone,
 		CreatedAt: row.CreatedAt,
 		UpdatedAt: row.UpdatedAt,
 	}, nil
@@ -108,9 +106,6 @@ func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*entity.
 		ID:        pgtypeToUUID(row.ID),
 		Username:  row.Username,
 		Email:     row.Email,
-		FirstName: row.FirstName,
-		LastName:  row.LastName,
-		Timezone:  row.Timezone,
 		CreatedAt: row.CreatedAt,
 		UpdatedAt: row.UpdatedAt,
 	}, nil
@@ -122,9 +117,6 @@ func (r *UserRepository) Update(ctx context.Context, user *entity.User) error {
 	err := r.queries.UpdateUser(ctx, queries.UpdateUserParams{
 		ID:        uuidToPgtype(user.ID),
 		Email:     user.Email,
-		FirstName: user.FirstName,
-		LastName:  user.LastName,
-		Timezone:  user.Timezone,
 		UpdatedAt: user.UpdatedAt,
 	})
 
