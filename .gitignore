@@ -1,4 +1,4 @@
-/bin/
+bin/
 *.exe
 *.exe~
 *.dll
@@ -21,9 +21,13 @@ go.work
 
 .DS_Store
 
-gen/
-*.pb.go
-*.pb.gw.go
+.keys/
+*.pem
+*.key
 
 .env
 .env.local
+
+*.pb.go
+*.pb.gw.go
+*.sql.go

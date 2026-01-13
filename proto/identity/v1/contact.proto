@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package identity.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/identity/v1;identityv1";
+
+import "identity/v1/common.proto";
+
+message Contact {
+  string id = 1;
+
+  identity.v1.ContactType type = 2;
+  string value = 3;
+}
+
+message MyContact {
+  Contact contact = 1;
+  identity.v1.VisibilityLevel visibility = 2;
+}

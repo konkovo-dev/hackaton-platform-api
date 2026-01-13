@@ -1,0 +1,102 @@
+syntax = "proto3";
+
+package identity.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/identity/v1;identityv1";
+
+import "google/api/annotations.proto";
+import "identity/v1/common.proto";
+import "identity/v1/user.proto";
+import "identity/v1/skill.proto";
+import "identity/v1/contact.proto";
+import "identity/v1/visibility.proto";
+import "common/v1/idempotency.proto";
+
+service MeService {
+  rpc GetMe(GetMeRequest) returns (GetMeResponse) {
+    option (google.api.http) = { get: "/v1/users/me" };
+  }
+
+  // One endpoint to update "public user fields" for myself.
+  rpc UpdateMe(UpdateMeRequest) returns (UpdateMeResponse) {
+    option (google.api.http) = {
+      put: "/v1/users/me"
+      body: "*"
+    };
+  }
+
+  // Updates my skills AND global skills visibility.
+  rpc UpdateMySkills(UpdateMySkillsRequest) returns (UpdateMySkillsResponse) {
+    option (google.api.http) = {
+      put: "/v1/users/me/skills"
+      body: "*"
+    };
+  }
+
+  // Updates my contacts AND global contacts visibility + per-contact visibility.
+  rpc UpdateMyContacts(UpdateMyContactsRequest) returns (UpdateMyContactsResponse) {
+    option (google.api.http) = {
+      put: "/v1/users/me/contacts"
+      body: "*"
+    };
+  }
+}
+
+message GetMeRequest {}
+
+message GetMeResponse {
+  User user = 1;
+
+  repeated Skill skills = 2;
+
+  // My contacts include per-contact visibility.
+  repeated MyContact contacts = 3;
+
+  // Global visibility (skills + contacts).
+  VisibilitySettings visibility = 4;
+}
+
+message UpdateMeRequest {
+  string first_name = 1;
+  string last_name = 2;
+
+  string username = 3;
+
+  string avatar_url = 4;
+  string timezone = 5;
+
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message UpdateMeResponse {
+  User user = 1;
+}
+
+message UpdateMySkillsRequest {
+  // Replace-all semantics:
+  repeated string catalog_skill_ids = 1;
+  repeated string user_skills = 2;
+
+  VisibilityLevel skills_visibility = 3;
+
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message UpdateMySkillsResponse {
+  repeated Skill skills = 1;
+  VisibilitySettings visibility = 2; // return updated global visibility
+}
+
+message UpdateMyContactsRequest {
+  // Replace-all semantics:
+  repeated MyContact contacts = 1;
+
+  VisibilityLevel contacts_visibility = 2;
+
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message UpdateMyContactsResponse {
+  repeated MyContact contacts = 1;
+  VisibilitySettings visibility = 2; // return updated global visibility
+}

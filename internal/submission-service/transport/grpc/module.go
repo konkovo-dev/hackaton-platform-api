@@ -10,4 +10,3 @@ var Module = fx.Module("grpc",
 	),
 	fx.Invoke(Run),
 )
-

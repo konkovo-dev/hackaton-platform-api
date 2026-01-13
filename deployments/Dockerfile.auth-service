@@ -1,0 +1,31 @@
+FROM golang:1.24-alpine AS builder
+
+WORKDIR /build
+
+# Install build dependencies
+RUN apk add --no-cache git
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy all source code including generated proto files
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/auth-service ./cmd/auth-service
+
+FROM alpine:latest
+
+WORKDIR /app
+
+RUN apk --no-cache add ca-certificates
+
+COPY --from=builder /app/auth-service .
+COPY .keys ./keys
+
+RUN adduser -D -u 1000 appuser && \
+    chown -R appuser:appuser /app
+USER appuser
+
+EXPOSE 50057
+
+CMD ["./auth-service"]

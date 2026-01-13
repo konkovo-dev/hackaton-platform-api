@@ -1,6 +1,6 @@
 .PHONY: help run-all build-all clean test lint deps
 
-SERVICES := identity-service hackaton-service team-service submission-service participation-and-roles-service support-and-judging-service
+SERVICES := identity-service hackaton-service team-service submission-service participation-and-roles-service support-and-judging-service auth-service
 
 help:
 	@echo "Hackathon Platform API - Monorepo"
@@ -55,28 +55,36 @@ deps:
 	@go mod download
 	@go mod tidy
 
-gen:
+buf-generate:
 	@echo "generating protobuf code"
 	@buf generate
 
-# docker commands
+sqlc-install:
+	@echo "installing sqlc"
+	@go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+
+goose-install:
+	@echo "installing goose"
+	@go install github.com/pressly/goose/v3/cmd/goose@latest
+
+# docker
 up:
 	@echo "starting services with docker-compose"
-	@docker-compose up -d
+	@docker-compose -f deployments/docker-compose.yml up -d
 
 down:
 	@echo "stopping services"
-	@docker-compose down
+	@docker-compose -f deployments/docker-compose.yml down
 
 logs:
-	@docker-compose logs -f
+	@docker-compose -f deployments/docker-compose.yml logs -f
 
 restart:
 	@echo "restarting services"
-	@docker-compose restart
+	@docker-compose -f deployments/docker-compose.yml restart
 
 ps:
-	@docker-compose ps
+	@docker-compose -f deployments/docker-compose.yml ps
 
 identity-service-%:
 	@$(MAKE) -C cmd/identity-service $*
@@ -96,6 +104,8 @@ participation-and-roles-service-%:
 support-and-judging-service-%:
 	@$(MAKE) -C cmd/support-and-judging-service $*
 
+auth-service-%:
+	@$(MAKE) -C cmd/auth-service $*
+
 gateway-%:
 	@$(MAKE) -C cmd/gateway $*
-

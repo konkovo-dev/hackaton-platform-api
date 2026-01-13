@@ -1,0 +1,183 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: hackathon-postgres
+    environment:
+      POSTGRES_USER: hackathon
+      POSTGRES_PASSWORD: hackathon_dev_password
+      POSTGRES_DB: hackathon
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - hackathon-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hackathon"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  auth-service:
+    build:
+      context: ..
+      dockerfile: deployments/Dockerfile.auth-service
+    container_name: hackathon-auth-service
+    environment:
+      ENV: dev
+      AUTH_SERVICE_GRPC_PORT: 50057
+      DB_DSN: postgres://hackathon:hackathon_dev_password@postgres:5432/hackathon?sslmode=disable
+      DB_MAX_CONNS: 25
+      DB_MIN_CONNS: 5
+      DB_MAX_CONN_LIFETIME: 1h
+      DB_MAX_CONN_IDLE_TIME: 30m
+      DB_HEALTH_CHECK_PERIOD: 1m
+      RS256_PRIVATE_KEY_PATH: /app/keys/private_key.pem
+      JWT_KEY_ID: key-1
+      JWT_ISSUER: hackaton-platform
+      JWT_AUDIENCE: hackaton-platform
+      ACCESS_TOKEN_TTL: 15m
+      REFRESH_TOKEN_TTL: 720h
+      IDEMPOTENCY_TTL: 24h
+    ports:
+      - "50057:50057"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - hackathon-network
+    restart: unless-stopped
+
+  identity-service:
+    build:
+      context: ..
+      dockerfile: deployments/Dockerfile.identity-service
+    container_name: hackathon-identity-service
+    environment:
+      ENV: dev
+      IDENTITY_SERVICE_GRPC_PORT: 50051
+    ports:
+      - "50051:50051"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - hackathon-network
+    restart: unless-stopped
+
+  hackaton-service:
+    build:
+      context: ..
+      dockerfile: deployments/Dockerfile.hackaton-service
+    container_name: hackathon-hackaton-service
+    environment:
+      ENV: dev
+      HACKATON_SERVICE_GRPC_PORT: 50052
+    ports:
+      - "50052:50052"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - hackathon-network
+    restart: unless-stopped
+
+  team-service:
+    build:
+      context: ..
+      dockerfile: deployments/Dockerfile.team-service
+    container_name: hackathon-team-service
+    environment:
+      ENV: dev
+      TEAM_SERVICE_GRPC_PORT: 50053
+    ports:
+      - "50053:50053"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - hackathon-network
+    restart: unless-stopped
+
+  submission-service:
+    build:
+      context: ..
+      dockerfile: deployments/Dockerfile.submission-service
+    container_name: hackathon-submission-service
+    environment:
+      ENV: dev
+      SUBMISSION_SERVICE_GRPC_PORT: 50054
+    ports:
+      - "50054:50054"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - hackathon-network
+    restart: unless-stopped
+
+  participation-and-roles-service:
+    build:
+      context: ..
+      dockerfile: deployments/Dockerfile.participation-and-roles-service
+    container_name: hackathon-participation-and-roles-service
+    environment:
+      ENV: dev
+      PARTICIPATION_AND_ROLES_SERVICE_GRPC_PORT: 50055
+    ports:
+      - "50055:50055"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - hackathon-network
+    restart: unless-stopped
+
+  support-and-judging-service:
+    build:
+      context: ..
+      dockerfile: deployments/Dockerfile.support-and-judging-service
+    container_name: hackathon-support-and-judging-service
+    environment:
+      ENV: dev
+      SUPPORT_AND_JUDGING_SERVICE_GRPC_PORT: 50056
+    ports:
+      - "50056:50056"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - hackathon-network
+    restart: unless-stopped
+
+  gateway:
+    build:
+      context: ..
+      dockerfile: deployments/Dockerfile.gateway
+    container_name: hackathon-gateway
+    environment:
+      ENV: dev
+      GATEWAY_HTTP_PORT: 8080
+      IDENTITY_GRPC_ENDPOINT: identity-service:50051
+      AUTH_GRPC_ENDPOINT: auth-service:50057
+    ports:
+      - "8080:8080"
+    depends_on:
+      - identity-service
+      - hackaton-service
+      - team-service
+      - submission-service
+      - participation-and-roles-service
+      - support-and-judging-service
+      - auth-service
+    networks:
+      - hackathon-network
+    restart: unless-stopped
+
+networks:
+  hackathon-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+

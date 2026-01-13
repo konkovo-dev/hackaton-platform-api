@@ -66,4 +66,3 @@ func Run(lc fx.Lifecycle, s *grpc.Server, lis net.Listener, logger *slog.Logger)
 		},
 	})
 }
-

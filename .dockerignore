@@ -38,9 +38,6 @@ docker-compose*.yml
 .env
 .env.local
 
-# Generated
-api/
-
 # Documentation
 README.md
 *.md
