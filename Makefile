@@ -55,10 +55,12 @@ deps:
 	@go mod download
 	@go mod tidy
 
-gen:
+# buf
+buf-generate:
 	@echo "generating protobuf code"
 	@buf generate
 
+# sqlc
 sqlc-generate:
 	@echo "generating sqlc code for auth-service"
 	@cd internal/auth-service && sqlc generate
@@ -67,7 +69,7 @@ sqlc-install:
 	@echo "installing sqlc"
 	@go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 
-# goose migrations
+# goose
 goose-install:
 	@echo "installing goose"
 	@go install github.com/pressly/goose/v3/cmd/goose@latest
@@ -88,16 +90,7 @@ migrate-create:
 	@echo "creating new migration: $(NAME)"
 	@goose -dir internal/auth-service/migrations create $(NAME) sql
 
-# Testing
-test-auth-local:
-	@echo "testing auth-service locally (make sure it's running on :50051)"
-	@./scripts/test-auth-service.sh
-
-test-auth-docker:
-	@echo "testing auth-service in docker (make sure docker-compose is up)"
-	@AUTH_SERVICE_URL=localhost:50057 ./scripts/test-auth-service.sh
-
-# docker commands
+# docker
 up:
 	@echo "starting services with docker-compose"
 	@docker-compose -f deployments/docker-compose.yml up -d

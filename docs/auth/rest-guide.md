@@ -1,35 +1,9 @@
-# Auth Service - HTTP REST API Quick Start
+# Auth Service REST Test Cases
 
-Этот гайд показывает как работать с `auth-service` через HTTP REST API (grpc-gateway).
+## Предусловия
+- запущен в докере с помощью docker-setup.md
 
-## Требования
-
-- Docker и Docker Compose
-- `curl` и `jq` для тестирования
-
-## Запуск сервисов
-
-```bash
-# 1. Запускаем postgres
-docker-compose -f deployments/docker-compose.yml up -d postgres
-
-# 2. Применяем миграции (если еще не применены)
-export DB_DSN="postgres://hackathon:hackathon_dev_password@localhost:5432/hackathon?sslmode=disable"
-make migrate-up
-
-# 3. Запускаем auth-service
-docker-compose -f deployments/docker-compose.yml up -d auth-service
-
-# 4. Запускаем gateway
-docker-compose -f deployments/docker-compose.yml up -d --no-deps gateway
-
-# Проверяем статус
-docker-compose -f deployments/docker-compose.yml ps
-```
-
-**Важно:** Gateway нужно запускать **после** auth-service, чтобы он успешно подключился.
-
-## API Endpoints
+## Эндпоинты
 
 Base URL: `http://localhost:8080`
 
@@ -263,4 +237,3 @@ Protobuf3 не сериализует поля со значениями по у
 - gRPC endpoint: `localhost:50057` (для прямых gRPC запросов)
 - HTTP gateway: `localhost:8080` (REST API)
 - Все HTTP endpoints доступны под `/v1/auth/*`
-
