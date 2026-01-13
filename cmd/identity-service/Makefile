@@ -42,15 +42,15 @@ list-services:
 
 migrate-up:
 	@echo "running migrations for $(SERVICE_NAME)"
-	@goose -dir $(ROOT_DIR)/internal/$(SERVICE_NAME)/migrations postgres "$(DB_DSN)" up
+	@goose -table goose_db_version_identity -dir $(ROOT_DIR)/internal/$(SERVICE_NAME)/migrations postgres "$(DB_DSN)" up
 
 migrate-down:
 	@echo "rolling back migrations for $(SERVICE_NAME)"
-	@goose -dir $(ROOT_DIR)/internal/$(SERVICE_NAME)/migrations postgres "$(DB_DSN)" down
+	@goose -table goose_db_version_identity -dir $(ROOT_DIR)/internal/$(SERVICE_NAME)/migrations postgres "$(DB_DSN)" down
 
 migrate-status:
 	@echo "checking migration status for $(SERVICE_NAME)"
-	@goose -dir $(ROOT_DIR)/internal/$(SERVICE_NAME)/migrations postgres "$(DB_DSN)" status
+	@goose -table goose_db_version_identity -dir $(ROOT_DIR)/internal/$(SERVICE_NAME)/migrations postgres "$(DB_DSN)" status
 
 migrate-create:
 	@echo "creating new migration: $(NAME)"

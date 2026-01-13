@@ -99,7 +99,7 @@ func (p *Processor) processSingle(ctx context.Context, event *Event) error {
 	if err := handler.Handle(ctx, event); err != nil {
 		event.LastError = err.Error()
 
-		if event.AttemptCount == p.cfg.MaxAttempts {
+		if event.AttemptCount >= p.cfg.MaxAttempts {
 			event.Status = EventStatusFailed
 		} else {
 			event.Status = EventStatusPending
@@ -108,7 +108,8 @@ func (p *Processor) processSingle(ctx context.Context, event *Event) error {
 		event.Status = EventStatusProcessed
 	}
 
-	if err := p.repo.Update(ctx, event); err != nil {
+	updateCtx := context.Background()
+	if err := p.repo.Update(updateCtx, event); err != nil {
 		return fmt.Errorf("failed to update event: %w", err)
 	}
 

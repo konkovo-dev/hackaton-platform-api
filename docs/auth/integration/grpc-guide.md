@@ -169,7 +169,7 @@ docker-compose -f deployments/docker-compose.yml stop identity-service
 grpcurl -plaintext -d '{
   "username": "charlie",
   "email": "charlie@example.com",
-  "password": "pass123",
+  "password": "pass1235678",
   "first_name": "Charlie",
   "last_name": "Brown",
   "timezone": "UTC",
@@ -179,55 +179,66 @@ grpcurl -plaintext -d '{
 
 **Что произойдет:**
 1. Пользователь создастся в `auth.users`
-2. Токены вернутся клиенту
-3. Событие запишется в `auth.outbox_events` со статусом `pending`
+2. Токены вернутся клиенту ✓
+3. Событие запишется в `auth.outbox_events` со статусом `pending` ✓
 4. Outbox processor попытается обработать событие
-5. После 3 неудачных попыток событие перейдет в статус `failed`
+5. После 3 неудачных попыток (каждая ~3-4 сек) событие перейдет в статус `failed`
 
 **Проверка статуса:**
 ```bash
-# Подождать ~3 секунды (3 попытки * 1 сек poll_interval)
-sleep 4
+# Подождать ~10-12 секунд (3 попытки * ~3-4 сек process_timeout + polling)
+sleep 12
 
 docker-compose -f deployments/docker-compose.yml exec postgres psql -U hackathon -d hackathon -c \
-  "SELECT event_type, status, attempt_count, last_error 
+  "SELECT event_type, status, attempt_count, substring(last_error, 1, 100) as last_error 
    FROM auth.outbox_events 
    WHERE payload::json->>'username' = 'charlie';"
 ```
 
 **Ожидаемый результат:**
 ```
-   event_type    | status | attempt_count |           last_error
------------------+--------+---------------+--------------------------------
- user.registered | failed |             3 | failed to create user in identity service: ...
+   event_type    | status | attempt_count |                         last_error
+-----------------+--------+---------------+------------------------------------------------------------
+ user.registered | failed |             3 | failed to create user in identity service: failed to crea...
+(1 row)
 ```
 
 **Восстановление:**
 ```bash
-# Запустить identity-service обратно
+# 1. Запустить identity-service обратно
 docker-compose -f deployments/docker-compose.yml start identity-service
 
-# Подождать 2 секунды
-sleep 2
+# 2. Повторно обработать failed события
+docker-compose -f deployments/docker-compose.yml exec postgres psql -U hackathon -d hackathon << 'EOF'
+UPDATE auth.outbox_events 
+SET status = 'pending', attempt_count = 0, last_error = '', updated_at = NOW()
+WHERE status = 'failed' AND payload::json->>'username' = 'charlie';
 
-# Повторно обработать failed события
-docker-compose -f deployments/docker-compose.yml exec postgres psql -U hackathon -d hackathon -c \
-  "UPDATE auth.outbox_events 
-   SET status = 'pending', attempt_count = 0, last_error = '' 
-   WHERE status = 'failed' AND payload::json->>'username' = 'charlie';"
+SELECT event_type, status, attempt_count FROM auth.outbox_events WHERE payload::json->>'username' = 'charlie';
+EOF
 
-# Подождать 2-3 секунды
+# 3. Подождать обработки (~2-3 секунды)
 sleep 3
 
-# Проверить что событие обработано
-docker-compose -f deployments/docker-compose.yml exec postgres psql -U hackathon -d hackathon -c \
-  "SELECT event_type, status FROM auth.outbox_events WHERE payload::json->>'username' = 'charlie';"
-# Ожидается: status = processed
+# 4. Проверить финальный результат
+docker-compose -f deployments/docker-compose.yml exec postgres psql -U hackathon -d hackathon << 'EOF'
+-- Проверить что событие обработано
+SELECT event_type, status, attempt_count FROM auth.outbox_events WHERE payload::json->>'username' = 'charlie';
 
-# Проверить что профиль создан
-docker-compose -f deployments/docker-compose.yml exec postgres psql -U hackathon -d hackathon -c \
-  "SELECT username, first_name FROM identity.users WHERE username = 'charlie';"
-# Ожидается: charlie | Charlie
+-- Проверить что профиль создан
+SELECT id, username, first_name, last_name FROM identity.users WHERE username = 'charlie';
+EOF
+```
+
+**Ожидаемый результат:**
+```
+   event_type    |  status   | attempt_count 
+-----------------+-----------+---------------
+ user.registered | processed |             1
+
+                  id                  | username | first_name | last_name 
+--------------------------------------+----------+------------+-----------
+ 3e38a3c9-2e2c-423f-8e88-dc51ada2fdea | charlie  | Charlie    | Brown
 ```
 
 ### 4. Негативные сценарии

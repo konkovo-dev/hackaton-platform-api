@@ -83,32 +83,32 @@ docker-compose -f deployments/docker-compose.yml ps postgres
 
 ### 2. Применение миграций
 
-#### Auth Service
+#### Применение миграций
 
 ```bash
 export DB_DSN="postgres://hackathon:hackathon_dev_password@localhost:5432/hackathon?sslmode=disable"
 make goose-install
 make auth-service-migrate-up
+make identity-service-migrate-up
 ```
 
 Проверка:
 ```bash
 make auth-service-migrate-status
+make identity-service-migrate-status
 ```
 
-#### Identity Service
+#### Проверка через SQL
 
 ```bash
-cd internal/identity-service
-goose -dir migrations postgres "$DB_DSN" up
-goose -dir migrations postgres "$DB_DSN" status
-cd ../..
-```
-
-Или через SQL напрямую:
-```bash
+# Проверить таблицы auth
 docker-compose -f deployments/docker-compose.yml exec postgres psql -U hackathon -d hackathon -c "\dt auth.*"
+
+# Проверить таблицы identity
 docker-compose -f deployments/docker-compose.yml exec postgres psql -U hackathon -d hackathon -c "\dt identity.*"
+
+# Проверить таблицы версий goose
+docker-compose -f deployments/docker-compose.yml exec postgres psql -U hackathon -d hackathon -c "SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename LIKE 'goose%' ORDER BY tablename;"
 ```
 
 Ожидаемые таблицы:
@@ -116,9 +116,11 @@ docker-compose -f deployments/docker-compose.yml exec postgres psql -U hackathon
 - `auth.credentials`
 - `auth.refresh_tokens`
 - `auth.idempotency_keys`
-- `auth.outbox_events` ← **новая таблица для outbox**
-- `identity.users` ← **таблица профилей**
+- `auth.outbox_events`
+- `identity.users`
 - `identity.idempotency_keys`
+- `goose_db_version_auth` (в схеме public)
+- `goose_db_version_identity` (в схеме public)
 
 ### 3. Запуск Identity Service
 
@@ -278,6 +280,56 @@ cd ../..
 
 ## Troubleshooting
 
+### Ошибка: "goose: no migrations to run" для identity-service, но таблиц нет
+
+**Симптомы:**
+```bash
+make identity-service-migrate-up
+# Output: goose: no migrations to run. current version: 2
+
+docker-compose -f deployments/docker-compose.yml exec postgres psql -U hackathon -d hackathon -c "\dt identity.*"
+# Output: Did not find any relation named "identity.*".
+```
+
+**Причина:** Ранее использовалась общая таблица `goose_db_version` для обоих сервисов. Теперь каждый сервис использует свою таблицу версий.
+
+**Решение 1: Автоматический скрипт**
+
+```bash
+export DB_DSN="postgres://hackathon:hackathon_dev_password@localhost:5432/hackathon?sslmode=disable"
+cd docs/auth/integration
+chmod +x fix-migrations.sh
+./fix-migrations.sh
+```
+
+**Решение 2: Вручную**
+
+```bash
+# 1. Проверить существующие таблицы версий
+docker-compose -f deployments/docker-compose.yml exec postgres psql -U hackathon -d hackathon -c \
+  "SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename LIKE 'goose%';"
+
+# 2. Если есть только goose_db_version (без суффикса), удалить её
+docker-compose -f deployments/docker-compose.yml exec postgres psql -U hackathon -d hackathon -c \
+  "DROP TABLE IF EXISTS goose_db_version;"
+
+# 3. Применить миграции заново
+export DB_DSN="postgres://hackathon:hackathon_dev_password@localhost:5432/hackathon?sslmode=disable"
+make auth-service-migrate-up
+make identity-service-migrate-up
+
+# 4. Проверить что теперь есть две таблицы версий
+docker-compose -f deployments/docker-compose.yml exec postgres psql -U hackathon -d hackathon -c \
+  "SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename LIKE 'goose%';"
+# Ожидается:
+#  goose_db_version_auth
+#  goose_db_version_identity
+
+# 5. Проверить что таблицы созданы
+docker-compose -f deployments/docker-compose.yml exec postgres psql -U hackathon -d hackathon -c "\dt identity.*"
+# Ожидается: identity.users, identity.idempotency_keys
+```
+
 ### Ошибка: "relation identity.users does not exist"
 
 **Причина:** Миграции identity-service не применены.
@@ -323,13 +375,26 @@ docker-compose -f deployments/docker-compose.yml logs auth-service | grep "handl
 
 ### События застряли в статусе "processing"
 
-**Причина:** Outbox processor был остановлен во время обработки.
+**Причина 1:** Outbox processor был остановлен во время обработки (старые версии до исправления).
+
+**Причина 2:** Handler занял слишком много времени и контекст истёк (исправлено в текущей версии).
 
 **Решение:**
 ```bash
+# Проверить сколько времени событие в processing
 docker-compose -f deployments/docker-compose.yml exec postgres psql -U hackathon -d hackathon -c \
-  "UPDATE auth.outbox_events SET status = 'pending' WHERE status = 'processing';"
+  "SELECT event_type, status, attempt_count, NOW() - updated_at as stuck_duration 
+   FROM auth.outbox_events 
+   WHERE status = 'processing';"
+
+# Если событие застряло > 10 секунд, сбросить в pending
+docker-compose -f deployments/docker-compose.yml exec postgres psql -U hackathon -d hackathon -c \
+  "UPDATE auth.outbox_events 
+   SET status = 'pending', updated_at = NOW() 
+   WHERE status = 'processing' AND updated_at < NOW() - INTERVAL '10 seconds';"
 ```
+
+**Примечание:** В текущей версии processor использует `context.Background()` для финального обновления статуса, поэтому события больше не должны застревать в `processing` даже при таймауте handler.
 
 ### Проверить связь между auth.users и identity.users
 
