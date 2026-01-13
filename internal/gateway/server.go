@@ -42,15 +42,17 @@ func Run(lc fx.Lifecycle, s *http.Server, lis net.Listener, mux *runtime.ServeMu
 		OnStart: func(ctx context.Context) error {
 			opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 
-			if err := identityv1.RegisterPingServiceHandlerFromEndpoint(ctx, mux, cfg.IdentityGRPCEndpoint, opts); err != nil {
+			bgCtx := context.Background()
+
+			if err := identityv1.RegisterPingServiceHandlerFromEndpoint(bgCtx, mux, cfg.IdentityGRPCEndpoint, opts); err != nil {
 				return fmt.Errorf("failed to register identity gateway handlers: %v", err)
 			}
 
-			if err := authv1.RegisterAuthServiceHandlerFromEndpoint(ctx, mux, cfg.AuthGRPCEndpoint, opts); err != nil {
+			if err := authv1.RegisterAuthServiceHandlerFromEndpoint(bgCtx, mux, cfg.AuthGRPCEndpoint, opts); err != nil {
 				return fmt.Errorf("failed to register auth gateway handlers: %v", err)
 			}
 
-			if err := authv1.RegisterPingServiceHandlerFromEndpoint(ctx, mux, cfg.AuthGRPCEndpoint, opts); err != nil {
+			if err := authv1.RegisterPingServiceHandlerFromEndpoint(bgCtx, mux, cfg.AuthGRPCEndpoint, opts); err != nil {
 				return fmt.Errorf("failed to register auth ping gateway handlers: %v", err)
 			}
 

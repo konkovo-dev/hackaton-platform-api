@@ -55,40 +55,17 @@ deps:
 	@go mod download
 	@go mod tidy
 
-# buf
 buf-generate:
 	@echo "generating protobuf code"
 	@buf generate
-
-# sqlc
-sqlc-generate:
-	@echo "generating sqlc code for auth-service"
-	@cd internal/auth-service && sqlc generate
 
 sqlc-install:
 	@echo "installing sqlc"
 	@go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 
-# goose
 goose-install:
 	@echo "installing goose"
 	@go install github.com/pressly/goose/v3/cmd/goose@latest
-
-migrate-up:
-	@echo "running migrations for auth-service"
-	@goose -dir internal/auth-service/migrations postgres "$(DB_DSN)" up
-
-migrate-down:
-	@echo "rolling back migrations for auth-service"
-	@goose -dir internal/auth-service/migrations postgres "$(DB_DSN)" down
-
-migrate-status:
-	@echo "checking migration status for auth-service"
-	@goose -dir internal/auth-service/migrations postgres "$(DB_DSN)" status
-
-migrate-create:
-	@echo "creating new migration: $(NAME)"
-	@goose -dir internal/auth-service/migrations create $(NAME) sql
 
 # docker
 up:

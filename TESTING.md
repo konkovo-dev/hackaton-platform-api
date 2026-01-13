@@ -1,7 +1,118 @@
-# Auth Service gRPC Test Cases
+# Auth Service Testing Guide
 
-## Предусловия
-- запущен в докере с помощью docker-setup.md
+## Предварительные требования
+
+1. **Docker & Docker Compose**
+2. **grpcurl** для тестирования gRPC:
+   ```bash
+   # macOS
+   brew install grpcurl
+   
+   # Linux
+   go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
+   ```
+3. **goose** для миграций:
+   ```bash
+   make goose-install
+   ```
+
+## Локальное тестирование (без Docker)
+
+### 1. Запустить Postgres
+
+```bash
+# Только postgres из docker-compose
+docker-compose -f deployments/docker-compose.yml up postgres -d
+
+# Проверить что запустился
+docker-compose -f deployments/docker-compose.yml ps
+```
+
+### 2. Применить миграции
+
+```bash
+export DB_DSN="postgres://hackathon:hackathon_dev_password@localhost:5432/hackathon?sslmode=disable"
+make auth-service-migrate-up
+make auth-service-migrate-status
+```
+
+### 3. Запустить auth-service локально
+
+```bash
+# Из корня проекта
+make auth-service-run
+
+# Или из cmd/auth-service
+cd cmd/auth-service
+make run
+```
+
+Сервис запустится на `localhost:50051`
+
+### 4. Тестировать
+
+```bash
+# Автоматический тест-скрипт
+make test-auth-local
+
+# Или вручную через grpcurl
+grpcurl -plaintext localhost:50051 grpc.health.v1.Health/Check
+
+grpcurl -plaintext -d '{
+  "username": "testuser",
+  "email": "test@example.com",
+  "password": "password123",
+  "first_name": "Test",
+  "last_name": "User",
+  "timezone": "UTC",
+  "idempotency_key": {"key": "test-1"}
+}' localhost:50051 auth.v1.AuthService/Register
+```
+
+## Тестирование в Docker
+
+### 1. Запустить всё через docker-compose
+
+```bash
+cd deployments
+docker-compose up auth-service postgres -d
+
+# Посмотреть логи
+docker-compose logs -f auth-service
+```
+
+### 2. Дождаться готовности
+
+```bash
+# Проверить что сервис работает
+docker-compose ps
+
+# Посмотреть health check
+grpcurl -plaintext localhost:50057 grpc.health.v1.Health/Check
+```
+
+### 3. Применить миграции (в контейнере)
+
+```bash
+docker-compose exec auth-service sh -c "cd /app && goose -dir migrations postgres \"postgres://hackathon:hackathon_dev_password@postgres:5432/hackathon?sslmode=disable\" up"
+```
+
+**Или** применить миграции с хоста:
+
+```bash
+export DB_DSN="postgres://hackathon:hackathon_dev_password@localhost:5432/hackathon?sslmode=disable"
+make auth-service-migrate-up
+```
+
+### 4. Тестировать
+
+```bash
+# Автоматический тест (порт 50057 для docker)
+make test-auth-docker
+
+# Или вручную
+grpcurl -plaintext localhost:50057 auth.v1.AuthService/Register -d '{...}'
+```
 
 ## Тест-сценарии
 
@@ -17,9 +128,11 @@ RESPONSE=$(grpcurl -plaintext -d '{
   "last_name": "Smith",
   "timezone": "Europe/Moscow",
   "idempotency_key": {"key": "alice-registration"}
-}' localhost:50057 auth.v1.AuthService/Register)
+}' localhost:50051 auth.v1.AuthService/Register)
 
 # Извлечь токены
+ACCESS_TOKEN=eyJhbGciOiJSUzI1NiIsImtpZCI6ImtleS0xIiwidHlwIjoiSldUIn0.eyJ1c2VyX2lkIjoiYjNjZDA2ODgtOTYxOS00Mjk0LWJkNGMtZDZmMjgwZGRmNjMyIiwiaXNzIjoiaGFja2F0b24tcGxhdGZvcm0iLCJhdWQiOlsiaGFja2F0b24tcGxhdGZvcm0iXSwiZXhwIjoxNzY4MjQ5OTg1LCJuYmYiOjE3NjgyNDkwODUsImlhdCI6MTc2ODI0OTA4NX0.K1kpDqB3_px_-V9R93Fc0gvElODUJmf7KQYuTPTQGX_yHP8Tf_9KccQYO-2kcmZg2kd-qgE1xJJfisefQ6FusrxAFq72vrPFYR6CrcpQCjVGRYtH3q4afI8t7c4hy55OZH64iL7NLXbceu3g1DGKLXSrVczMXwIDBPPg-ei2h_6Zvv2mwwN1FxRhF7R7HWMDF0bI9HuS1_w6bcbKcV9wBm3fGBIhXsvFS4Gqc22bH2ldlVtu-zIML-PsR4QL505D-ENAH8MZCAw7rnQGc0gbdK9odPnLsFz8E5U83yFNKRKlsdf0A0SywVA1qcKh0r2JWGgFLEo5g3y2Qz4bPFmLwg
+REFRESH_TOKEN=WqnYqQ6TS0QtK6GNpw35bMrrM4YFN4vTJDj9yxEDU7s=
 ACCESS_TOKEN=$(echo "$RESPONSE" | jq -r '.accessToken')
 REFRESH_TOKEN=$(echo "$RESPONSE" | jq -r '.refreshToken')
 
@@ -30,12 +143,7 @@ grpcurl -plaintext -d "{
 
 # 3. Login
 grpcurl -plaintext -d '{
-  "email": "alice@example.com",
-  "password": "SecurePass123"
-}' localhost:50057 auth.v1.AuthService/Login
-
-grpcurl -plaintext -d '{
-  "username": "alice",
+  "email": "testuser3@example.com",
   "password": "SecurePass123"
 }' localhost:50057 auth.v1.AuthService/Login
 
@@ -87,7 +195,7 @@ grpcurl -plaintext -d '{
 
 # Неверный пароль
 grpcurl -plaintext -d '{
-  "email": "alice@example.com",
+  "email": "bob@example.com",
   "password": "WrongPassword"
 }' localhost:50057 auth.v1.AuthService/Login
 # Ожидается: error "invalid credentials"
@@ -151,10 +259,10 @@ make auth-service-migrate-up
 
 ```bash
 # Список методов сервиса
-grpcurl -plaintext localhost:50057 list auth.v1.AuthService
+grpcurl -plaintext localhost:50051 list auth.v1.AuthService
 
 # Описание метода
-grpcurl -plaintext localhost:50057 describe auth.v1.AuthService.Register
+grpcurl -plaintext localhost:50051 describe auth.v1.AuthService.Register
 
 # Логи сервиса
 docker-compose logs -f auth-service
