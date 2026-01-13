@@ -54,4 +54,3 @@ func (r *IdempotencyRepository) Set(ctx context.Context, key, scope, requestHash
 	})
 	return err
 }
-
