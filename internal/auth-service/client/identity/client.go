@@ -38,7 +38,7 @@ func (c *Client) Close() error {
 }
 
 func (c *Client) CreateUser(ctx context.Context, userID, username, firstName, lastName, timezone string) error {
-	idempotencyKeyValue := idempotency.ComputeHash(userID, "identity.create_user")
+	idempotencyKeyValue := idempotency.ComputeHash(userID, "identity.create_me")
 
 	req := &identityv1.CreateMeRequest{
 		UserId:    userID,

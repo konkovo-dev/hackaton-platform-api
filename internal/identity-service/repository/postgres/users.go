@@ -7,9 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/domain/entity"
-	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/repository/postgres/queries"
-	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/usecase/auth"
+	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/domain/entity"
+	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/repository/postgres/queries"
 	pgxadapter "github.com/belikoooova/hackaton-platform-api/pkg/pgx"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -26,12 +25,6 @@ func NewUserRepository(pool *pgxpool.Pool) *UserRepository {
 	}
 }
 
-func (r *UserRepository) WithTx(tx pgx.Tx) auth.UserRepository {
-	return &UserRepository{
-		queries: queries.New(tx),
-	}
-}
-
 func (r *UserRepository) Create(ctx context.Context, user *entity.User) error {
 	now := time.Now().UTC()
 	user.CreatedAt = now
@@ -41,7 +34,10 @@ func (r *UserRepository) Create(ctx context.Context, user *entity.User) error {
 	err := r.queries.CreateUser(ctx, queries.CreateUserParams{
 		ID:        pgxadapter.UUIDToPgtype(user.ID),
 		Username:  user.Username,
-		Email:     user.Email,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		AvatarUrl: pgxadapter.StringToPgtype(user.AvatarURL),
+		Timezone:  user.Timezone,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 	})
@@ -68,7 +64,10 @@ func (r *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (*entity.Use
 	return &entity.User{
 		ID:        pgxadapter.PgtypeToUUID(row.ID),
 		Username:  row.Username,
-		Email:     row.Email,
+		FirstName: row.FirstName,
+		LastName:  row.LastName,
+		AvatarURL: pgxadapter.PgtypeToString(row.AvatarUrl),
+		Timezone:  row.Timezone,
 		CreatedAt: row.CreatedAt,
 		UpdatedAt: row.UpdatedAt,
 	}, nil
@@ -88,25 +87,10 @@ func (r *UserRepository) GetByUsername(ctx context.Context, username string) (*e
 	return &entity.User{
 		ID:        pgxadapter.PgtypeToUUID(row.ID),
 		Username:  row.Username,
-		Email:     row.Email,
-		CreatedAt: row.CreatedAt,
-		UpdatedAt: row.UpdatedAt,
-	}, nil
-}
-
-func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*entity.User, error) {
-	row, err := r.queries.GetUserByEmail(ctx, email)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("user not found")
-		}
-		return nil, fmt.Errorf("failed to get user: %w", err)
-	}
-
-	return &entity.User{
-		ID:        pgxadapter.PgtypeToUUID(row.ID),
-		Username:  row.Username,
-		Email:     row.Email,
+		FirstName: row.FirstName,
+		LastName:  row.LastName,
+		AvatarURL: pgxadapter.PgtypeToString(row.AvatarUrl),
+		Timezone:  row.Timezone,
 		CreatedAt: row.CreatedAt,
 		UpdatedAt: row.UpdatedAt,
 	}, nil
@@ -117,7 +101,10 @@ func (r *UserRepository) Update(ctx context.Context, user *entity.User) error {
 
 	err := r.queries.UpdateUser(ctx, queries.UpdateUserParams{
 		ID:        pgxadapter.UUIDToPgtype(user.ID),
-		Email:     user.Email,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		AvatarUrl: pgxadapter.StringToPgtype(user.AvatarURL),
+		Timezone:  user.Timezone,
 		UpdatedAt: user.UpdatedAt,
 	})
 

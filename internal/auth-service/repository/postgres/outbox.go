@@ -2,13 +2,13 @@ package postgres
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/repository/postgres/queries"
 	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/usecase/auth"
 	"github.com/belikoooova/hackaton-platform-api/pkg/outbox"
+	pgxadapter "github.com/belikoooova/hackaton-platform-api/pkg/pgx"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -31,7 +31,7 @@ func (r *OutboxRepository) WithTx(tx pgx.Tx) auth.OutboxRepository {
 
 func (r *OutboxRepository) Create(ctx context.Context, event *outbox.Event) error {
 	err := r.queries.CreateOutboxEvent(ctx, queries.CreateOutboxEventParams{
-		ID:            uuidToPgtype(event.ID),
+		ID:            pgxadapter.UUIDToPgtype(event.ID),
 		AggregateID:   event.AggregateID,
 		AggregateType: event.AggregateType,
 		EventType:     event.EventType,
@@ -59,7 +59,7 @@ func (r *OutboxRepository) GetPending(ctx context.Context, limit int) ([]*outbox
 	events := make([]*outbox.Event, 0, len(rows))
 	for _, row := range rows {
 		events = append(events, &outbox.Event{
-			ID:            pgtypeToUUID(row.ID),
+			ID:            pgxadapter.PgtypeToUUID(row.ID),
 			AggregateID:   row.AggregateID,
 			AggregateType: row.AggregateType,
 			EventType:     row.EventType,
@@ -79,7 +79,7 @@ func (r *OutboxRepository) Update(ctx context.Context, event *outbox.Event) erro
 	event.UpdatedAt = time.Now().UTC()
 
 	err := r.queries.UpdateOutboxEvent(ctx, queries.UpdateOutboxEventParams{
-		ID:           uuidToPgtype(event.ID),
+		ID:           pgxadapter.UUIDToPgtype(event.ID),
 		Status:       string(event.Status),
 		AttemptCount: int32(event.AttemptCount),
 		LastError:    event.LastError,
@@ -91,12 +91,4 @@ func (r *OutboxRepository) Update(ctx context.Context, event *outbox.Event) erro
 	}
 
 	return nil
-}
-
-func MarshalEventPayload(v interface{}) ([]byte, error) {
-	payload, err := json.Marshal(v)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal event payload: %w", err)
-	}
-	return payload, nil
 }

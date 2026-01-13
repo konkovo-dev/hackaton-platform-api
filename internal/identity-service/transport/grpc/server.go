@@ -7,7 +7,10 @@ import (
 	"net"
 
 	identityv1 "github.com/belikoooova/hackaton-platform-api/api/identity/v1"
+	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/transport/grpc/meservice"
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/transport/grpc/pingservice"
+	"github.com/belikoooova/hackaton-platform-api/pkg/auth/client"
+	"github.com/belikoooova/hackaton-platform-api/pkg/auth/interceptor"
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
@@ -24,10 +27,25 @@ func NewListener(cfg *Config) (net.Listener, error) {
 	return listener, nil
 }
 
-func NewGRPCServer(pingService *pingservice.PingService) *grpc.Server {
-	grpcServer := grpc.NewServer()
+func NewGRPCServer(
+	pingService *pingservice.PingService,
+	meService *meservice.MeService,
+	authClient client.AuthClient,
+	logger *slog.Logger,
+) *grpc.Server {
+	publicMethods := []string{
+		"/identity.v1.PingService/Ping",
+		"/identity.v1.MeService/CreateMe",
+	}
+
+	authInterceptor := interceptor.NewUnaryInterceptor(authClient, publicMethods, logger)
+
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(authInterceptor),
+	)
 
 	identityv1.RegisterPingServiceServer(grpcServer, pingService)
+	identityv1.RegisterMeServiceServer(grpcServer, meService)
 
 	healthServer := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)

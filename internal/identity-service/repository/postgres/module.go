@@ -4,8 +4,8 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/usecase/auth"
-	"github.com/belikoooova/hackaton-platform-api/pkg/outbox"
+	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/usecase/me"
+	"github.com/belikoooova/hackaton-platform-api/pkg/idempotency"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/fx"
 )
@@ -13,15 +13,10 @@ import (
 var Module = fx.Module("postgres",
 	fx.Provide(
 		MustNewConfig,
-		NewTxManager,
 		NewUserRepository,
-		NewCredentialsRepository,
-		NewRefreshTokenRepository,
 		NewIdempotencyRepository,
-		NewOutboxRepository,
-		func(r *OutboxRepository) outbox.EventRepository { return r },
-		func(r *OutboxRepository) auth.OutboxRepository { return r },
-		func(m *TxManager) auth.TxManager { return m },
+		func(r *UserRepository) me.UserRepository { return r },
+		func(r *IdempotencyRepository) idempotency.Repository { return r },
 	),
 	fx.Provide(
 		func(lc fx.Lifecycle, cfg *Config, logger *slog.Logger) (*pgxpool.Pool, error) {
@@ -32,11 +27,11 @@ var Module = fx.Module("postgres",
 
 			lc.Append(fx.Hook{
 				OnStart: func(ctx context.Context) error {
-					logger.Info("database connection pool initialized")
+					logger.Info("identity database connection pool initialized")
 					return nil
 				},
 				OnStop: func(ctx context.Context) error {
-					logger.Info("closing database connection pool")
+					logger.Info("closing identity database connection pool")
 					pool.Close()
 					return nil
 				},

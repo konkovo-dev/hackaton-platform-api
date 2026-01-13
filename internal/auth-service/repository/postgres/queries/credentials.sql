@@ -11,4 +11,3 @@ WHERE user_id = $1;
 UPDATE auth.credentials
 SET password_hash = $2, updated_at = $3
 WHERE user_id = $1;
-

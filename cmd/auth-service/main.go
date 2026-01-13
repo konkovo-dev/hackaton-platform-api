@@ -1,13 +1,16 @@
 package main
 
 import (
+	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/client/identity"
 	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/repository/postgres"
 	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/transport/grpc"
 	authUsecase "github.com/belikoooova/hackaton-platform-api/internal/auth-service/usecase/auth"
 	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/usecase/jwt"
+	outboxHandlers "github.com/belikoooova/hackaton-platform-api/internal/auth-service/usecase/outbox"
 	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/usecase/password"
 	"github.com/belikoooova/hackaton-platform-api/pkg/idempotency"
 	"github.com/belikoooova/hackaton-platform-api/pkg/logger"
+	"github.com/belikoooova/hackaton-platform-api/pkg/outbox"
 	"go.uber.org/fx"
 )
 
@@ -19,6 +22,9 @@ func main() {
 		jwt.Module,
 		authUsecase.Module,
 		idempotency.Module,
+		identity.Module,
+		outboxHandlers.Module,
+		outbox.Module,
 		grpc.Module,
 		fx.Provide(
 			fx.Annotate(postgres.NewUserRepository, fx.As(new(authUsecase.UserRepository))),

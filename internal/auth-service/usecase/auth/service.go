@@ -91,7 +91,6 @@ func (s *Service) Register(ctx context.Context, input RegisterInput) (*RegisterO
 		Username: username,
 		Email:    input.Email,
 	}
-
 	err = s.txManager.WithTx(ctx, func(tx pgx.Tx) error {
 		userRepoTx := s.userRepo.WithTx(tx)
 		credRepoTx := s.credentialsRepo.WithTx(tx)
@@ -138,7 +137,6 @@ func (s *Service) Register(ctx context.Context, input RegisterInput) (*RegisterO
 	return s.generateTokens(ctx, user.ID)
 }
 
-// IntrospectToken проверяет access token и возвращает user info
 func (s *Service) IntrospectToken(ctx context.Context, accessToken string) (active bool, userID uuid.UUID, expiresAt time.Time, err error) {
 	if accessToken == "" {
 		return false, uuid.Nil, time.Time{}, ErrTokenInvalid
@@ -156,7 +154,6 @@ func (s *Service) IntrospectToken(ctx context.Context, accessToken string) (acti
 	return true, userID, expiresAt, nil
 }
 
-// Login аутентифицирует пользователя по email/username и паролю
 func (s *Service) Login(ctx context.Context, login, password string) (*RegisterOutput, error) {
 	if login == "" {
 		return nil, ErrEmptyLogin
@@ -166,7 +163,6 @@ func (s *Service) Login(ctx context.Context, login, password string) (*RegisterO
 		return nil, ErrEmptyPassword
 	}
 
-	// Ищем user по email или username
 	var user *entity.User
 	var err error
 
@@ -180,79 +176,62 @@ func (s *Service) Login(ctx context.Context, login, password string) (*RegisterO
 		return nil, ErrInvalidCredentials
 	}
 
-	// Получаем credentials
 	credentials, err := s.credentialsRepo.GetByUserID(ctx, user.ID)
 	if err != nil {
 		return nil, ErrInvalidCredentials
 	}
 
-	// Проверяем пароль
 	if err := s.passwordService.Verify(password, credentials.PasswordHash); err != nil {
 		return nil, ErrInvalidCredentials
 	}
 
-	// Генерируем токены
 	return s.generateTokens(ctx, user.ID)
 }
 
-// Refresh обновляет access token используя refresh token
 func (s *Service) Refresh(ctx context.Context, refreshToken string) (*RegisterOutput, error) {
 	if refreshToken == "" {
 		return nil, ErrTokenInvalid
 	}
 
-	// Хешируем refresh token
 	tokenHash := s.hashRefreshToken(refreshToken)
 
-	// Получаем токен из БД
 	storedToken, err := s.refreshTokenRepo.GetByTokenHash(ctx, tokenHash)
 	if err != nil {
 		return nil, ErrTokenInvalid
 	}
 
-	// Проверяем, что токен не отозван
 	if storedToken.RevokedAt != nil {
 		return nil, ErrTokenRevoked
 	}
-
-	// Проверяем, что токен не истёк
 	if time.Now().UTC().After(storedToken.ExpiresAt) {
 		return nil, ErrTokenExpired
 	}
 
-	// Получаем user
 	user, err := s.userRepo.GetByID(ctx, storedToken.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
-	// Отзываем старый refresh token
 	if err := s.refreshTokenRepo.Revoke(ctx, tokenHash, time.Now().UTC()); err != nil {
 		return nil, fmt.Errorf("failed to revoke old refresh token: %w", err)
 	}
 
-	// Генерируем новые токены
 	return s.generateTokens(ctx, user.ID)
 }
 
-// Logout отзывает refresh token
 func (s *Service) Logout(ctx context.Context, refreshToken string) error {
 	if refreshToken == "" {
 		return ErrTokenInvalid
 	}
 
-	// Хешируем refresh token
 	tokenHash := s.hashRefreshToken(refreshToken)
 
-	// Отзываем токен
 	if err := s.refreshTokenRepo.Revoke(ctx, tokenHash, time.Now().UTC()); err != nil {
 		return fmt.Errorf("failed to revoke refresh token: %w", err)
 	}
 
 	return nil
 }
-
-// Внутренние методы
 
 func (s *Service) validateRegisterInput(input RegisterInput) error {
 	if input.Username == "" {
