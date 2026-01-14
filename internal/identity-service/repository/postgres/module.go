@@ -4,9 +4,8 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/usecase/me"
 	"github.com/belikoooova/hackaton-platform-api/pkg/idempotency"
-	"github.com/belikoooova/hackaton-platform-api/pkg/pgx"
+	"github.com/belikoooova/hackaton-platform-api/pkg/pgxutil"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/fx"
 )
@@ -14,14 +13,16 @@ import (
 var Module = fx.Module("postgres",
 	fx.Provide(
 		MustNewConfig,
-		NewUserRepository,
 		NewIdempotencyRepository,
-		func(r *UserRepository) me.UserRepository { return r },
 		func(r *IdempotencyRepository) idempotency.Repository { return r },
+		NewUserRepository,
+		NewSkillRepository,
+		NewContactRepository,
+		NewVisibilityRepository,
 	),
 	fx.Provide(
-		func(lc fx.Lifecycle, cfg *pgx.Config, logger *slog.Logger) (*pgxpool.Pool, error) {
-			pool, err := pgx.NewPool(context.Background(), cfg)
+		func(lc fx.Lifecycle, cfg *pgxutil.Config, logger *slog.Logger) (*pgxpool.Pool, error) {
+			pool, err := pgxutil.NewPool(context.Background(), cfg)
 			if err != nil {
 				return nil, err
 			}

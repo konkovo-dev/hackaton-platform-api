@@ -6,32 +6,23 @@ import (
 	"time"
 
 	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/repository/postgres/queries"
-	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/usecase/auth"
 	"github.com/belikoooova/hackaton-platform-api/pkg/outbox"
-	pgxadapter "github.com/belikoooova/hackaton-platform-api/pkg/pgx"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/belikoooova/hackaton-platform-api/pkg/pgxutil"
 )
 
 type OutboxRepository struct {
 	queries *queries.Queries
 }
 
-func NewOutboxRepository(pool *pgxpool.Pool) *OutboxRepository {
+func NewOutboxRepository(db queries.DBTX) *OutboxRepository {
 	return &OutboxRepository{
-		queries: queries.New(pool),
-	}
-}
-
-func (r *OutboxRepository) WithTx(tx pgx.Tx) auth.OutboxRepository {
-	return &OutboxRepository{
-		queries: queries.New(tx),
+		queries: queries.New(db),
 	}
 }
 
 func (r *OutboxRepository) Create(ctx context.Context, event *outbox.Event) error {
 	err := r.queries.CreateOutboxEvent(ctx, queries.CreateOutboxEventParams{
-		ID:            pgxadapter.UUIDToPgtype(event.ID),
+		ID:            pgxutil.UUIDToPgtype(event.ID),
 		AggregateID:   event.AggregateID,
 		AggregateType: event.AggregateType,
 		EventType:     event.EventType,
@@ -59,7 +50,7 @@ func (r *OutboxRepository) GetPending(ctx context.Context, limit int) ([]*outbox
 	events := make([]*outbox.Event, 0, len(rows))
 	for _, row := range rows {
 		events = append(events, &outbox.Event{
-			ID:            pgxadapter.PgtypeToUUID(row.ID),
+			ID:            pgxutil.PgtypeToUUID(row.ID),
 			AggregateID:   row.AggregateID,
 			AggregateType: row.AggregateType,
 			EventType:     row.EventType,
@@ -79,7 +70,7 @@ func (r *OutboxRepository) Update(ctx context.Context, event *outbox.Event) erro
 	event.UpdatedAt = time.Now().UTC()
 
 	err := r.queries.UpdateOutboxEvent(ctx, queries.UpdateOutboxEventParams{
-		ID:           pgxadapter.UUIDToPgtype(event.ID),
+		ID:           pgxutil.UUIDToPgtype(event.ID),
 		Status:       string(event.Status),
 		AttemptCount: int32(event.AttemptCount),
 		LastError:    event.LastError,

@@ -6,7 +6,9 @@ import (
 	"log/slog"
 
 	identityv1 "github.com/belikoooova/hackaton-platform-api/api/identity/v1"
+	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/transport/grpc/mappers"
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/usecase/me"
+	"github.com/belikoooova/hackaton-platform-api/pkg/auth"
 	"github.com/belikoooova/hackaton-platform-api/pkg/idempotency"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
@@ -57,38 +59,13 @@ func (s *MeService) CreateMe(ctx context.Context, req *identityv1.CreateMeReques
 		}
 	}
 
-	if req.UserId == "" {
-		s.logger.WarnContext(ctx, "create_me: empty user_id")
-		return nil, status.Error(codes.InvalidArgument, "user_id is required")
-	}
-
 	userID, err := uuid.Parse(req.UserId)
 	if err != nil {
 		s.logger.WarnContext(ctx, "create_me: invalid user_id", slog.String("user_id", req.UserId))
 		return nil, status.Error(codes.InvalidArgument, "invalid user_id format")
 	}
 
-	if req.Username == "" {
-		s.logger.WarnContext(ctx, "create_me: empty username")
-		return nil, status.Error(codes.InvalidArgument, "username is required")
-	}
-
-	if req.FirstName == "" {
-		s.logger.WarnContext(ctx, "create_me: empty first_name")
-		return nil, status.Error(codes.InvalidArgument, "first_name is required")
-	}
-
-	if req.LastName == "" {
-		s.logger.WarnContext(ctx, "create_me: empty last_name")
-		return nil, status.Error(codes.InvalidArgument, "last_name is required")
-	}
-
-	if req.Timezone == "" {
-		s.logger.WarnContext(ctx, "create_me: empty timezone")
-		return nil, status.Error(codes.InvalidArgument, "timezone is required")
-	}
-
-	result, err := s.meService.CreateMe(ctx, me.CreateMeInput{
+	result, err := s.meService.CreateMe(ctx, me.CreateMeIn{
 		UserID:    userID,
 		Username:  req.Username,
 		FirstName: req.FirstName,
@@ -100,16 +77,7 @@ func (s *MeService) CreateMe(ctx context.Context, req *identityv1.CreateMeReques
 		return nil, s.handleError(ctx, err, "create_me")
 	}
 
-	resp := &identityv1.CreateMeResponse{
-		User: &identityv1.User{
-			UserId:    result.User.ID.String(),
-			Username:  result.User.Username,
-			FirstName: result.User.FirstName,
-			LastName:  result.User.LastName,
-			AvatarUrl: result.User.AvatarURL,
-			Timezone:  result.User.Timezone,
-		},
-	}
+	resp := mappers.CreateMeOutToResponse(result)
 
 	if idempotencyKey != "" {
 		requestHash := idempotency.ComputeHash(req.UserId, req.Username)
@@ -123,34 +91,142 @@ func (s *MeService) CreateMe(ctx context.Context, req *identityv1.CreateMeReques
 }
 
 func (s *MeService) GetMe(ctx context.Context, req *identityv1.GetMeRequest) (*identityv1.GetMeResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "not implemented yet")
+	userID, ok := auth.GetUserID(ctx)
+	if !ok {
+		s.logger.WarnContext(ctx, "get_me: no user_id in context")
+		return nil, status.Error(codes.Unauthenticated, "unauthenticated")
+	}
+
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		s.logger.WarnContext(ctx, "get_me: invalid user_id", slog.String("user_id", userID))
+		return nil, status.Error(codes.InvalidArgument, "invalid user_id")
+	}
+
+	result, err := s.meService.GetMe(ctx, me.GetMeIn{
+		UserID: userUUID,
+	})
+	if err != nil {
+		return nil, s.handleError(ctx, err, "get_me")
+	}
+
+	s.logger.InfoContext(ctx, "get_me: success", slog.String("user_id", userID))
+	return mappers.GetMeOutToResponse(result), nil
 }
 
 func (s *MeService) UpdateMe(ctx context.Context, req *identityv1.UpdateMeRequest) (*identityv1.UpdateMeResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "not implemented yet")
+	userID, ok := auth.GetUserID(ctx)
+	if !ok {
+		s.logger.WarnContext(ctx, "update_me: no user_id in context")
+		return nil, status.Error(codes.Unauthenticated, "unauthenticated")
+	}
+
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		s.logger.WarnContext(ctx, "update_me: invalid user_id", slog.String("user_id", userID))
+		return nil, status.Error(codes.InvalidArgument, "invalid user_id")
+	}
+
+	result, err := s.meService.UpdateMe(ctx, me.UpdateMeIn{
+		UserID:    userUUID,
+		FirstName: req.FirstName,
+		LastName:  req.LastName,
+		AvatarURL: req.AvatarUrl,
+		Timezone:  req.Timezone,
+	})
+	if err != nil {
+		return nil, s.handleError(ctx, err, "update_me")
+	}
+
+	s.logger.InfoContext(ctx, "update_me: success", slog.String("user_id", userID))
+	return mappers.UpdateMeOutToResponse(result), nil
 }
 
 func (s *MeService) UpdateMySkills(ctx context.Context, req *identityv1.UpdateMySkillsRequest) (*identityv1.UpdateMySkillsResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "not implemented yet")
+	userID, ok := auth.GetUserID(ctx)
+	if !ok {
+		s.logger.WarnContext(ctx, "update_my_skills: no user_id in context")
+		return nil, status.Error(codes.Unauthenticated, "unauthenticated")
+	}
+
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		s.logger.WarnContext(ctx, "update_my_skills: invalid user_id", slog.String("user_id", userID))
+		return nil, status.Error(codes.InvalidArgument, "invalid user_id")
+	}
+
+	catalogSkillIDs := make([]uuid.UUID, 0, len(req.CatalogSkillIds))
+	for _, idStr := range req.CatalogSkillIds {
+		id, err := uuid.Parse(idStr)
+		if err != nil {
+			s.logger.WarnContext(ctx, "update_my_skills: invalid catalog_skill_id", slog.String("id", idStr))
+			return nil, status.Error(codes.InvalidArgument, "invalid catalog_skill_id format")
+		}
+		catalogSkillIDs = append(catalogSkillIDs, id)
+	}
+
+	result, err := s.meService.UpdateMySkills(ctx, me.UpdateMySkillsIn{
+		UserID:           userUUID,
+		CatalogSkillIDs:  catalogSkillIDs,
+		CustomSkills:     req.UserSkills,
+		SkillsVisibility: mappers.ProtoVisibilityLevelToDomain(req.SkillsVisibility),
+	})
+	if err != nil {
+		return nil, s.handleError(ctx, err, "update_my_skills")
+	}
+
+	s.logger.InfoContext(ctx, "update_my_skills: success", slog.String("user_id", userID))
+	return mappers.UpdateMySkillsOutToResponse(result), nil
 }
 
 func (s *MeService) UpdateMyContacts(ctx context.Context, req *identityv1.UpdateMyContactsRequest) (*identityv1.UpdateMyContactsResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "not implemented yet")
+	userID, ok := auth.GetUserID(ctx)
+	if !ok {
+		s.logger.WarnContext(ctx, "update_my_contacts: no user_id in context")
+		return nil, status.Error(codes.Unauthenticated, "unauthenticated")
+	}
+
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		s.logger.WarnContext(ctx, "update_my_contacts: invalid user_id", slog.String("user_id", userID))
+		return nil, status.Error(codes.InvalidArgument, "invalid user_id")
+	}
+
+	contacts := make([]*me.ContactInput, 0, len(req.Contacts))
+	for _, c := range req.Contacts {
+		contacts = append(contacts, &me.ContactInput{
+			Type:       mappers.ProtoContactTypeToDomain(c.Contact.Type),
+			Value:      c.Contact.Value,
+			Visibility: mappers.ProtoVisibilityLevelToDomain(c.Visibility),
+		})
+	}
+
+	result, err := s.meService.UpdateMyContacts(ctx, me.UpdateMyContactsIn{
+		UserID:             userUUID,
+		Contacts:           contacts,
+		ContactsVisibility: mappers.ProtoVisibilityLevelToDomain(req.ContactsVisibility),
+	})
+	if err != nil {
+		return nil, s.handleError(ctx, err, "update_my_contacts")
+	}
+
+	s.logger.InfoContext(ctx, "update_my_contacts: success", slog.String("user_id", userID))
+	return mappers.UpdateMyContactsOutToResponse(result), nil
 }
 
 func (s *MeService) handleError(ctx context.Context, err error, operation string) error {
 	switch {
 	case errors.Is(err, me.ErrUserNotFound):
-		s.logger.WarnContext(ctx, operation+": user not found")
-		return status.Error(codes.NotFound, "user not found")
+		s.logger.WarnContext(ctx, operation, slog.String("error", err.Error()))
+		return status.Error(codes.NotFound, err.Error())
 	case errors.Is(err, me.ErrUserAlreadyExists):
-		s.logger.WarnContext(ctx, operation+": user already exists")
-		return status.Error(codes.AlreadyExists, "user already exists")
+		s.logger.WarnContext(ctx, operation, slog.String("error", err.Error()))
+		return status.Error(codes.AlreadyExists, err.Error())
 	case errors.Is(err, me.ErrInvalidInput):
-		s.logger.WarnContext(ctx, operation+": invalid input")
+		s.logger.WarnContext(ctx, operation, slog.String("error", err.Error()))
 		return status.Error(codes.InvalidArgument, err.Error())
 	default:
-		s.logger.ErrorContext(ctx, operation+": internal error", slog.String("error", err.Error()))
+		s.logger.ErrorContext(ctx, operation, slog.String("error", err.Error()))
 		return status.Error(codes.Internal, "internal error")
 	}
 }

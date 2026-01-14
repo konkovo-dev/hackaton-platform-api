@@ -8,7 +8,7 @@ import (
 
 	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/domain/entity"
 	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/repository/postgres/queries"
-	pgxadapter "github.com/belikoooova/hackaton-platform-api/pkg/pgx"
+	"github.com/belikoooova/hackaton-platform-api/pkg/pgxutil"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -37,8 +37,8 @@ func (r *RefreshTokenRepository) Create(ctx context.Context, token *entity.Refre
 	}
 
 	err := r.queries.CreateRefreshToken(ctx, queries.CreateRefreshTokenParams{
-		ID:        pgxadapter.UUIDToPgtype(token.ID),
-		UserID:    pgxadapter.UUIDToPgtype(token.UserID),
+		ID:        pgxutil.UUIDToPgtype(token.ID),
+		UserID:    pgxutil.UUIDToPgtype(token.UserID),
 		TokenHash: token.TokenHash,
 		ExpiresAt: token.ExpiresAt,
 		RevokedAt: revokedAt,
@@ -62,11 +62,11 @@ func (r *RefreshTokenRepository) GetByTokenHash(ctx context.Context, tokenHash s
 	}
 
 	return &entity.RefreshToken{
-		ID:        pgxadapter.PgtypeToUUID(row.ID),
-		UserID:    pgxadapter.PgtypeToUUID(row.UserID),
+		ID:        pgxutil.PgtypeToUUID(row.ID),
+		UserID:    pgxutil.PgtypeToUUID(row.UserID),
 		TokenHash: row.TokenHash,
 		ExpiresAt: row.ExpiresAt,
-		RevokedAt: pgxadapter.PgtypeTimestampToTimePtr(row.RevokedAt),
+		RevokedAt: pgxutil.PgtypeTimestampToTimePtr(row.RevokedAt),
 		CreatedAt: row.CreatedAt,
 	}, nil
 }
@@ -89,7 +89,7 @@ func (r *RefreshTokenRepository) Revoke(ctx context.Context, tokenHash string, r
 
 func (r *RefreshTokenRepository) RevokeAllByUserID(ctx context.Context, userID uuid.UUID, revokedAt time.Time) error {
 	err := r.queries.RevokeAllRefreshTokensByUserID(ctx, queries.RevokeAllRefreshTokensByUserIDParams{
-		UserID: pgxadapter.UUIDToPgtype(userID),
+		UserID: pgxutil.UUIDToPgtype(userID),
 		RevokedAt: pgtype.Timestamptz{
 			Time:  revokedAt,
 			Valid: true,

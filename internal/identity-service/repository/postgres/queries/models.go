@@ -19,6 +19,11 @@ type IdentityIdempotencyKey struct {
 	ExpiresAt    time.Time `json:"expires_at"`
 }
 
+type IdentitySkillCatalog struct {
+	ID   pgtype.UUID `json:"id"`
+	Name string      `json:"name"`
+}
+
 type IdentityUser struct {
 	ID        pgtype.UUID `json:"id"`
 	Username  string      `json:"username"`
@@ -28,4 +33,29 @@ type IdentityUser struct {
 	Timezone  string      `json:"timezone"`
 	CreatedAt time.Time   `json:"created_at"`
 	UpdatedAt time.Time   `json:"updated_at"`
+}
+
+type IdentityUserCatalogSkill struct {
+	UserID         pgtype.UUID `json:"user_id"`
+	CatalogSkillID pgtype.UUID `json:"catalog_skill_id"`
+}
+
+type IdentityUserContact struct {
+	ID         pgtype.UUID `json:"id"`
+	UserID     pgtype.UUID `json:"user_id"`
+	Type       string      `json:"type"`
+	Value      string      `json:"value"`
+	Visibility string      `json:"visibility"`
+}
+
+type IdentityUserCustomSkill struct {
+	ID     pgtype.UUID `json:"id"`
+	UserID pgtype.UUID `json:"user_id"`
+	Name   string      `json:"name"`
+}
+
+type IdentityUserVisibility struct {
+	UserID             pgtype.UUID `json:"user_id"`
+	SkillsVisibility   string      `json:"skills_visibility"`
+	ContactsVisibility string      `json:"contacts_visibility"`
 }
