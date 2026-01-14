@@ -27,12 +27,8 @@ func main() {
 		outbox.Module,
 		grpc.Module,
 		fx.Provide(
-			fx.Annotate(postgres.NewUserRepository, fx.As(new(authUsecase.UserRepository))),
-			fx.Annotate(postgres.NewCredentialsRepository, fx.As(new(authUsecase.CredentialsRepository))),
-			fx.Annotate(postgres.NewRefreshTokenRepository, fx.As(new(authUsecase.RefreshTokenRepository))),
 			fx.Annotate(password.NewService, fx.As(new(authUsecase.PasswordService))),
 			fx.Annotate(jwt.NewService, fx.As(new(authUsecase.JWTService))),
-			fx.Annotate(postgres.NewIdempotencyRepository, fx.As(new(idempotency.Repository))),
 		),
 	)
 

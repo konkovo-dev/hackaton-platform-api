@@ -13,8 +13,23 @@ var Module = fx.Module("auth",
 		MustNewConfig,
 		NewService,
 		NewUnitOfWork,
+		NewUserRepository,
+		NewCredentialsRepository,
+		NewRefreshTokenRepository,
 	),
 )
+
+func NewUserRepository(pool *pgxpool.Pool) UserRepository {
+	return postgres.NewUserRepository(pool)
+}
+
+func NewCredentialsRepository(pool *pgxpool.Pool) CredentialsRepository {
+	return postgres.NewCredentialsRepository(pool)
+}
+
+func NewRefreshTokenRepository(pool *pgxpool.Pool) RefreshTokenRepository {
+	return postgres.NewRefreshTokenRepository(pool)
+}
 
 func NewUnitOfWork(pool *pgxpool.Pool) UnitOfWork {
 	factory := func(tx pgx.Tx) *TxRepositories {

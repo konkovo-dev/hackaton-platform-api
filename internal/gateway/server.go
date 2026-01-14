@@ -45,15 +45,19 @@ func Run(lc fx.Lifecycle, s *http.Server, lis net.Listener, mux *runtime.ServeMu
 			bgCtx := context.Background()
 
 			if err := identityv1.RegisterPingServiceHandlerFromEndpoint(bgCtx, mux, cfg.IdentityGRPCEndpoint, opts); err != nil {
-				return fmt.Errorf("failed to register identity gateway handlers: %v", err)
+				return fmt.Errorf("failed to register identity ping gateway handlers: %v", err)
 			}
 
-			if err := authv1.RegisterAuthServiceHandlerFromEndpoint(bgCtx, mux, cfg.AuthGRPCEndpoint, opts); err != nil {
-				return fmt.Errorf("failed to register auth gateway handlers: %v", err)
+			if err := identityv1.RegisterMeServiceHandlerFromEndpoint(bgCtx, mux, cfg.IdentityGRPCEndpoint, opts); err != nil {
+				return fmt.Errorf("failed to register identity me service gateway handlers: %v", err)
 			}
 
 			if err := authv1.RegisterPingServiceHandlerFromEndpoint(bgCtx, mux, cfg.AuthGRPCEndpoint, opts); err != nil {
 				return fmt.Errorf("failed to register auth ping gateway handlers: %v", err)
+			}
+
+			if err := authv1.RegisterAuthServiceHandlerFromEndpoint(bgCtx, mux, cfg.AuthGRPCEndpoint, opts); err != nil {
+				return fmt.Errorf("failed to register auth gateway handlers: %v", err)
 			}
 
 			logger.Info("starting http gateway",

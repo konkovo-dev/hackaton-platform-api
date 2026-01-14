@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/belikoooova/hackaton-platform-api/pkg/idempotency"
 	"github.com/belikoooova/hackaton-platform-api/pkg/outbox"
 	"github.com/belikoooova/hackaton-platform-api/pkg/pgxutil"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -13,12 +14,16 @@ import (
 var Module = fx.Module("postgres",
 	fx.Provide(
 		MustNewConfig,
-		NewUserRepository,
-		NewCredentialsRepository,
-		NewRefreshTokenRepository,
 		NewIdempotencyRepository,
-		NewOutboxRepository,
-		func(r *OutboxRepository) outbox.EventRepository { return r },
+		func(r *IdempotencyRepository) idempotency.Repository {
+			return r
+		},
+		func(pool *pgxpool.Pool) *OutboxRepository {
+			return NewOutboxRepository(pool)
+		},
+		func(r *OutboxRepository) outbox.EventRepository {
+			return r
+		},
 	),
 	fx.Provide(
 		func(lc fx.Lifecycle, cfg *pgxutil.Config, logger *slog.Logger) (*pgxpool.Pool, error) {

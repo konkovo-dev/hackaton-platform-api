@@ -12,8 +12,28 @@ var Module = fx.Module("me-usecase",
 	fx.Provide(
 		NewService,
 		NewUnitOfWork,
+		NewUserRepository,
+		NewSkillRepository,
+		NewContactRepository,
+		NewVisibilityRepository,
 	),
 )
+
+func NewUserRepository(pool *pgxpool.Pool) UserRepository {
+	return postgres.NewUserRepository(pool)
+}
+
+func NewSkillRepository(pool *pgxpool.Pool) SkillRepository {
+	return postgres.NewSkillRepository(pool)
+}
+
+func NewContactRepository(pool *pgxpool.Pool) ContactRepository {
+	return postgres.NewContactRepository(pool)
+}
+
+func NewVisibilityRepository(pool *pgxpool.Pool) VisibilityRepository {
+	return postgres.NewVisibilityRepository(pool)
+}
 
 func NewUnitOfWork(pool *pgxpool.Pool) UnitOfWork {
 	factory := func(tx pgx.Tx) *TxRepositories {

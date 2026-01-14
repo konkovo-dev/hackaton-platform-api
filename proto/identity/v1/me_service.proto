@@ -76,10 +76,8 @@ message UpdateMeRequest {
   string first_name = 1;
   string last_name = 2;
 
-  string username = 3;
-
-  string avatar_url = 4;
-  string timezone = 5;
+  string avatar_url = 3;
+  string timezone = 4;
 
   common.v1.IdempotencyKey idempotency_key = 10;
 }
