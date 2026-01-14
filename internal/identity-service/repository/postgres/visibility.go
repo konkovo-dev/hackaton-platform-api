@@ -11,6 +11,7 @@ import (
 	"github.com/belikoooova/hackaton-platform-api/pkg/pgxutil"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type VisibilityRepository struct {
@@ -65,4 +66,32 @@ func (r *VisibilityRepository) Upsert(ctx context.Context, visibility *entity.Vi
 	}
 
 	return nil
+}
+
+func (r *VisibilityRepository) GetByUserIDs(ctx context.Context, userIDs []uuid.UUID) (map[uuid.UUID]*entity.Visibility, error) {
+	if len(userIDs) == 0 {
+		return map[uuid.UUID]*entity.Visibility{}, nil
+	}
+
+	pgIDs := make([]pgtype.UUID, len(userIDs))
+	for i, id := range userIDs {
+		pgIDs[i] = pgxutil.UUIDToPgtype(id)
+	}
+
+	rows, err := r.queries.VisibilityGetByUserIDs(ctx, pgIDs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get users visibility: %w", err)
+	}
+
+	result := make(map[uuid.UUID]*entity.Visibility)
+	for _, row := range rows {
+		userID := pgxutil.PgtypeToUUID(row.UserID)
+		result[userID] = &entity.Visibility{
+			UserID:             userID,
+			SkillsVisibility:   domain.VisibilityLevel(row.SkillsVisibility),
+			ContactsVisibility: domain.VisibilityLevel(row.ContactsVisibility),
+		}
+	}
+
+	return result, nil
 }

@@ -21,3 +21,8 @@ SET first_name = $2,
     updated_at = $6
 WHERE id = $1;
 
+-- name: UserGetByIDs :many
+SELECT id, username, first_name, last_name, avatar_url, timezone, created_at, updated_at
+FROM identity.users
+WHERE id = ANY($1::uuid[]);
+

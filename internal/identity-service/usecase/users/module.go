@@ -1,7 +1,7 @@
-package me
+package users
 
 import "go.uber.org/fx"
 
-var Module = fx.Module("me-usecase",
+var Module = fx.Module("users",
 	fx.Provide(NewService),
 )

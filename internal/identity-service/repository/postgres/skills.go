@@ -115,3 +115,60 @@ func (r *SkillRepository) Update(ctx context.Context, userID uuid.UUID, catalogS
 
 	return nil
 }
+
+func (r *SkillRepository) GetUsersCatalogSkills(ctx context.Context, userIDs []uuid.UUID) (map[uuid.UUID][]*entity.CatalogSkill, error) {
+	if len(userIDs) == 0 {
+		return map[uuid.UUID][]*entity.CatalogSkill{}, nil
+	}
+
+	pgIDs := make([]pgtype.UUID, len(userIDs))
+	for i, id := range userIDs {
+		pgIDs[i] = pgxutil.UUIDToPgtype(id)
+	}
+
+	rows, err := r.queries.SkillCatalogGetByUserIDs(ctx, pgIDs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get users catalog skills: %w", err)
+	}
+
+	result := make(map[uuid.UUID][]*entity.CatalogSkill)
+	for _, row := range rows {
+		userID := pgxutil.PgtypeToUUID(row.UserID)
+		skill := &entity.CatalogSkill{
+			ID:   pgxutil.PgtypeToUUID(row.ID),
+			Name: row.Name,
+		}
+		result[userID] = append(result[userID], skill)
+	}
+
+	return result, nil
+}
+
+func (r *SkillRepository) GetUsersCustomSkills(ctx context.Context, userIDs []uuid.UUID) (map[uuid.UUID][]*entity.CustomSkill, error) {
+	if len(userIDs) == 0 {
+		return map[uuid.UUID][]*entity.CustomSkill{}, nil
+	}
+
+	pgIDs := make([]pgtype.UUID, len(userIDs))
+	for i, id := range userIDs {
+		pgIDs[i] = pgxutil.UUIDToPgtype(id)
+	}
+
+	rows, err := r.queries.SkillCustomGetByUserIDs(ctx, pgIDs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get users custom skills: %w", err)
+	}
+
+	result := make(map[uuid.UUID][]*entity.CustomSkill)
+	for _, row := range rows {
+		userID := pgxutil.PgtypeToUUID(row.UserID)
+		skill := &entity.CustomSkill{
+			ID:     pgxutil.PgtypeToUUID(row.ID),
+			UserID: userID,
+			Name:   row.Name,
+		}
+		result[userID] = append(result[userID], skill)
+	}
+
+	return result, nil
+}

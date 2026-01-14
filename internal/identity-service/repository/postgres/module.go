@@ -15,6 +15,10 @@ var Module = fx.Module("postgres",
 		MustNewConfig,
 		NewIdempotencyRepository,
 		func(r *IdempotencyRepository) idempotency.Repository { return r },
+		NewUserRepository,
+		NewSkillRepository,
+		NewContactRepository,
+		NewVisibilityRepository,
 	),
 	fx.Provide(
 		func(lc fx.Lifecycle, cfg *pgxutil.Config, logger *slog.Logger) (*pgxpool.Pool, error) {

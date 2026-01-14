@@ -14,3 +14,8 @@ ON CONFLICT (user_id) DO UPDATE
 SET skills_visibility = EXCLUDED.skills_visibility,
     contacts_visibility = EXCLUDED.contacts_visibility;
 
+-- name: VisibilityGetByUserIDs :many
+SELECT user_id, skills_visibility, contacts_visibility
+FROM identity.user_visibility
+WHERE user_id = ANY($1::uuid[]);
+

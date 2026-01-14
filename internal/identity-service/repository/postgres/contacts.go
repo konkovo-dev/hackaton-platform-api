@@ -9,6 +9,7 @@ import (
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/repository/postgres/queries"
 	"github.com/belikoooova/hackaton-platform-api/pkg/pgxutil"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type ContactRepository struct {
@@ -60,4 +61,35 @@ func (r *ContactRepository) Update(ctx context.Context, userID uuid.UUID, contac
 	}
 
 	return nil
+}
+
+func (r *ContactRepository) GetByUserIDs(ctx context.Context, userIDs []uuid.UUID) (map[uuid.UUID][]*entity.Contact, error) {
+	if len(userIDs) == 0 {
+		return map[uuid.UUID][]*entity.Contact{}, nil
+	}
+
+	pgIDs := make([]pgtype.UUID, len(userIDs))
+	for i, id := range userIDs {
+		pgIDs[i] = pgxutil.UUIDToPgtype(id)
+	}
+
+	rows, err := r.queries.ContactGetByUserIDs(ctx, pgIDs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get users contacts: %w", err)
+	}
+
+	result := make(map[uuid.UUID][]*entity.Contact)
+	for _, row := range rows {
+		userID := pgxutil.PgtypeToUUID(row.UserID)
+		contact := &entity.Contact{
+			ID:         pgxutil.PgtypeToUUID(row.ID),
+			UserID:     userID,
+			Type:       row.Type,
+			Value:      row.Value,
+			Visibility: domain.VisibilityLevel(row.Visibility),
+		}
+		result[userID] = append(result[userID], contact)
+	}
+
+	return result, nil
 }

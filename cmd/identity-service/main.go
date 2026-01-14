@@ -4,9 +4,13 @@ import (
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/repository/postgres"
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/transport/grpc"
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/usecase/me"
+	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/usecase/users"
 	authclient "github.com/belikoooova/hackaton-platform-api/pkg/auth/client"
 	"github.com/belikoooova/hackaton-platform-api/pkg/idempotency"
 	"github.com/belikoooova/hackaton-platform-api/pkg/logger"
+	"github.com/belikoooova/hackaton-platform-api/pkg/pgxutil"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/fx"
 )
 
@@ -17,7 +21,30 @@ func main() {
 		postgres.Module,
 		idempotency.Module,
 		me.Module,
+		users.Module,
 		grpc.Module,
+		fx.Provide(
+			func(repo *postgres.UserRepository) me.UserRepository { return repo },
+			func(repo *postgres.SkillRepository) me.SkillRepository { return repo },
+			func(repo *postgres.ContactRepository) me.ContactRepository { return repo },
+			func(repo *postgres.VisibilityRepository) me.VisibilityRepository { return repo },
+			func(pool *pgxpool.Pool) me.UnitOfWork {
+				return pgxutil.NewUnitOfWork(pool, func(tx pgx.Tx) *me.TxRepositories {
+					return &me.TxRepositories{
+						Users:      postgres.NewUserRepository(tx),
+						Skills:     postgres.NewSkillRepository(tx),
+						Contacts:   postgres.NewContactRepository(tx),
+						Visibility: postgres.NewVisibilityRepository(tx),
+					}
+				})
+			},
+		),
+		fx.Provide(
+			func(repo *postgres.UserRepository) users.UserRepository { return repo },
+			func(repo *postgres.SkillRepository) users.SkillRepository { return repo },
+			func(repo *postgres.ContactRepository) users.ContactRepository { return repo },
+			func(repo *postgres.VisibilityRepository) users.VisibilityRepository { return repo },
+		),
 	)
 
 	app.Run()

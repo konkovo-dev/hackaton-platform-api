@@ -53,10 +53,11 @@ message PageResponse {
 }
 
 message Query {
+  string q = 1;
   // OR between groups, AND inside group.
-  repeated FilterGroup filter_groups = 1;
+  repeated FilterGroup filter_groups = 2;
 
-  repeated Sort sort = 2;
+  repeated Sort sort = 3;
 
   PageRequest page = 10;
 }
