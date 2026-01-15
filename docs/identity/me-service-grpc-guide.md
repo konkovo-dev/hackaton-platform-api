@@ -1,4 +1,4 @@
-# Identity Service gRPC Test Cases
+# MeService gRPC Test Cases
 
 ## Предусловия
 - Запущен в докере с помощью [docker-setup.md](../docker-setup.md)
@@ -14,12 +14,12 @@ localhost:50051
 
 ## Получение access_token
 
-Сначала зарегистрируйтесь через auth-service:
+Зарегистрируйтесь через auth-service:
 
 ```bash
 RESPONSE=$(grpcurl -plaintext -d '{
-  "username": "alice",
-  "email": "alice@example.com",
+  "username": "alice_me",
+  "email": "alice_me@example.com",
   "password": "SecurePass123",
   "first_name": "Alice",
   "last_name": "Smith",
@@ -29,6 +29,8 @@ RESPONSE=$(grpcurl -plaintext -d '{
 ACCESS_TOKEN=$(echo "$RESPONSE" | jq -r '.accessToken')
 echo "Access Token: $ACCESS_TOKEN"
 ```
+
+> Подробнее о auth-service: [../auth/grpc-guide.md](../auth/grpc-guide.md)
 
 ---
 
@@ -47,7 +49,7 @@ grpcurl -plaintext \
 ```json
 {
   "user": {
-    "userId": "4d0c9c23-8548-4c66-91a1-283e572a702f",
+    "userId": "generated-uuid",
     "username": "alice",
     "firstName": "Alice",
     "lastName": "Smith",
@@ -80,8 +82,8 @@ grpcurl -plaintext \
 ```json
 {
   "user": {
-    "userId": "4d0c9c23-8548-4c66-91a1-283e572a702f",
-    "username": "alice",
+    "userId": "generated-uuid",
+    "username": "alice_me",
     "firstName": "Alice",
     "lastName": "Johnson",
     "avatarUrl": "https://example.com/avatar.jpg",
@@ -213,20 +215,20 @@ grpcurl -plaintext \
 
 ## Полный тестовый скрипт
 
-Сохраните как `test-identity.sh`:
+Сохраните как `test-me-service.sh`:
 
 ```bash
 #!/bin/bash
 
 set -e
 
-echo "=== Identity Service gRPC Test ==="
+echo "=== MeService gRPC Test ==="
 
 # 1. Register через auth
 echo -e "\n1. Registering user..."
 RESPONSE=$(grpcurl -plaintext -d '{
-  "username": "testuser",
-  "email": "test@example.com",
+  "username": "testuser_me",
+  "email": "testme@example.com",
   "password": "SecurePass123",
   "first_name": "Test",
   "last_name": "User",
@@ -310,8 +312,8 @@ echo -e "\n=== All tests completed! ==="
 Запуск:
 
 ```bash
-chmod +x test-identity.sh
-./test-identity.sh
+chmod +x test-me-service.sh
+./test-me-service.sh
 ```
 
 ---
@@ -375,7 +377,7 @@ grpcurl -plaintext -H "authorization: Bearer $ACCESS_TOKEN" \
 ```bash
 # Получите новый токен
 RESPONSE=$(grpcurl -plaintext -d '{
-  "username": "testuser",
+  "username": "testuser_me",
   "password": "SecurePass123"
 }' localhost:50051 auth.v1.AuthService/Login)
 

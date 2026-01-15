@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/repository/postgres/queries"
 	"github.com/belikoooova/hackaton-platform-api/pkg/idempotency"
 	"github.com/belikoooova/hackaton-platform-api/pkg/outbox"
 	"github.com/belikoooova/hackaton-platform-api/pkg/pgxutil"
@@ -18,6 +19,10 @@ var Module = fx.Module("postgres",
 		func(r *IdempotencyRepository) idempotency.Repository {
 			return r
 		},
+		func(pool *pgxpool.Pool) queries.DBTX { return pool },
+		NewUserRepository,
+		NewCredentialsRepository,
+		NewRefreshTokenRepository,
 		func(pool *pgxpool.Pool) *OutboxRepository {
 			return NewOutboxRepository(pool)
 		},

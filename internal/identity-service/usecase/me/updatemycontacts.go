@@ -33,7 +33,7 @@ func (s *Service) UpdateMyContacts(ctx context.Context, in UpdateMyContactsIn) (
 
 	_, err := s.userRepo.GetByID(ctx, in.UserID)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrUserNotFound, err)
+		return nil, ErrUserNotFound
 	}
 
 	contacts := make([]*entity.Contact, 0, len(in.Contacts))

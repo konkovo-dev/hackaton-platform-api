@@ -32,7 +32,7 @@ func (s *Service) GetUser(ctx context.Context, in GetUserIn) (*GetUserOut, error
 
 	user, err := s.userRepo.GetByID(ctx, in.UserID)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrUserNotFound, err)
+		return nil, ErrUserNotFound
 	}
 
 	enrichedMap, err := s.enrichUsersWithData(ctx, []*entity.User{user}, enrichmentOptions{

@@ -27,7 +27,7 @@ func (s *Service) UpdateMe(ctx context.Context, in UpdateMeIn) (*UpdateMeOut, er
 
 	user, err := s.userRepo.GetByID(ctx, in.UserID)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrUserNotFound, err)
+		return nil, ErrUserNotFound
 	}
 
 	user.FirstName = in.FirstName

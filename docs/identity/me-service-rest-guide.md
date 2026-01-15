@@ -1,4 +1,4 @@
-# Identity Service REST Test Cases
+# MeService REST Test Cases
 
 ## Предусловия
 - Запущен в докере с помощью [docker-setup.md](../docker-setup.md)
@@ -11,15 +11,15 @@ Base URL: `http://localhost:8080`
 
 ### Получение access_token
 
-Сначала зарегистрируйтесь или залогиньтесь через auth:
+Зарегистрируйтесь через auth-service:
 
 ```bash
 # Register
 RESPONSE=$(curl -s -X POST http://localhost:8080/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
-    "username": "alice",
-    "email": "alice@example.com",
+    "username": "alice_me",
+    "email": "alice_me@example.com",
     "password": "SecurePass123",
     "first_name": "Alice",
     "last_name": "Smith",
@@ -30,9 +30,11 @@ ACCESS_TOKEN=$(echo $RESPONSE | jq -r '.accessToken')
 echo "Access Token: $ACCESS_TOKEN"
 ```
 
+> Подробнее о auth-service: [../auth/rest-guide.md](../auth/rest-guide.md)
+
 ---
 
-## MyService Endpoints
+## Тест-сценарии
 
 ### 1. GetMe (Получить свой профиль)
 
@@ -45,7 +47,7 @@ curl http://localhost:8080/v1/users/me \
 ```json
 {
   "user": {
-    "userId": "4d0c9c23-8548-4c66-91a1-283e572a702f",
+    "userId": "generated-uuid",
     "username": "alice",
     "firstName": "Alice",
     "lastName": "Smith",
@@ -79,8 +81,8 @@ curl -X PUT http://localhost:8080/v1/users/me \
 ```json
 {
   "user": {
-    "userId": "4d0c9c23-8548-4c66-91a1-283e572a702f",
-    "username": "alice",
+    "userId": "generated-uuid",
+    "username": "alice_me",
     "firstName": "Alice",
     "lastName": "Johnson",
     "avatarUrl": "https://example.com/avatar.jpg",
@@ -100,8 +102,8 @@ curl -X PUT http://localhost:8080/v1/users/me/skills \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "catalog_skill_ids": ["<catalog-skill-uuid-1>", "<catalog-skill-uuid-2>"],
-    "user_skills": ["Custom Skill 1", "Custom Skill 2"],
+    "catalog_skill_ids": [],
+    "user_skills": ["Go", "PostgreSQL", "Docker"],
     "skills_visibility": "VISIBILITY_LEVEL_PUBLIC"
   }' | jq .
 ```
@@ -111,14 +113,18 @@ curl -X PUT http://localhost:8080/v1/users/me/skills \
 {
   "skills": [
     {
-      "catalog": {
-        "id": "uuid-1",
+      "custom": {
         "name": "Go"
       }
     },
     {
       "custom": {
-        "name": "Custom Skill 1"
+        "name": "PostgreSQL"
+      }
+    },
+    {
+      "custom": {
+        "name": "Docker"
       }
     }
   ],
@@ -199,8 +205,8 @@ curl -X PUT http://localhost:8080/v1/users/me/contacts \
 REGISTER_RESPONSE=$(curl -s -X POST http://localhost:8080/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
-    "username": "testuser",
-    "email": "test@example.com",
+    "username": "testuser_me",
+    "email": "testme@example.com",
     "password": "SecurePass123",
     "first_name": "Test",
     "last_name": "User",
@@ -310,7 +316,7 @@ echo -e "\nAll tests completed!"
 curl -X POST http://localhost:8080/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{
-    "username": "testuser",
+    "username": "testuser_me",
     "password": "SecurePass123"
   }' | jq -r '.accessToken'
 ```
@@ -320,6 +326,14 @@ curl -X POST http://localhost:8080/v1/auth/login \
 **Причина**: UUID навыка не существует в `identity.skill_catalog`.
 
 **Решение**: Используйте только существующие UUID или пустой массив.
+
+### 404 Not Found
+
+**Причина**: Пользователь не был создан consumer'ом после регистрации.
+
+**Решение**:
+- Проверьте логи identity-service: `docker-compose -f deployments/docker-compose.yml logs identity-service`
+- Убедитесь, что outbox processor работает
 
 ### Replace-all удаляет данные
 
@@ -332,4 +346,5 @@ curl -X POST http://localhost:8080/v1/auth/login \
 - gRPC endpoint: `localhost:50051` (для прямых gRPC запросов)
 - HTTP gateway: `localhost:8080` (REST API)
 - Все HTTP endpoints доступны под `/v1/users/me*`
+- gRPC guide: [me-service-grpc-guide.md](./me-service-grpc-guide.md)
 

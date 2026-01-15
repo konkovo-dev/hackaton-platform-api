@@ -36,7 +36,7 @@ func (s *Service) GetMe(ctx context.Context, in GetMeIn) (*GetMeOut, error) {
 
 	user, err := s.userRepo.GetByID(ctx, in.UserID)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrUserNotFound, err)
+		return nil, ErrUserNotFound
 	}
 
 	catalogSkills, err := s.skillRepo.GetUserCatalogSkills(ctx, in.UserID)

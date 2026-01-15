@@ -29,7 +29,7 @@ func (s *Service) UpdateMySkills(ctx context.Context, in UpdateMySkillsIn) (*Upd
 
 	_, err := s.userRepo.GetByID(ctx, in.UserID)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrUserNotFound, err)
+		return nil, ErrUserNotFound
 	}
 
 	var catalogSkills []*entity.CatalogSkill
