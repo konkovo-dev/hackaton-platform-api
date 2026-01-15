@@ -11,6 +11,9 @@ import (
 	"github.com/belikoooova/hackaton-platform-api/pkg/idempotency"
 	"github.com/belikoooova/hackaton-platform-api/pkg/logger"
 	"github.com/belikoooova/hackaton-platform-api/pkg/outbox"
+	"github.com/belikoooova/hackaton-platform-api/pkg/pgxutil"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/fx"
 )
 
@@ -27,12 +30,23 @@ func main() {
 		outbox.Module,
 		grpc.Module,
 		fx.Provide(
-			fx.Annotate(postgres.NewUserRepository, fx.As(new(authUsecase.UserRepository))),
-			fx.Annotate(postgres.NewCredentialsRepository, fx.As(new(authUsecase.CredentialsRepository))),
-			fx.Annotate(postgres.NewRefreshTokenRepository, fx.As(new(authUsecase.RefreshTokenRepository))),
 			fx.Annotate(password.NewService, fx.As(new(authUsecase.PasswordService))),
 			fx.Annotate(jwt.NewService, fx.As(new(authUsecase.JWTService))),
-			fx.Annotate(postgres.NewIdempotencyRepository, fx.As(new(idempotency.Repository))),
+		),
+		// Wire repositories to auth usecase interfaces
+		fx.Provide(
+			func(repo *postgres.UserRepository) authUsecase.UserRepository { return repo },
+			func(repo *postgres.CredentialsRepository) authUsecase.CredentialsRepository { return repo },
+			func(repo *postgres.RefreshTokenRepository) authUsecase.RefreshTokenRepository { return repo },
+			func(pool *pgxpool.Pool) authUsecase.UnitOfWork {
+				return pgxutil.NewUnitOfWork(pool, func(tx pgx.Tx) *authUsecase.TxRepositories {
+					return &authUsecase.TxRepositories{
+						Users:       postgres.NewUserRepository(tx),
+						Credentials: postgres.NewCredentialsRepository(tx),
+						Outbox:      postgres.NewOutboxRepository(tx),
+					}
+				})
+			},
 		),
 	)
 

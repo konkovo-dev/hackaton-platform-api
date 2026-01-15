@@ -6,6 +6,8 @@ import (
 	identityv1 "github.com/belikoooova/hackaton-platform-api/api/identity/v1"
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/transport/grpc/meservice"
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/transport/grpc/pingservice"
+	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/transport/grpc/skillsservice"
+	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/transport/grpc/usersservice"
 	"github.com/belikoooova/hackaton-platform-api/pkg/auth/client"
 	"github.com/belikoooova/hackaton-platform-api/pkg/auth/interceptor"
 	commongrpc "github.com/belikoooova/hackaton-platform-api/pkg/grpc"
@@ -15,6 +17,8 @@ import (
 func NewGRPCServer(
 	pingService *pingservice.PingService,
 	meService *meservice.MeService,
+	usersService *usersservice.UsersService,
+	skillsService *skillsservice.SkillsService,
 	authClient client.AuthClient,
 	logger *slog.Logger,
 ) *grpc.Server {
@@ -31,6 +35,8 @@ func NewGRPCServer(
 
 	identityv1.RegisterPingServiceServer(grpcServer, pingService)
 	identityv1.RegisterMeServiceServer(grpcServer, meService)
+	identityv1.RegisterUsersServiceServer(grpcServer, usersService)
+	identityv1.RegisterSkillsServiceServer(grpcServer, skillsService)
 
 	return grpcServer
 }

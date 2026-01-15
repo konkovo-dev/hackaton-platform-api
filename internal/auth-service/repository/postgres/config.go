@@ -1,17 +1,17 @@
 package postgres
 
 import (
-	"github.com/belikoooova/hackaton-platform-api/pkg/pgx"
+	"github.com/belikoooova/hackaton-platform-api/pkg/pgxutil"
 )
 
-func NewConfig() (*pgx.Config, error) {
-	return pgx.NewConfig(pgx.ConfigOptions{
+func NewConfig() (*pgxutil.Config, error) {
+	return pgxutil.NewConfig(pgxutil.ConfigOptions{
 		DSNRequired: true,
 	})
 }
 
-func MustNewConfig() *pgx.Config {
-	return pgx.MustNewConfig(pgx.ConfigOptions{
+func MustNewConfig() *pgxutil.Config {
+	return pgxutil.MustNewConfig(pgxutil.ConfigOptions{
 		DSNRequired: true,
 	})
 }
