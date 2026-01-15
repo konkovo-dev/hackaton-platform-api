@@ -2,26 +2,23 @@ package postgres
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/domain/entity"
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/repository/postgres/queries"
 	"github.com/belikoooova/hackaton-platform-api/pkg/pgxutil"
+	"github.com/belikoooova/hackaton-platform-api/pkg/queryutil"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type SkillRepository struct {
-	queries *queries.Queries
-	db      queries.DBTX
+	*pgxutil.BaseRepository[*queries.Queries, queries.DBTX]
 }
 
 func NewSkillRepository(db queries.DBTX) *SkillRepository {
 	return &SkillRepository{
-		queries: queries.New(db),
-		db:      db,
+		BaseRepository: pgxutil.NewBaseRepository(db, queries.New),
 	}
 }
 
@@ -31,7 +28,7 @@ func (r *SkillRepository) ListCatalogSkillsByIDs(ctx context.Context, ids []uuid
 		pgIDs[i] = pgxutil.UUIDToPgtype(id)
 	}
 
-	rows, err := r.queries.SkillCatalogListByIDs(ctx, pgIDs)
+	rows, err := r.Queries().SkillCatalogListByIDs(ctx, pgIDs)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list catalog skills: %w", err)
 	}
@@ -48,7 +45,7 @@ func (r *SkillRepository) ListCatalogSkillsByIDs(ctx context.Context, ids []uuid
 }
 
 func (r *SkillRepository) GetUserCatalogSkills(ctx context.Context, userID uuid.UUID) ([]*entity.CatalogSkill, error) {
-	rows, err := r.queries.SkillCatalogGetByUserID(ctx, pgxutil.UUIDToPgtype(userID))
+	rows, err := r.Queries().SkillCatalogGetByUserID(ctx, pgxutil.UUIDToPgtype(userID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user catalog skills: %w", err)
 	}
@@ -65,7 +62,7 @@ func (r *SkillRepository) GetUserCatalogSkills(ctx context.Context, userID uuid.
 }
 
 func (r *SkillRepository) GetUserCustomSkills(ctx context.Context, userID uuid.UUID) ([]*entity.CustomSkill, error) {
-	rows, err := r.queries.SkillCustomGetByUserID(ctx, pgxutil.UUIDToPgtype(userID))
+	rows, err := r.Queries().SkillCustomGetByUserID(ctx, pgxutil.UUIDToPgtype(userID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user custom skills: %w", err)
 	}
@@ -83,29 +80,30 @@ func (r *SkillRepository) GetUserCustomSkills(ctx context.Context, userID uuid.U
 }
 
 func (r *SkillRepository) Update(ctx context.Context, userID uuid.UUID, catalogSkillIDs []uuid.UUID, customSkillNames []string) error {
-	if err := r.queries.SkillCatalogDeleteByUserID(ctx, pgxutil.UUIDToPgtype(userID)); err != nil {
+	if err := r.Queries().SkillCatalogDeleteByUserID(ctx, pgxutil.UUIDToPgtype(userID)); err != nil {
 		return fmt.Errorf("failed to delete user catalog skills: %w", err)
 	}
 
-	if err := r.queries.SkillCustomDeleteByUserID(ctx, pgxutil.UUIDToPgtype(userID)); err != nil {
+	if err := r.Queries().SkillCustomDeleteByUserID(ctx, pgxutil.UUIDToPgtype(userID)); err != nil {
 		return fmt.Errorf("failed to delete user custom skills: %w", err)
 	}
 
 	for _, catalogSkillID := range catalogSkillIDs {
-		err := r.queries.SkillCatalogCreate(ctx, queries.SkillCatalogCreateParams{
+		err := r.Queries().SkillCatalogCreate(ctx, queries.SkillCatalogCreateParams{
 			UserID:         pgxutil.UUIDToPgtype(userID),
 			CatalogSkillID: pgxutil.UUIDToPgtype(catalogSkillID),
 		})
 		if err != nil {
-			if errors.Is(err, pgx.ErrNoRows) {
-				return fmt.Errorf("catalog skill not found: %s", catalogSkillID)
+			err = pgxutil.MapDBError(err)
+			if pgxutil.IsNotFound(err) {
+				return fmt.Errorf("catalog skill not found: %s: %w", catalogSkillID, err)
 			}
 			return fmt.Errorf("failed to create user catalog skill: %w", err)
 		}
 	}
 
 	for _, customSkillName := range customSkillNames {
-		err := r.queries.SkillCustomCreate(ctx, queries.SkillCustomCreateParams{
+		err := r.Queries().SkillCustomCreate(ctx, queries.SkillCustomCreateParams{
 			ID:     pgxutil.UUIDToPgtype(uuid.New()),
 			UserID: pgxutil.UUIDToPgtype(userID),
 			Name:   customSkillName,
@@ -128,7 +126,7 @@ func (r *SkillRepository) GetUsersCatalogSkills(ctx context.Context, userIDs []u
 		pgIDs[i] = pgxutil.UUIDToPgtype(id)
 	}
 
-	rows, err := r.queries.SkillCatalogGetByUserIDs(ctx, pgIDs)
+	rows, err := r.Queries().SkillCatalogGetByUserIDs(ctx, pgIDs)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get users catalog skills: %w", err)
 	}
@@ -156,7 +154,7 @@ func (r *SkillRepository) GetUsersCustomSkills(ctx context.Context, userIDs []uu
 		pgIDs[i] = pgxutil.UUIDToPgtype(id)
 	}
 
-	rows, err := r.queries.SkillCustomGetByUserIDs(ctx, pgIDs)
+	rows, err := r.Queries().SkillCustomGetByUserIDs(ctx, pgIDs)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get users custom skills: %w", err)
 	}
@@ -206,7 +204,7 @@ func (r *SkillRepository) ListSkillCatalog(ctx context.Context, params ListSkill
 		return nil, false, fmt.Errorf("failed to build query: %w", err)
 	}
 
-	rows, err := r.db.Query(ctx, query, args...)
+	rows, err := r.DB().Query(ctx, query, args...)
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -238,66 +236,36 @@ func (r *SkillRepository) ListSkillCatalog(ctx context.Context, params ListSkill
 }
 
 func (r *SkillRepository) buildListSkillCatalogQuery(params ListSkillCatalogParams) (string, []interface{}, error) {
-	baseQuery := "SELECT sc.id, sc.name FROM identity.skill_catalog sc"
+	qb := queryutil.NewQueryBuilder("SELECT sc.id, sc.name FROM identity.skill_catalog sc")
 
-	whereClauses := []string{}
-	args := []interface{}{}
-	argCounter := 1
-
-	if params.SearchQuery != "" {
-		searchPattern := "%" + params.SearchQuery + "%"
-		whereClauses = append(whereClauses, fmt.Sprintf("sc.name ILIKE $%d", argCounter))
-		args = append(args, searchPattern)
-		argCounter++
-	}
+	qb.WithSearch([]string{"sc.name"}, params.SearchQuery)
 
 	for _, filter := range params.Filters {
 		switch filter.Field {
 		case "name":
 			switch filter.Operation {
 			case "CONTAINS":
-				whereClauses = append(whereClauses, fmt.Sprintf("LOWER(sc.name) = LOWER($%d)", argCounter))
-				args = append(args, filter.Value)
-				argCounter++
+				qb.WithCustomWhere("LOWER(sc.name) = LOWER(?)", filter.Value)
 			case "PREFIX":
-				whereClauses = append(whereClauses, fmt.Sprintf("sc.name ILIKE $%d", argCounter))
-				args = append(args, filter.Value+"%")
-				argCounter++
+				qb.WithCustomWhere("sc.name ILIKE ?", filter.Value+"%")
 			}
 		}
 	}
 
 	if params.Cursor != nil {
-		if params.SortDesc {
-			whereClauses = append(whereClauses, fmt.Sprintf(
-				"(sc.name, sc.id) < ($%d, $%d)",
-				argCounter, argCounter+1,
-			))
-		} else {
-			whereClauses = append(whereClauses, fmt.Sprintf(
-				"(sc.name, sc.id) > ($%d, $%d)",
-				argCounter, argCounter+1,
-			))
-		}
-		args = append(args, params.Cursor.Name, pgxutil.UUIDToPgtype(params.Cursor.ID))
-		argCounter += 2
+		qb.WithCursor([]queryutil.CursorField{
+			{Column: "sc.name", Value: params.Cursor.Name, Descending: params.SortDesc},
+			{Column: "sc.id", Value: pgxutil.UUIDToPgtype(params.Cursor.ID), Descending: params.SortDesc},
+		})
 	}
 
-	if len(whereClauses) > 0 {
-		baseQuery += " WHERE " + whereClauses[0]
-		for i := 1; i < len(whereClauses); i++ {
-			baseQuery += " AND " + whereClauses[i]
-		}
-	}
+	qb.WithOrderBy([]queryutil.OrderByField{
+		{Column: "sc.name", Descending: params.SortDesc},
+		{Column: "sc.id", Descending: params.SortDesc},
+	})
 
-	sortDirection := "ASC"
-	if params.SortDesc {
-		sortDirection = "DESC"
-	}
-	baseQuery += fmt.Sprintf(" ORDER BY sc.name %s, sc.id %s", sortDirection, sortDirection)
+	qb.WithLimit(params.Limit)
 
-	baseQuery += fmt.Sprintf(" LIMIT $%d", argCounter)
-	args = append(args, params.Limit)
-
-	return baseQuery, args, nil
+	query, args := qb.Build()
+	return query, args, nil
 }

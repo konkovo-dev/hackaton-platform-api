@@ -7,22 +7,23 @@ import (
 
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/repository/postgres/queries"
 	"github.com/belikoooova/hackaton-platform-api/pkg/idempotency"
+	"github.com/belikoooova/hackaton-platform-api/pkg/pgxutil"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type IdempotencyRepository struct {
-	queries *queries.Queries
+	*pgxutil.BaseRepository[*queries.Queries, queries.DBTX]
 }
 
 func NewIdempotencyRepository(pool *pgxpool.Pool) *IdempotencyRepository {
 	return &IdempotencyRepository{
-		queries: queries.New(pool),
+		BaseRepository: pgxutil.NewBaseRepository[*queries.Queries, queries.DBTX](pool, queries.New),
 	}
 }
 
 func (r *IdempotencyRepository) Get(ctx context.Context, key, scope string) (*idempotency.StoredResponse, error) {
-	row, err := r.queries.GetIdempotencyKey(ctx, queries.GetIdempotencyKeyParams{
+	row, err := r.Queries().GetIdempotencyKey(ctx, queries.GetIdempotencyKeyParams{
 		Key:   key,
 		Scope: scope,
 	})
@@ -45,7 +46,7 @@ func (r *IdempotencyRepository) Get(ctx context.Context, key, scope string) (*id
 }
 
 func (r *IdempotencyRepository) Set(ctx context.Context, key, scope, requestHash string, responseBlob []byte, expiresAt time.Time) error {
-	_, err := r.queries.SetIdempotencyKey(ctx, queries.SetIdempotencyKeyParams{
+	_, err := r.Queries().SetIdempotencyKey(ctx, queries.SetIdempotencyKeyParams{
 		Key:          key,
 		Scope:        scope,
 		RequestHash:  requestHash,

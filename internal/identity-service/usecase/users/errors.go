@@ -1,9 +1,13 @@
 package users
 
-import "errors"
+import (
+	"errors"
+
+	pkgerrors "github.com/belikoooova/hackaton-platform-api/pkg/errors"
+)
 
 var (
-	ErrUserNotFound = errors.New("user not found")
-	ErrInvalidInput = errors.New("invalid input")
+	ErrUserNotFound = pkgerrors.ErrUserNotFound
+	ErrInvalidInput = pkgerrors.ErrInvalidInput
 	ErrTooManyUsers = errors.New("too many users requested")
 )

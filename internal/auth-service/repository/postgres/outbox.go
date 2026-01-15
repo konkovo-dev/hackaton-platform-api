@@ -11,17 +11,17 @@ import (
 )
 
 type OutboxRepository struct {
-	queries *queries.Queries
+	*pgxutil.BaseRepository[*queries.Queries, queries.DBTX]
 }
 
 func NewOutboxRepository(db queries.DBTX) *OutboxRepository {
 	return &OutboxRepository{
-		queries: queries.New(db),
+		BaseRepository: pgxutil.NewBaseRepository(db, queries.New),
 	}
 }
 
 func (r *OutboxRepository) Create(ctx context.Context, event *outbox.Event) error {
-	err := r.queries.CreateOutboxEvent(ctx, queries.CreateOutboxEventParams{
+	err := r.Queries().CreateOutboxEvent(ctx, queries.CreateOutboxEventParams{
 		ID:            pgxutil.UUIDToPgtype(event.ID),
 		AggregateID:   event.AggregateID,
 		AggregateType: event.AggregateType,
@@ -42,7 +42,7 @@ func (r *OutboxRepository) Create(ctx context.Context, event *outbox.Event) erro
 }
 
 func (r *OutboxRepository) GetPending(ctx context.Context, limit int) ([]*outbox.Event, error) {
-	rows, err := r.queries.GetPendingOutboxEvents(ctx, int32(limit))
+	rows, err := r.Queries().GetPendingOutboxEvents(ctx, int32(limit))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get pending outbox events: %w", err)
 	}
@@ -69,7 +69,7 @@ func (r *OutboxRepository) GetPending(ctx context.Context, limit int) ([]*outbox
 func (r *OutboxRepository) Update(ctx context.Context, event *outbox.Event) error {
 	event.UpdatedAt = time.Now().UTC()
 
-	err := r.queries.UpdateOutboxEvent(ctx, queries.UpdateOutboxEventParams{
+	err := r.Queries().UpdateOutboxEvent(ctx, queries.UpdateOutboxEventParams{
 		ID:           pgxutil.UUIDToPgtype(event.ID),
 		Status:       string(event.Status),
 		AttemptCount: int32(event.AttemptCount),

@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -11,16 +10,15 @@ import (
 	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/repository/postgres/queries"
 	"github.com/belikoooova/hackaton-platform-api/pkg/pgxutil"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 )
 
 type UserRepository struct {
-	queries *queries.Queries
+	*pgxutil.BaseRepository[*queries.Queries, queries.DBTX]
 }
 
 func NewUserRepository(db queries.DBTX) *UserRepository {
 	return &UserRepository{
-		queries: queries.New(db),
+		BaseRepository: pgxutil.NewBaseRepository(db, queries.New),
 	}
 }
 
@@ -30,7 +28,7 @@ func (r *UserRepository) Create(ctx context.Context, user *entity.User) error {
 	user.UpdatedAt = now
 	user.Username = strings.ToLower(user.Username)
 
-	err := r.queries.CreateUser(ctx, queries.CreateUserParams{
+	err := r.Queries().CreateUser(ctx, queries.CreateUserParams{
 		ID:        pgxutil.UUIDToPgtype(user.ID),
 		Username:  user.Username,
 		Email:     user.Email,
@@ -39,7 +37,8 @@ func (r *UserRepository) Create(ctx context.Context, user *entity.User) error {
 	})
 
 	if err != nil {
-		if strings.Contains(err.Error(), "duplicate key") {
+		err = pgxutil.MapDBError(err)
+		if pgxutil.IsConflict(err) {
 			return fmt.Errorf("user already exists: %w", err)
 		}
 		return fmt.Errorf("failed to create user: %w", err)
@@ -49,10 +48,11 @@ func (r *UserRepository) Create(ctx context.Context, user *entity.User) error {
 }
 
 func (r *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (*entity.User, error) {
-	row, err := r.queries.GetUserByID(ctx, pgxutil.UUIDToPgtype(id))
+	row, err := r.Queries().GetUserByID(ctx, pgxutil.UUIDToPgtype(id))
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("user not found")
+		err = pgxutil.MapDBError(err)
+		if pgxutil.IsNotFound(err) {
+			return nil, fmt.Errorf("user not found: %w", err)
 		}
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
@@ -69,10 +69,11 @@ func (r *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (*entity.Use
 func (r *UserRepository) GetByUsername(ctx context.Context, username string) (*entity.User, error) {
 	username = strings.ToLower(username)
 
-	row, err := r.queries.GetUserByUsername(ctx, username)
+	row, err := r.Queries().GetUserByUsername(ctx, username)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("user not found")
+		err = pgxutil.MapDBError(err)
+		if pgxutil.IsNotFound(err) {
+			return nil, fmt.Errorf("user not found: %w", err)
 		}
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
@@ -87,10 +88,11 @@ func (r *UserRepository) GetByUsername(ctx context.Context, username string) (*e
 }
 
 func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*entity.User, error) {
-	row, err := r.queries.GetUserByEmail(ctx, email)
+	row, err := r.Queries().GetUserByEmail(ctx, email)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("user not found")
+		err = pgxutil.MapDBError(err)
+		if pgxutil.IsNotFound(err) {
+			return nil, fmt.Errorf("user not found: %w", err)
 		}
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
@@ -107,15 +109,16 @@ func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*entity.
 func (r *UserRepository) Update(ctx context.Context, user *entity.User) error {
 	user.UpdatedAt = time.Now().UTC()
 
-	err := r.queries.UpdateUser(ctx, queries.UpdateUserParams{
+	err := r.Queries().UpdateUser(ctx, queries.UpdateUserParams{
 		ID:        pgxutil.UUIDToPgtype(user.ID),
 		Email:     user.Email,
 		UpdatedAt: user.UpdatedAt,
 	})
 
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return fmt.Errorf("user not found")
+		err = pgxutil.MapDBError(err)
+		if pgxutil.IsNotFound(err) {
+			return fmt.Errorf("user not found: %w", err)
 		}
 		return fmt.Errorf("failed to update user: %w", err)
 	}
