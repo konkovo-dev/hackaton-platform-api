@@ -15,11 +15,13 @@ import (
 
 type SkillRepository struct {
 	queries *queries.Queries
+	db      queries.DBTX
 }
 
 func NewSkillRepository(db queries.DBTX) *SkillRepository {
 	return &SkillRepository{
 		queries: queries.New(db),
+		db:      db,
 	}
 }
 
@@ -171,4 +173,131 @@ func (r *SkillRepository) GetUsersCustomSkills(ctx context.Context, userIDs []uu
 	}
 
 	return result, nil
+}
+
+type ListSkillCatalogParams struct {
+	SearchQuery string
+	Filters     []ListSkillCatalogFilter
+	SortField   string
+	SortDesc    bool
+	Cursor      *ListSkillCatalogCursor
+	Limit       int
+}
+
+type ListSkillCatalogFilter struct {
+	Field     string
+	Operation string
+	Value     string
+}
+
+type ListSkillCatalogCursor struct {
+	Name string
+	ID   uuid.UUID
+}
+
+type ListSkillCatalogResult struct {
+	ID   uuid.UUID
+	Name string
+}
+
+func (r *SkillRepository) ListSkillCatalog(ctx context.Context, params ListSkillCatalogParams) ([]*ListSkillCatalogResult, bool, error) {
+	query, args, err := r.buildListSkillCatalogQuery(params)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to build query: %w", err)
+	}
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to execute query: %w", err)
+	}
+	defer rows.Close()
+
+	results := make([]*ListSkillCatalogResult, 0)
+	for rows.Next() {
+		var id pgtype.UUID
+		var name string
+		if err := rows.Scan(&id, &name); err != nil {
+			return nil, false, fmt.Errorf("failed to scan row: %w", err)
+		}
+		results = append(results, &ListSkillCatalogResult{
+			ID:   pgxutil.PgtypeToUUID(id),
+			Name: name,
+		})
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, false, fmt.Errorf("rows error: %w", err)
+	}
+
+	hasMore := false
+	if len(results) >= params.Limit {
+		hasMore = true
+	}
+
+	return results, hasMore, nil
+}
+
+func (r *SkillRepository) buildListSkillCatalogQuery(params ListSkillCatalogParams) (string, []interface{}, error) {
+	baseQuery := "SELECT sc.id, sc.name FROM identity.skill_catalog sc"
+
+	whereClauses := []string{}
+	args := []interface{}{}
+	argCounter := 1
+
+	if params.SearchQuery != "" {
+		searchPattern := "%" + params.SearchQuery + "%"
+		whereClauses = append(whereClauses, fmt.Sprintf("sc.name ILIKE $%d", argCounter))
+		args = append(args, searchPattern)
+		argCounter++
+	}
+
+	for _, filter := range params.Filters {
+		switch filter.Field {
+		case "name":
+			switch filter.Operation {
+			case "CONTAINS":
+				whereClauses = append(whereClauses, fmt.Sprintf("LOWER(sc.name) = LOWER($%d)", argCounter))
+				args = append(args, filter.Value)
+				argCounter++
+			case "PREFIX":
+				whereClauses = append(whereClauses, fmt.Sprintf("sc.name ILIKE $%d", argCounter))
+				args = append(args, filter.Value+"%")
+				argCounter++
+			}
+		}
+	}
+
+	if params.Cursor != nil {
+		if params.SortDesc {
+			whereClauses = append(whereClauses, fmt.Sprintf(
+				"(sc.name, sc.id) < ($%d, $%d)",
+				argCounter, argCounter+1,
+			))
+		} else {
+			whereClauses = append(whereClauses, fmt.Sprintf(
+				"(sc.name, sc.id) > ($%d, $%d)",
+				argCounter, argCounter+1,
+			))
+		}
+		args = append(args, params.Cursor.Name, pgxutil.UUIDToPgtype(params.Cursor.ID))
+		argCounter += 2
+	}
+
+	if len(whereClauses) > 0 {
+		baseQuery += " WHERE " + whereClauses[0]
+		for i := 1; i < len(whereClauses); i++ {
+			baseQuery += " AND " + whereClauses[i]
+		}
+	}
+
+	sortDirection := "ASC"
+	if params.SortDesc {
+		sortDirection = "DESC"
+	}
+	baseQuery += fmt.Sprintf(" ORDER BY sc.name %s, sc.id %s", sortDirection, sortDirection)
+
+	baseQuery += fmt.Sprintf(" LIMIT $%d", argCounter)
+	args = append(args, params.Limit)
+
+	return baseQuery, args, nil
 }

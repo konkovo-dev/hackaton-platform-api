@@ -36,7 +36,7 @@ services:
       JWT_KEY_ID: key-1
       JWT_ISSUER: hackaton-platform
       JWT_AUDIENCE: hackaton-platform
-      ACCESS_TOKEN_TTL: 15m
+      ACCESS_TOKEN_TTL: 1h
       REFRESH_TOKEN_TTL: 720h
       IDEMPOTENCY_TTL: 24h
       IDENTITY_SERVICE_URL: identity-service:50051

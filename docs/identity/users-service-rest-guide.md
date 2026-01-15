@@ -18,13 +18,14 @@ Base URL: `http://localhost:8080`
 RESPONSE=$(curl -s -X POST http://localhost:8080/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
-    "username": "testuser",
-    "email": "testuser@example.com",
+    "username": "testuser-user-service",
+    "email": "testuser-user-service@example.com",
     "password": "SecurePass123",
     "first_name": "Test",
     "last_name": "User",
     "timezone": "UTC"
   }')
+echo "Response $RESPONSE"
 
 ACCESS_TOKEN=$(echo $RESPONSE | jq -r '.accessToken')
 echo "Access Token: $ACCESS_TOKEN"
@@ -41,7 +42,7 @@ UsersService — публичный API, не требует авторизац�
 ### Шаг 1: Подключитесь к БД
 
 ```bash
-docker-compose -f deployments/docker-compose.yml exec postgres-identity psql -U identity_user -d identity_db
+docker-compose -f deployments/docker-compose.yml exec postgres psql -U hackathon -d hackathon
 ```
 
 ### Шаг 2: Добавьте тестовых пользователей
@@ -56,11 +57,16 @@ INSERT INTO identity.user_visibility (user_id, skills_visibility, contacts_visib
 VALUES 
   ('b0b00000-0000-0000-0000-000000000001', 'public', 'public');
 
+-- Catalog skills
+INSERT INTO identity.user_catalog_skills (user_id, catalog_skill_id)
+VALUES 
+  ('b0b00000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000002'), -- Python
+  ('b0b00000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000020'); -- PostgreSQL
+
+-- Custom skills
 INSERT INTO identity.user_custom_skills (id, user_id, name)
 VALUES 
-  (gen_random_uuid(), 'b0b00000-0000-0000-0000-000000000001', 'Python'),
-  (gen_random_uuid(), 'b0b00000-0000-0000-0000-000000000001', 'Django'),
-  (gen_random_uuid(), 'b0b00000-0000-0000-0000-000000000001', 'PostgreSQL');
+  (gen_random_uuid(), 'b0b00000-0000-0000-0000-000000000001', 'Django');
 
 INSERT INTO identity.user_contacts (id, user_id, type, value, visibility)
 VALUES 
@@ -77,9 +83,14 @@ INSERT INTO identity.user_visibility (user_id, skills_visibility, contacts_visib
 VALUES 
   ('c4a41e00-0000-0000-0000-000000000002', 'private', 'public');
 
+-- Catalog skills
+INSERT INTO identity.user_catalog_skills (user_id, catalog_skill_id)
+VALUES 
+  ('c4a41e00-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000003'); -- Java
+
+-- Custom skills
 INSERT INTO identity.user_custom_skills (id, user_id, name)
 VALUES 
-  (gen_random_uuid(), 'c4a41e00-0000-0000-0000-000000000002', 'Java'),
   (gen_random_uuid(), 'c4a41e00-0000-0000-0000-000000000002', 'Spring');
 
 INSERT INTO identity.user_contacts (id, user_id, type, value, visibility)
@@ -96,9 +107,14 @@ INSERT INTO identity.user_visibility (user_id, skills_visibility, contacts_visib
 VALUES 
   ('d1a4a000-0000-0000-0000-000000000003', 'private', 'private');
 
+-- Catalog skills
+INSERT INTO identity.user_catalog_skills (user_id, catalog_skill_id)
+VALUES 
+  ('d1a4a000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000008'); -- Rust
+
+-- Custom skills
 INSERT INTO identity.user_custom_skills (id, user_id, name)
 VALUES 
-  (gen_random_uuid(), 'd1a4a000-0000-0000-0000-000000000003', 'Rust'),
   (gen_random_uuid(), 'd1a4a000-0000-0000-0000-000000000003', 'WebAssembly');
 
 INSERT INTO identity.user_contacts (id, user_id, type, value, visibility)
@@ -114,11 +130,12 @@ INSERT INTO identity.user_visibility (user_id, skills_visibility, contacts_visib
 VALUES 
   ('e5e00000-0000-0000-0000-000000000004', 'public', 'public');
 
-INSERT INTO identity.user_custom_skills (id, user_id, name)
+-- Catalog skills
+INSERT INTO identity.user_catalog_skills (user_id, catalog_skill_id)
 VALUES 
-  (gen_random_uuid(), 'e5e00000-0000-0000-0000-000000000004', 'Go'),
-  (gen_random_uuid(), 'e5e00000-0000-0000-0000-000000000004', 'Kubernetes'),
-  (gen_random_uuid(), 'e5e00000-0000-0000-0000-000000000004', 'Docker');
+  ('e5e00000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000001'), -- Go
+  ('e5e00000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000031'), -- Kubernetes
+  ('e5e00000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000030'); -- Docker
 
 INSERT INTO identity.user_contacts (id, user_id, type, value, visibility)
 VALUES 
@@ -184,17 +201,19 @@ curl "http://localhost:8080/v1/users/b0b00000-0000-0000-0000-000000000001?includ
   "skills": [
     {
       "custom": {
-        "name": "Python"
-      }
-    },
-    {
-      "custom": {
         "name": "Django"
       }
     },
     {
-      "custom": {
+      "catalog": {
+        "id": "00000000-0000-0000-0000-000000000020",
         "name": "PostgreSQL"
+      }
+    },
+    {
+      "catalog": {
+        "id": "00000000-0000-0000-0000-000000000002",
+        "name": "Python"
       }
     }
   ],
@@ -271,7 +290,7 @@ curl "http://localhost:8080/v1/users/d1a4a000-0000-0000-0000-000000000003?includ
 ### 5. GetUser (несуществующий пользователь)
 
 ```bash
-curl "http://localhost:8080/v1/users/00000000-0000-0000-0000-000000000000" \
+curl "http://localhost:8080/v1/users/00000000-0000-0000-0000-000000000001" \
   -H "Authorization: Bearer $ACCESS_TOKEN" | jq .
 ```
 
@@ -317,17 +336,19 @@ curl -X POST "http://localhost:8080/v1/users:batchGet" \
       "skills": [
         {
           "custom": {
-            "name": "Python"
-          }
-        },
-        {
-          "custom": {
             "name": "Django"
           }
         },
         {
-          "custom": {
+          "catalog": {
+            "id": "00000000-0000-0000-0000-000000000020",
             "name": "PostgreSQL"
+          }
+        },
+        {
+          "catalog": {
+            "id": "00000000-0000-0000-0000-000000000002",
+            "name": "Python"
           }
         }
       ]
@@ -362,8 +383,17 @@ curl -X POST "http://localhost:8080/v1/users:batchGet" \
 
 ```bash
 # Поиск по имени "Bob" или "bob"
-curl "http://localhost:8080/v1/users?q=bob&page_size=10" \
-  -H "Authorization: Bearer $ACCESS_TOKEN" | jq .
+curl -X POST "http://localhost:8080/v1/users:list" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": {
+      "q": "bob",
+      "page": {
+        "page_size": 10
+      }
+    }
+  }' | jq .
 ```
 
 **Response:**
@@ -386,9 +416,18 @@ curl "http://localhost:8080/v1/users?q=bob&page_size=10" \
 ### 8. ListUsers (поиск по username через query)
 
 ```bash
-# Поиск по username "charlie" - query также ищет в username
-curl "http://localhost:8080/v1/users?q=charlie&page_size=10" \
-  -H "Authorization: Bearer $ACCESS_TOKEN" | jq .
+# Поиск по username "e_mi" - query также ищет в username
+curl -X POST "http://localhost:8080/v1/users:list" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": {
+      "q": "e_mi",
+      "page": {
+        "page_size": 10
+      }
+    }
+  }' | jq .
 ```
 
 **Response:**
@@ -424,7 +463,7 @@ curl -X POST "http://localhost:8080/v1/users:list" \
             {
               "field": "username",
               "operation": "FILTER_OPERATION_PREFIX",
-              "string_value": "bob"
+              "string_value": "bo"
             }
           ]
         }
@@ -484,18 +523,21 @@ curl -X POST "http://localhost:8080/v1/users:list" \
       },
       "skills": [
         {
-          "custom": {
+          "catalog": {
+            "id": "00000000-0000-0000-0000-000000000030",
+            "name": "Docker"
+          }
+        },
+        {
+          "catalog": {
+            "id": "00000000-0000-0000-0000-000000000001",
             "name": "Go"
           }
         },
         {
-          "custom": {
+          "catalog": {
+            "id": "00000000-0000-0000-0000-000000000031",
             "name": "Kubernetes"
-          }
-        },
-        {
-          "custom": {
-            "name": "Docker"
           }
         }
       ]
@@ -505,7 +547,183 @@ curl -X POST "http://localhost:8080/v1/users:list" \
 }
 ```
 
-### 11. ListUsers с фильтрацией по user_id (IN)
+> **Примечание:** Найден только пользователь с catalog skill "Go" (точное совпадение). Навыки отсортированы по имени.
+
+### 11. ListUsers с фильтрацией по навыкам (Python ИЛИ Go)
+
+```bash
+# Найти всех пользователей с навыком "Python" ИЛИ "Go" (OR логика через filter_groups)
+curl -X POST "http://localhost:8080/v1/users:list" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": {
+      "filter_groups": [
+        {
+          "filters": [
+            {
+              "field": "skills",
+              "operation": "FILTER_OPERATION_CONTAINS",
+              "string_value": "python"
+            }
+          ]
+        },
+        {
+          "filters": [
+            {
+              "field": "skills",
+              "operation": "FILTER_OPERATION_CONTAINS",
+              "string_value": "go"
+            }
+          ]
+        }
+      ],
+      "page": {
+        "page_size": 20
+      }
+    },
+    "include_skills": true
+  }' | jq .
+```
+
+**Response:**
+```json
+{
+  "users": [
+    {
+      "user": {
+        "userId": "b0b00000-0000-0000-0000-000000000001",
+        "username": "bob_public",
+        "firstName": "Bob",
+        "lastName": "Public"
+      },
+      "skills": [
+        {
+          "custom": {
+            "name": "Django"
+          }
+        },
+        {
+          "catalog": {
+            "id": "00000000-0000-0000-0000-000000000020",
+            "name": "PostgreSQL"
+          }
+        },
+        {
+          "catalog": {
+            "id": "00000000-0000-0000-0000-000000000002",
+            "name": "Python"
+          }
+        }
+      ]
+    },
+    {
+      "user": {
+        "userId": "e5e00000-0000-0000-0000-000000000004",
+        "username": "eve_golang",
+        "firstName": "Eve",
+        "lastName": "Gopher"
+      },
+      "skills": [
+        {
+          "catalog": {
+            "id": "00000000-0000-0000-0000-000000000030",
+            "name": "Docker"
+          }
+        },
+        {
+          "catalog": {
+            "id": "00000000-0000-0000-0000-000000000001",
+            "name": "Go"
+          }
+        },
+        {
+          "catalog": {
+            "id": "00000000-0000-0000-0000-000000000031",
+            "name": "Kubernetes"
+          }
+        }
+      ]
+    }
+  ],
+  "page": {}
+}
+```
+
+> **Примечание:** Используются **две filter_groups** для OR логики: найдены пользователи с Python (Bob) и с Go (Eve). Между группами применяется OR, внутри группы — AND.
+
+### 12. ListUsers с фильтрацией по навыкам (Python И PostgreSQL)
+
+```bash
+# Найти всех пользователей, у которых есть И Python, И PostgreSQL (AND логика внутри одной группы)
+curl -X POST "http://localhost:8080/v1/users:list" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": {
+      "filter_groups": [
+        {
+          "filters": [
+            {
+              "field": "skills",
+              "operation": "FILTER_OPERATION_CONTAINS",
+              "string_value": "python"
+            },
+            {
+              "field": "skills",
+              "operation": "FILTER_OPERATION_CONTAINS",
+              "string_value": "postgresql"
+            }
+          ]
+        }
+      ],
+      "page": {
+        "page_size": 20
+      }
+    },
+    "include_skills": true
+  }' | jq .
+```
+
+**Response:**
+```json
+{
+  "users": [
+    {
+      "user": {
+        "userId": "b0b00000-0000-0000-0000-000000000001",
+        "username": "bob_public",
+        "firstName": "Bob",
+        "lastName": "Public"
+      },
+      "skills": [
+        {
+          "custom": {
+            "name": "Django"
+          }
+        },
+        {
+          "catalog": {
+            "id": "00000000-0000-0000-0000-000000000020",
+            "name": "PostgreSQL"
+          }
+        },
+        {
+          "catalog": {
+            "id": "00000000-0000-0000-0000-000000000002",
+            "name": "Python"
+          }
+        }
+      ]
+    }
+  ],
+  "page": {}
+}
+```
+
+> **Примечание:** Используется **одна filter_group** с двумя фильтрами для AND логики: найден только Bob, у которого есть **ОБА** навыка (Python И PostgreSQL). Eve не подходит, т.к. у неё есть Go, но нет Python.
+
+### 13. ListUsers с фильтрацией по user_id (IN)
 
 ```bash
 curl -X POST "http://localhost:8080/v1/users:list" \
@@ -537,6 +755,92 @@ curl -X POST "http://localhost:8080/v1/users:list" \
     "include_contacts": true
   }' | jq .
 ```
+
+**Response:**
+```json
+{
+  "users": [
+    {
+      "user": {
+        "userId": "b0b00000-0000-0000-0000-000000000001",
+        "username": "bob_public",
+        "firstName": "Bob",
+        "lastName": "Public"
+      },
+      "skills": [
+        {
+          "custom": {
+            "name": "Django"
+          }
+        },
+        {
+          "catalog": {
+            "id": "00000000-0000-0000-0000-000000000020",
+            "name": "PostgreSQL"
+          }
+        },
+        {
+          "catalog": {
+            "id": "00000000-0000-0000-0000-000000000002",
+            "name": "Python"
+          }
+        }
+      ],
+      "contacts": [
+        {
+          "type": "CONTACT_TYPE_EMAIL",
+          "value": "bob@example.com"
+        },
+        {
+          "type": "CONTACT_TYPE_GITHUB",
+          "value": "github.com/bob"
+        }
+      ]
+    },
+    {
+      "user": {
+        "userId": "e5e00000-0000-0000-0000-000000000004",
+        "username": "eve_golang",
+        "firstName": "Eve",
+        "lastName": "Gopher"
+      },
+      "skills": [
+        {
+          "catalog": {
+            "id": "00000000-0000-0000-0000-000000000030",
+            "name": "Docker"
+          }
+        },
+        {
+          "catalog": {
+            "id": "00000000-0000-0000-0000-000000000001",
+            "name": "Go"
+          }
+        },
+        {
+          "catalog": {
+            "id": "00000000-0000-0000-0000-000000000031",
+            "name": "Kubernetes"
+          }
+        }
+      ],
+      "contacts": [
+        {
+          "type": "CONTACT_TYPE_EMAIL",
+          "value": "eve@example.com"
+        },
+        {
+          "type": "CONTACT_TYPE_GITHUB",
+          "value": "github.com/eve"
+        }
+      ]
+    }
+  ],
+  "page": {}
+}
+```
+
+> **Примечание:** Фильтрация по `user_id IN` возвращает только Bob и Eve с их skills и contacts.
 
 ---
 

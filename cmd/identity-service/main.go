@@ -4,6 +4,7 @@ import (
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/repository/postgres"
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/transport/grpc"
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/usecase/me"
+	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/usecase/skills"
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/usecase/users"
 	authclient "github.com/belikoooova/hackaton-platform-api/pkg/auth/client"
 	"github.com/belikoooova/hackaton-platform-api/pkg/idempotency"
@@ -22,6 +23,7 @@ func main() {
 		idempotency.Module,
 		me.Module,
 		users.Module,
+		skills.Module,
 		grpc.Module,
 		fx.Provide(
 			func(repo *postgres.UserRepository) me.UserRepository { return repo },
@@ -44,6 +46,9 @@ func main() {
 			func(repo *postgres.SkillRepository) users.SkillRepository { return repo },
 			func(repo *postgres.ContactRepository) users.ContactRepository { return repo },
 			func(repo *postgres.VisibilityRepository) users.VisibilityRepository { return repo },
+		),
+		fx.Provide(
+			func(repo *postgres.SkillRepository) skills.SkillRepository { return repo },
 		),
 	)
 

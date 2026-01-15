@@ -38,6 +38,21 @@ API для просмотра профилей других пользовате
 
 ---
 
+## SkillsService (Каталог навыков)
+
+API для просмотра каталога доступных навыков. **Требует авторизации**.
+
+### Endpoints
+
+- **ListSkillCatalog** — получить список навыков из каталога с фильтрацией и пагинацией
+
+### Guides
+
+- 📡 **gRPC**: [skills-service-grpc-guide.md](./skills-service-grpc-guide.md)
+- 🌐 **REST**: [skills-service-rest-guide.md](./skills-service-rest-guide.md)
+
+---
+
 ## Visibility Rules
 
 ### MeService

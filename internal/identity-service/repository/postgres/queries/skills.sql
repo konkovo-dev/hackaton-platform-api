@@ -41,3 +41,8 @@ SELECT id, user_id, name
 FROM identity.user_custom_skills
 WHERE user_id = ANY($1::uuid[]);
 
+-- name: SkillCatalogListAll :many
+SELECT id, name
+FROM identity.skill_catalog
+ORDER BY name ASC;
+

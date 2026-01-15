@@ -1,8 +1,10 @@
 package mappers
 
 import (
+	commonv1 "github.com/belikoooova/hackaton-platform-api/api/common/v1"
 	identityv1 "github.com/belikoooova/hackaton-platform-api/api/identity/v1"
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/domain/entity"
+	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/usecase/skills"
 )
 
 func CatalogSkillsToProto(catalogSkills []*entity.CatalogSkill, customSkills []*entity.CustomSkill) []*identityv1.Skill {
@@ -30,4 +32,22 @@ func CatalogSkillsToProto(catalogSkills []*entity.CatalogSkill, customSkills []*
 	}
 
 	return skills
+}
+
+func ListSkillCatalogOutToResponse(out *skills.ListSkillCatalogOut) *identityv1.ListSkillCatalogResponse {
+	catalogSkills := make([]*identityv1.CatalogSkill, 0, len(out.Skills))
+
+	for _, skill := range out.Skills {
+		catalogSkills = append(catalogSkills, &identityv1.CatalogSkill{
+			Id:   skill.ID.String(),
+			Name: skill.Name,
+		})
+	}
+
+	return &identityv1.ListSkillCatalogResponse{
+		Skills: catalogSkills,
+		Page: &commonv1.PageResponse{
+			NextPageToken: out.NextPageToken,
+		},
+	}
 }

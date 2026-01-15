@@ -52,6 +52,14 @@ func Run(lc fx.Lifecycle, s *http.Server, lis net.Listener, mux *runtime.ServeMu
 				return fmt.Errorf("failed to register identity me service gateway handlers: %v", err)
 			}
 
+			if err := identityv1.RegisterUsersServiceHandlerFromEndpoint(bgCtx, mux, cfg.IdentityGRPCEndpoint, opts); err != nil {
+				return fmt.Errorf("failed to register identity users service gateway handlers: %v", err)
+			}
+
+			if err := identityv1.RegisterSkillsServiceHandlerFromEndpoint(bgCtx, mux, cfg.IdentityGRPCEndpoint, opts); err != nil {
+				return fmt.Errorf("failed to register identity skills service gateway handlers: %v", err)
+			}
+
 			if err := authv1.RegisterPingServiceHandlerFromEndpoint(bgCtx, mux, cfg.AuthGRPCEndpoint, opts); err != nil {
 				return fmt.Errorf("failed to register auth ping gateway handlers: %v", err)
 			}
