@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -11,21 +10,19 @@ import (
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/repository/postgres/queries"
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/usecase/users"
 	"github.com/belikoooova/hackaton-platform-api/pkg/pgxutil"
+	"github.com/belikoooova/hackaton-platform-api/pkg/queryutil"
 	"github.com/belikoooova/hackaton-platform-api/pkg/queryutil/sqlbuilder"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type UserRepository struct {
-	queries *queries.Queries
-	db      queries.DBTX
+	*pgxutil.BaseRepository[*queries.Queries, queries.DBTX]
 }
 
 func NewUserRepository(db queries.DBTX) *UserRepository {
 	return &UserRepository{
-		queries: queries.New(db),
-		db:      db,
+		BaseRepository: pgxutil.NewBaseRepository(db, queries.New),
 	}
 }
 
@@ -35,7 +32,7 @@ func (r *UserRepository) Create(ctx context.Context, user *entity.User) error {
 	user.UpdatedAt = now
 	user.Username = strings.ToLower(user.Username)
 
-	err := r.queries.UserCreate(ctx, queries.UserCreateParams{
+	err := r.Queries().UserCreate(ctx, queries.UserCreateParams{
 		ID:        pgxutil.UUIDToPgtype(user.ID),
 		Username:  user.Username,
 		FirstName: user.FirstName,
@@ -47,7 +44,8 @@ func (r *UserRepository) Create(ctx context.Context, user *entity.User) error {
 	})
 
 	if err != nil {
-		if strings.Contains(err.Error(), "duplicate key") {
+		err = pgxutil.MapDBError(err)
+		if pgxutil.IsConflict(err) {
 			return fmt.Errorf("user already exists: %w", err)
 		}
 		return fmt.Errorf("failed to create user: %w", err)
@@ -57,10 +55,11 @@ func (r *UserRepository) Create(ctx context.Context, user *entity.User) error {
 }
 
 func (r *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (*entity.User, error) {
-	row, err := r.queries.UserGetByID(ctx, pgxutil.UUIDToPgtype(id))
+	row, err := r.Queries().UserGetByID(ctx, pgxutil.UUIDToPgtype(id))
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("user not found")
+		err = pgxutil.MapDBError(err)
+		if pgxutil.IsNotFound(err) {
+			return nil, fmt.Errorf("user not found: %w", err)
 		}
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
@@ -80,10 +79,11 @@ func (r *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (*entity.Use
 func (r *UserRepository) GetByUsername(ctx context.Context, username string) (*entity.User, error) {
 	username = strings.ToLower(username)
 
-	row, err := r.queries.UserGetByUsername(ctx, username)
+	row, err := r.Queries().UserGetByUsername(ctx, username)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("user not found")
+		err = pgxutil.MapDBError(err)
+		if pgxutil.IsNotFound(err) {
+			return nil, fmt.Errorf("user not found: %w", err)
 		}
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
@@ -103,7 +103,7 @@ func (r *UserRepository) GetByUsername(ctx context.Context, username string) (*e
 func (r *UserRepository) Update(ctx context.Context, user *entity.User) error {
 	user.UpdatedAt = time.Now().UTC()
 
-	err := r.queries.UserUpdate(ctx, queries.UserUpdateParams{
+	err := r.Queries().UserUpdate(ctx, queries.UserUpdateParams{
 		ID:        pgxutil.UUIDToPgtype(user.ID),
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
@@ -113,8 +113,9 @@ func (r *UserRepository) Update(ctx context.Context, user *entity.User) error {
 	})
 
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return fmt.Errorf("user not found")
+		err = pgxutil.MapDBError(err)
+		if pgxutil.IsNotFound(err) {
+			return fmt.Errorf("user not found: %w", err)
 		}
 		return fmt.Errorf("failed to update user: %w", err)
 	}
@@ -132,7 +133,7 @@ func (r *UserRepository) GetByIDs(ctx context.Context, ids []uuid.UUID) ([]*enti
 		pgIDs[i] = pgxutil.UUIDToPgtype(id)
 	}
 
-	rows, err := r.queries.UserGetByIDs(ctx, pgIDs)
+	rows, err := r.Queries().UserGetByIDs(ctx, pgIDs)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get users by ids: %w", err)
 	}
@@ -160,7 +161,7 @@ func (r *UserRepository) ListUsers(ctx context.Context, params users.ListUsersRe
 		return nil, false, fmt.Errorf("failed to build query: %w", err)
 	}
 
-	rows, err := r.db.Query(ctx, query, args...)
+	rows, err := r.DB().Query(ctx, query, args...)
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -192,21 +193,9 @@ func (r *UserRepository) ListUsers(ctx context.Context, params users.ListUsersRe
 }
 
 func (r *UserRepository) buildListUsersQuery(params users.ListUsersRepoParams) (string, []interface{}, error) {
-	baseQuery := "SELECT DISTINCT u.id, u.username FROM identity.users u"
+	qb := queryutil.NewQueryBuilder("SELECT DISTINCT u.id, u.username FROM identity.users u")
 
-	whereClauses := []string{}
-	args := []interface{}{}
-	argCounter := 1
-
-	if params.SearchQuery != "" {
-		searchPattern := "%" + params.SearchQuery + "%"
-		whereClauses = append(whereClauses, fmt.Sprintf(
-			"(u.username ILIKE $%d OR u.first_name ILIKE $%d OR u.last_name ILIKE $%d)",
-			argCounter, argCounter+1, argCounter+2,
-		))
-		args = append(args, searchPattern, searchPattern, searchPattern)
-		argCounter += 3
-	}
+	qb.WithSearch([]string{"u.username", "u.first_name", "u.last_name"}, params.SearchQuery)
 
 	if params.Filters != nil && len(params.Filters.FilterGroups) > 0 {
 		nonSkillGroups := []*sqlbuilder.FilterGroup{}
@@ -223,42 +212,40 @@ func (r *UserRepository) buildListUsersQuery(params users.ListUsersRepoParams) (
 		}
 
 		if len(nonSkillGroups) > 0 {
-			wb := sqlbuilder.NewWhereBuilder(params.FieldMapping)
-			wb.SetArgCounter(argCounter)
-
-			whereClause := wb.Build(nonSkillGroups)
-			if whereClause.SQL != "" {
-				whereClauses = append(whereClauses, whereClause.SQL)
-				args = append(args, whereClause.Args...)
-				argCounter += len(whereClause.Args)
-			}
+			qb.WithFilters(nonSkillGroups, params.FieldMapping)
 		}
 	}
 
 	if params.Cursor != nil {
-		whereClauses = append(whereClauses, fmt.Sprintf(
-			"(u.username, u.id) > ($%d, $%d)",
-			argCounter, argCounter+1,
-		))
-		args = append(args, params.Cursor.Username, pgxutil.UUIDToPgtype(params.Cursor.UserID))
-		argCounter += 2
-	}
-
-	if len(whereClauses) > 0 {
-		baseQuery += " WHERE " + strings.Join(whereClauses, " AND ")
+		qb.WithCursor([]queryutil.CursorField{
+			{Column: "u.username", Value: params.Cursor.Username, Descending: false},
+			{Column: "u.id", Value: pgxutil.UUIDToPgtype(params.Cursor.UserID), Descending: false},
+		})
 	}
 
 	if len(params.Sort) > 0 {
-		orderBy := sqlbuilder.BuildOrderBy(params.Sort, params.FieldMapping)
-		if orderBy != "" {
-			baseQuery += " ORDER BY " + orderBy
+		orderByFields := make([]queryutil.OrderByField, len(params.Sort))
+		for i, sortField := range params.Sort {
+			column := params.FieldMapping[sortField.Field]
+			if column != "" {
+				orderByFields[i] = queryutil.OrderByField{
+					Column:     column,
+					Descending: sortField.Direction == "DESC",
+				}
+			}
+		}
+		if len(orderByFields) > 0 {
+			qb.WithOrderBy(orderByFields)
 		}
 	} else {
-		baseQuery += " ORDER BY u.username ASC, u.id ASC"
+		qb.WithOrderBy([]queryutil.OrderByField{
+			{Column: "u.username", Descending: false},
+			{Column: "u.id", Descending: false},
+		})
 	}
 
-	baseQuery += fmt.Sprintf(" LIMIT $%d", argCounter)
-	args = append(args, params.Limit)
+	qb.WithLimit(params.Limit)
 
-	return baseQuery, args, nil
+	query, args := qb.Build()
+	return query, args, nil
 }

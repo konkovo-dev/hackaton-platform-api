@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -10,16 +9,15 @@ import (
 	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/repository/postgres/queries"
 	"github.com/belikoooova/hackaton-platform-api/pkg/pgxutil"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 )
 
 type CredentialsRepository struct {
-	queries *queries.Queries
+	*pgxutil.BaseRepository[*queries.Queries, queries.DBTX]
 }
 
 func NewCredentialsRepository(db queries.DBTX) *CredentialsRepository {
 	return &CredentialsRepository{
-		queries: queries.New(db),
+		BaseRepository: pgxutil.NewBaseRepository(db, queries.New),
 	}
 }
 
@@ -28,7 +26,7 @@ func (r *CredentialsRepository) Create(ctx context.Context, creds *entity.Creden
 	creds.CreatedAt = now
 	creds.UpdatedAt = now
 
-	err := r.queries.CreateCredentials(ctx, queries.CreateCredentialsParams{
+	err := r.Queries().CreateCredentials(ctx, queries.CreateCredentialsParams{
 		UserID:       pgxutil.UUIDToPgtype(creds.UserID),
 		PasswordHash: creds.PasswordHash,
 		CreatedAt:    creds.CreatedAt,
@@ -36,17 +34,18 @@ func (r *CredentialsRepository) Create(ctx context.Context, creds *entity.Creden
 	})
 
 	if err != nil {
-		return fmt.Errorf("failed to create credentials: %w", err)
+		return fmt.Errorf("failed to create credentials: %w", pgxutil.MapDBError(err))
 	}
 
 	return nil
 }
 
 func (r *CredentialsRepository) GetByUserID(ctx context.Context, userID uuid.UUID) (*entity.Credentials, error) {
-	row, err := r.queries.GetCredentialsByUserID(ctx, pgxutil.UUIDToPgtype(userID))
+	row, err := r.Queries().GetCredentialsByUserID(ctx, pgxutil.UUIDToPgtype(userID))
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("credentials not found")
+		err = pgxutil.MapDBError(err)
+		if pgxutil.IsNotFound(err) {
+			return nil, fmt.Errorf("credentials not found: %w", err)
 		}
 		return nil, fmt.Errorf("failed to get credentials: %w", err)
 	}
@@ -62,15 +61,16 @@ func (r *CredentialsRepository) GetByUserID(ctx context.Context, userID uuid.UUI
 func (r *CredentialsRepository) Update(ctx context.Context, creds *entity.Credentials) error {
 	creds.UpdatedAt = time.Now().UTC()
 
-	err := r.queries.UpdateCredentials(ctx, queries.UpdateCredentialsParams{
+	err := r.Queries().UpdateCredentials(ctx, queries.UpdateCredentialsParams{
 		UserID:       pgxutil.UUIDToPgtype(creds.UserID),
 		PasswordHash: creds.PasswordHash,
 		UpdatedAt:    creds.UpdatedAt,
 	})
 
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return fmt.Errorf("credentials not found")
+		err = pgxutil.MapDBError(err)
+		if pgxutil.IsNotFound(err) {
+			return fmt.Errorf("credentials not found: %w", err)
 		}
 		return fmt.Errorf("failed to update credentials: %w", err)
 	}

@@ -16,12 +16,12 @@ import (
 )
 
 type RefreshTokenRepository struct {
-	queries *queries.Queries
+	*pgxutil.BaseRepository[*queries.Queries, queries.DBTX]
 }
 
 func NewRefreshTokenRepository(pool *pgxpool.Pool) *RefreshTokenRepository {
 	return &RefreshTokenRepository{
-		queries: queries.New(pool),
+		BaseRepository: pgxutil.NewBaseRepository[*queries.Queries, queries.DBTX](pool, queries.New),
 	}
 }
 
@@ -36,7 +36,7 @@ func (r *RefreshTokenRepository) Create(ctx context.Context, token *entity.Refre
 		}
 	}
 
-	err := r.queries.CreateRefreshToken(ctx, queries.CreateRefreshTokenParams{
+	err := r.Queries().CreateRefreshToken(ctx, queries.CreateRefreshTokenParams{
 		ID:        pgxutil.UUIDToPgtype(token.ID),
 		UserID:    pgxutil.UUIDToPgtype(token.UserID),
 		TokenHash: token.TokenHash,
@@ -53,7 +53,7 @@ func (r *RefreshTokenRepository) Create(ctx context.Context, token *entity.Refre
 }
 
 func (r *RefreshTokenRepository) GetByTokenHash(ctx context.Context, tokenHash string) (*entity.RefreshToken, error) {
-	row, err := r.queries.GetRefreshTokenByHash(ctx, tokenHash)
+	row, err := r.Queries().GetRefreshTokenByHash(ctx, tokenHash)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf("refresh token not found")
@@ -72,7 +72,7 @@ func (r *RefreshTokenRepository) GetByTokenHash(ctx context.Context, tokenHash s
 }
 
 func (r *RefreshTokenRepository) Revoke(ctx context.Context, tokenHash string, revokedAt time.Time) error {
-	err := r.queries.RevokeRefreshToken(ctx, queries.RevokeRefreshTokenParams{
+	err := r.Queries().RevokeRefreshToken(ctx, queries.RevokeRefreshTokenParams{
 		TokenHash: tokenHash,
 		RevokedAt: pgtype.Timestamptz{
 			Time:  revokedAt,
@@ -88,7 +88,7 @@ func (r *RefreshTokenRepository) Revoke(ctx context.Context, tokenHash string, r
 }
 
 func (r *RefreshTokenRepository) RevokeAllByUserID(ctx context.Context, userID uuid.UUID, revokedAt time.Time) error {
-	err := r.queries.RevokeAllRefreshTokensByUserID(ctx, queries.RevokeAllRefreshTokensByUserIDParams{
+	err := r.Queries().RevokeAllRefreshTokensByUserID(ctx, queries.RevokeAllRefreshTokensByUserIDParams{
 		UserID: pgxutil.UUIDToPgtype(userID),
 		RevokedAt: pgtype.Timestamptz{
 			Time:  revokedAt,

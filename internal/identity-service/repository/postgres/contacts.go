@@ -13,19 +13,19 @@ import (
 )
 
 type ContactRepository struct {
-	queries *queries.Queries
+	*pgxutil.BaseRepository[*queries.Queries, queries.DBTX]
 }
 
 func NewContactRepository(db queries.DBTX) *ContactRepository {
 	return &ContactRepository{
-		queries: queries.New(db),
+		BaseRepository: pgxutil.NewBaseRepository(db, queries.New),
 	}
 }
 
 func (r *ContactRepository) GetByUserID(ctx context.Context, userID uuid.UUID) ([]*entity.Contact, error) {
-	rows, err := r.queries.ContactGetByUserID(ctx, pgxutil.UUIDToPgtype(userID))
+	rows, err := r.Queries().ContactGetByUserID(ctx, pgxutil.UUIDToPgtype(userID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user contacts: %w", err)
+		return nil, fmt.Errorf("failed to get user contacts: %w", pgxutil.MapDBError(err))
 	}
 
 	contacts := make([]*entity.Contact, 0, len(rows))
@@ -43,12 +43,12 @@ func (r *ContactRepository) GetByUserID(ctx context.Context, userID uuid.UUID) (
 }
 
 func (r *ContactRepository) Update(ctx context.Context, userID uuid.UUID, contacts []*entity.Contact) error {
-	if err := r.queries.ContactDeleteByUserID(ctx, pgxutil.UUIDToPgtype(userID)); err != nil {
-		return fmt.Errorf("failed to delete user contacts: %w", err)
+	if err := r.Queries().ContactDeleteByUserID(ctx, pgxutil.UUIDToPgtype(userID)); err != nil {
+		return fmt.Errorf("failed to delete user contacts: %w", pgxutil.MapDBError(err))
 	}
 
 	for _, contact := range contacts {
-		err := r.queries.ContactCreate(ctx, queries.ContactCreateParams{
+		err := r.Queries().ContactCreate(ctx, queries.ContactCreateParams{
 			ID:         pgxutil.UUIDToPgtype(contact.ID),
 			UserID:     pgxutil.UUIDToPgtype(userID),
 			Type:       contact.Type,
@@ -56,7 +56,7 @@ func (r *ContactRepository) Update(ctx context.Context, userID uuid.UUID, contac
 			Visibility: string(contact.Visibility),
 		})
 		if err != nil {
-			return fmt.Errorf("failed to create user contact: %w", err)
+			return fmt.Errorf("failed to create user contact: %w", pgxutil.MapDBError(err))
 		}
 	}
 
@@ -73,9 +73,9 @@ func (r *ContactRepository) GetByUserIDs(ctx context.Context, userIDs []uuid.UUI
 		pgIDs[i] = pgxutil.UUIDToPgtype(id)
 	}
 
-	rows, err := r.queries.ContactGetByUserIDs(ctx, pgIDs)
+	rows, err := r.Queries().ContactGetByUserIDs(ctx, pgIDs)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get users contacts: %w", err)
+		return nil, fmt.Errorf("failed to get users contacts: %w", pgxutil.MapDBError(err))
 	}
 
 	result := make(map[uuid.UUID][]*entity.Contact)
