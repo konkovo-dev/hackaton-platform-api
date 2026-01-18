@@ -27,7 +27,7 @@ func NewGRPCServer(
 		"/identity.v1.MeService/CreateMe",
 	}
 
-	authInterceptor := interceptor.NewUnaryInterceptor(authClient, publicMethods, logger)
+	authInterceptor := interceptor.NewUnaryInterceptor(authClient, publicMethods, nil, nil, "", logger)
 
 	grpcServer := commongrpc.NewServer(commongrpc.ServerOptions{
 		UnaryInterceptors: []grpc.UnaryServerInterceptor{authInterceptor},

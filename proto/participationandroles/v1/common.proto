@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package participationandroles.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/participationandroles/v1;participationandrolesv1";
+
+enum ParticipationStatus {
+  PARTICIPATION_STATUS_UNSPECIFIED = 0;
+  PART_NONE = 1;
+  PART_INDIVIDUAL_ACTIVE = 2;
+  PART_LOOKING_FOR_TEAM = 3;
+  PART_TEAM_MEMBER = 4;
+  PART_TEAM_CAPTAIN = 5;
+}
+
+enum HackathonRole {
+  HACKATHON_ROLE_UNSPECIFIED = 0;
+  HX_ROLE_OWNER = 1;
+  HX_ROLE_ORGANIZER = 2;
+  HX_ROLE_MENTOR = 3;
+  HX_ROLE_JUDGE = 4;
+}
+
+enum AccessPolicy {
+  ACCESS_POLICY_UNSPECIFIED = 0;
+  POLICY_HACKATHON_EDIT = 1;
+  POLICY_HACKATHON_MESSAGES_READ = 2;
+  POLICY_HACKATHON_MESSAGES_MANAGE = 3;
+}

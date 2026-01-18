@@ -1,7 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 
-CREATE TABLE auth.outbox_events (
+CREATE TABLE hackathon.outbox_events (
     id UUID PRIMARY KEY,
     aggregate_id TEXT NOT NULL,
     aggregate_type TEXT NOT NULL,
@@ -15,24 +15,24 @@ CREATE TABLE auth.outbox_events (
 );
 
 CREATE INDEX idx_outbox_events_status_created 
-    ON auth.outbox_events(status, created_at)
+    ON hackathon.outbox_events(status, created_at)
     WHERE status = 'pending';
 
 CREATE INDEX idx_outbox_events_aggregate 
-    ON auth.outbox_events(aggregate_type, aggregate_id);
+    ON hackathon.outbox_events(aggregate_type, aggregate_id);
 
 CREATE INDEX idx_outbox_events_event_type 
-    ON auth.outbox_events(event_type);
+    ON hackathon.outbox_events(event_type);
 
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
 
-DROP INDEX IF EXISTS auth.idx_outbox_events_event_type;
-DROP INDEX IF EXISTS auth.idx_outbox_events_aggregate;
-DROP INDEX IF EXISTS auth.idx_outbox_events_status_created;
-DROP TABLE IF EXISTS auth.outbox_events;
+DROP INDEX IF EXISTS hackathon.idx_outbox_events_event_type;
+DROP INDEX IF EXISTS hackathon.idx_outbox_events_aggregate;
+DROP INDEX IF EXISTS hackathon.idx_outbox_events_status_created;
+DROP TABLE IF EXISTS hackathon.outbox_events;
 
 -- +goose StatementEnd
 

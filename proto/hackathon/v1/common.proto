@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package hackathon.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/hackathon/v1;hackathonv1";
+
+enum HackathonStage {
+  HACKATHON_STAGE_UNSPECIFIED = 0;
+  HACKATHON_STAGE_UPCOMING = 1;
+  HACKATHON_STAGE_REGISTRATION = 2;
+  HACKATHON_STAGE_PRE_START = 3;
+  HACKATHON_STAGE_RUNNING = 4;
+  HACKATHON_STAGE_JUDGING = 5;
+  HACKATHON_STAGE_FINISHED = 6;
+}

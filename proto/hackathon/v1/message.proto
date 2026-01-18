@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package hackathon.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/hackathon/v1;hackathonv1";
+
+import "google/protobuf/timestamp.proto";
+
+message OrganizerMessage {
+  string message_id = 1;
+
+  string title = 2;
+  string body = 3;
+
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp updated_at = 5;
+}

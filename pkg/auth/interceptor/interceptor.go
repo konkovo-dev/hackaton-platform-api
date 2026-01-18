@@ -15,14 +15,20 @@ import (
 )
 
 type unaryInterceptor struct {
-	authClient    client.AuthClient
-	publicMethods map[string]bool
-	logger        *slog.Logger
+	authClient      client.AuthClient
+	publicMethods   map[string]bool
+	optionalMethods map[string]bool
+	internalMethods map[string]bool
+	serviceToken    string
+	logger          *slog.Logger
 }
 
 func NewUnaryInterceptor(
 	authClient client.AuthClient,
 	publicMethods []string,
+	optionalMethods []string,
+	internalMethods []string,
+	serviceToken string,
 	logger *slog.Logger,
 ) grpc.UnaryServerInterceptor {
 	publicMap := make(map[string]bool, len(publicMethods))
@@ -30,10 +36,23 @@ func NewUnaryInterceptor(
 		publicMap[method] = true
 	}
 
+	optionalMap := make(map[string]bool, len(optionalMethods))
+	for _, method := range optionalMethods {
+		optionalMap[method] = true
+	}
+
+	internalMap := make(map[string]bool, len(internalMethods))
+	for _, method := range internalMethods {
+		internalMap[method] = true
+	}
+
 	i := &unaryInterceptor{
-		authClient:    authClient,
-		publicMethods: publicMap,
-		logger:        logger,
+		authClient:      authClient,
+		publicMethods:   publicMap,
+		optionalMethods: optionalMap,
+		internalMethods: internalMap,
+		serviceToken:    serviceToken,
+		logger:          logger,
 	}
 
 	return i.intercept
@@ -47,7 +66,29 @@ func (i *unaryInterceptor) intercept(
 ) (interface{}, error) {
 	method := info.FullMethod
 
+	if i.internalMethods[method] {
+		if err := i.verifyServiceToken(ctx, method); err != nil {
+			return nil, err
+		}
+		return handler(ctx, req)
+	}
+
 	if i.publicMethods[method] {
+		return handler(ctx, req)
+	}
+
+	if i.optionalMethods[method] {
+		token, err := i.extractToken(ctx, method)
+		if err != nil {
+			return handler(ctx, req)
+		}
+
+		claims, err := i.authenticate(ctx, token, method)
+		if err != nil {
+			return handler(ctx, req)
+		}
+
+		ctx = auth.WithClaims(ctx, claims)
 		return handler(ctx, req)
 	}
 
@@ -123,4 +164,38 @@ func (i *unaryInterceptor) logAuthFailure(method, reason string, err error) {
 			"reason", reason,
 		)
 	}
+}
+
+func (i *unaryInterceptor) extractServiceToken(ctx context.Context) (string, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return "", status.Error(codes.Unauthenticated, "missing metadata")
+	}
+
+	values := md.Get("x-service-token")
+	if len(values) == 0 {
+		return "", status.Error(codes.PermissionDenied, "service authentication required")
+	}
+
+	token := strings.TrimSpace(values[0])
+	if token == "" {
+		return "", status.Error(codes.PermissionDenied, "empty service token")
+	}
+
+	return token, nil
+}
+
+func (i *unaryInterceptor) verifyServiceToken(ctx context.Context, method string) error {
+	token, err := i.extractServiceToken(ctx)
+	if err != nil {
+		i.logAuthFailure(method, "missing_service_token", err)
+		return err
+	}
+
+	if token != i.serviceToken {
+		i.logAuthFailure(method, "invalid_service_token", nil)
+		return status.Error(codes.PermissionDenied, "invalid service token")
+	}
+
+	return nil
 }
