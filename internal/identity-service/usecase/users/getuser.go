@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/domain/entity"
+	identitypolicy "github.com/belikoooova/hackaton-platform-api/internal/identity-service/policy"
+	"github.com/belikoooova/hackaton-platform-api/pkg/policy"
 	"github.com/google/uuid"
 )
 
@@ -26,6 +28,17 @@ type GetUserSkills struct {
 }
 
 func (s *Service) GetUser(ctx context.Context, in GetUserIn) (*GetUserOut, error) {
+	policy := identitypolicy.NewRequireAuthPolicy(identitypolicy.ActionReadUser)
+	pctx, err := policy.LoadContext(ctx, identitypolicy.NoParams{})
+	if err != nil {
+		return nil, err
+	}
+
+	decision := policy.Check(ctx, pctx)
+	if !decision.Allowed {
+		return nil, s.mapPolicyError(decision)
+	}
+
 	if err := s.validateGetUserIn(in); err != nil {
 		return nil, err
 	}
@@ -57,4 +70,17 @@ func (s *Service) validateGetUserIn(in GetUserIn) error {
 	}
 
 	return nil
+}
+
+func (s *Service) mapPolicyError(decision *policy.Decision) error {
+	if len(decision.Violations) == 0 {
+		return fmt.Errorf("access denied")
+	}
+
+	v := decision.Violations[0]
+	if v.Code == policy.ViolationCodeForbidden {
+		return fmt.Errorf("access denied: %s", v.Message)
+	}
+
+	return fmt.Errorf("%s", v.Message)
 }

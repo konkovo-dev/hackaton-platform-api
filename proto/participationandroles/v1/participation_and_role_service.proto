@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package participationandroles.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/participationandroles/v1;participationandrolesv1";
+
+import "common/v1/idempotency.proto";
+import "participationandroles/v1/common.proto";
+
+service ParticipationAndRolesService {
+  rpc GetHackathonContext(GetHackathonContextRequest) returns (GetHackathonContextResponse);
+
+  rpc CheckAccess(CheckAccessRequest) returns (CheckAccessResponse);
+
+  rpc AssignHackathonRole(AssignHackathonRoleRequest) returns (AssignHackathonRoleResponse);
+}
+
+message GetHackathonContextRequest {
+  string hackathon_id = 1;
+}
+
+message GetHackathonContextResponse {
+  string user_id = 1;
+
+  ParticipationStatus participation_status = 2;
+  string team_id = 3;
+  repeated HackathonRole roles = 4;
+}
+
+message CheckAccessRequest {
+  string hackathon_id = 1;
+  AccessPolicy policy = 2;
+}
+
+message CheckAccessResponse {
+  bool allowed = 1;
+}
+
+message AssignHackathonRoleRequest {
+  string hackathon_id = 1;
+  string user_id = 2;
+  HackathonRole role = 3;
+
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message AssignHackathonRoleResponse {}

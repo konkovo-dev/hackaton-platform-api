@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/domain/entity"
+	identitypolicy "github.com/belikoooova/hackaton-platform-api/internal/identity-service/policy"
 	"github.com/google/uuid"
 )
 
@@ -21,8 +22,27 @@ type UpdateMeOut struct {
 }
 
 func (s *Service) UpdateMe(ctx context.Context, in UpdateMeIn) (*UpdateMeOut, error) {
-	if err := s.validateUpdateMeIn(in); err != nil {
+	updatePolicy := identitypolicy.NewUpdateMePolicy()
+	pctx, err := updatePolicy.LoadContext(ctx, identitypolicy.UpdateMeParams{
+		UserID: in.UserID,
+	})
+	if err != nil {
 		return nil, err
+	}
+
+	decision := updatePolicy.Check(ctx, pctx)
+	if !decision.Allowed {
+		return nil, s.mapPolicyError(decision)
+	}
+
+	inputDecision := updatePolicy.ValidateInput(identitypolicy.UpdateMeParams{
+		UserID:    in.UserID,
+		FirstName: in.FirstName,
+		LastName:  in.LastName,
+		Timezone:  in.Timezone,
+	})
+	if !inputDecision.Allowed {
+		return nil, s.mapPolicyError(inputDecision)
 	}
 
 	user, err := s.userRepo.GetByID(ctx, in.UserID)
@@ -40,24 +60,4 @@ func (s *Service) UpdateMe(ctx context.Context, in UpdateMeIn) (*UpdateMeOut, er
 	}
 
 	return &UpdateMeOut{User: user}, nil
-}
-
-func (s *Service) validateUpdateMeIn(in UpdateMeIn) error {
-	if in.UserID == uuid.Nil {
-		return fmt.Errorf("%w: user_id is required", ErrInvalidInput)
-	}
-
-	if in.FirstName == "" {
-		return fmt.Errorf("%w: first_name is required", ErrInvalidInput)
-	}
-
-	if in.LastName == "" {
-		return fmt.Errorf("%w: last_name is required", ErrInvalidInput)
-	}
-
-	if in.Timezone == "" {
-		return fmt.Errorf("%w: timezone is required", ErrInvalidInput)
-	}
-
-	return nil
 }

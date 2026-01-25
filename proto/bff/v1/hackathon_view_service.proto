@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package bff.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/bff/hackathon/v1;bffhackathonv1";
+
+import "google/api/annotations.proto";
+import "bff/v1/hackathon_view.proto";
+
+service HackathonViewService {
+  rpc GetHackathonViewForMe(GetHackathonViewForMeRequest) returns (GetHackathonViewForMeResponse) {
+    option (google.api.http) = { get: "/v1/hackathons/{hackathon_id}/view" };
+  }
+}
+
+message GetHackathonViewForMeRequest {
+  string hackathon_id = 1;
+}
+
+message GetHackathonViewForMeResponse {
+  HackathonViewForMe view = 1;
+  bool is_authenticated = 2;
+}

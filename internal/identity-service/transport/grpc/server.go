@@ -10,6 +10,7 @@ import (
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/transport/grpc/usersservice"
 	"github.com/belikoooova/hackaton-platform-api/pkg/auth/client"
 	"github.com/belikoooova/hackaton-platform-api/pkg/auth/interceptor"
+	"github.com/belikoooova/hackaton-platform-api/pkg/env"
 	commongrpc "github.com/belikoooova/hackaton-platform-api/pkg/grpc"
 	"google.golang.org/grpc"
 )
@@ -24,10 +25,15 @@ func NewGRPCServer(
 ) *grpc.Server {
 	publicMethods := []string{
 		"/identity.v1.PingService/Ping",
+	}
+
+	internalMethods := []string{
 		"/identity.v1.MeService/CreateMe",
 	}
 
-	authInterceptor := interceptor.NewUnaryInterceptor(authClient, publicMethods, logger)
+	serviceToken := env.GetEnv("SERVICE_AUTH_TOKEN", "")
+
+	authInterceptor := interceptor.NewUnaryInterceptor(authClient, publicMethods, nil, internalMethods, serviceToken, logger)
 
 	grpcServer := commongrpc.NewServer(commongrpc.ServerOptions{
 		UnaryInterceptors: []grpc.UnaryServerInterceptor{authInterceptor},

@@ -6,6 +6,7 @@ import (
 
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/domain"
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/domain/entity"
+	"github.com/belikoooova/hackaton-platform-api/pkg/auth"
 	"github.com/google/uuid"
 )
 
@@ -21,6 +22,13 @@ func (s *Service) enrichUsersWithData(
 ) (map[uuid.UUID]*GetUserOut, error) {
 	if len(users) == 0 {
 		return map[uuid.UUID]*GetUserOut{}, nil
+	}
+
+	var actorUserID uuid.UUID
+	if actorID, ok := auth.GetUserID(ctx); ok {
+		if parsed, err := uuid.Parse(actorID); err == nil {
+			actorUserID = parsed
+		}
 	}
 
 	userMap := make(map[uuid.UUID]*GetUserOut)
@@ -44,13 +52,13 @@ func (s *Service) enrichUsersWithData(
 	}
 
 	if opts.IncludeSkills {
-		if err := s.enrichSkills(ctx, userIDs, visibilityMap, userMap); err != nil {
+		if err := s.enrichSkills(ctx, actorUserID, userIDs, visibilityMap, userMap); err != nil {
 			return nil, err
 		}
 	}
 
 	if opts.IncludeContacts {
-		if err := s.enrichContacts(ctx, userIDs, visibilityMap, userMap); err != nil {
+		if err := s.enrichContacts(ctx, actorUserID, userIDs, visibilityMap, userMap); err != nil {
 			return nil, err
 		}
 	}
@@ -60,27 +68,34 @@ func (s *Service) enrichUsersWithData(
 
 func (s *Service) enrichSkills(
 	ctx context.Context,
+	actorUserID uuid.UUID,
 	userIDs []uuid.UUID,
 	visibilityMap map[uuid.UUID]*entity.Visibility,
 	userMap map[uuid.UUID]*GetUserOut,
 ) error {
-	userIDsWithPublicSkills := make([]uuid.UUID, 0)
+	userIDsToLoad := make([]uuid.UUID, 0)
 	for _, userID := range userIDs {
+		isMe := actorUserID != uuid.Nil && actorUserID == userID
+		if isMe {
+			userIDsToLoad = append(userIDsToLoad, userID)
+			continue
+		}
+
 		if vis, ok := visibilityMap[userID]; ok && vis.SkillsVisibility == domain.VisibilityLevelPublic {
-			userIDsWithPublicSkills = append(userIDsWithPublicSkills, userID)
+			userIDsToLoad = append(userIDsToLoad, userID)
 		}
 	}
 
-	if len(userIDsWithPublicSkills) == 0 {
+	if len(userIDsToLoad) == 0 {
 		return nil
 	}
 
-	catalogSkillsMap, err := s.skillRepo.GetUsersCatalogSkills(ctx, userIDsWithPublicSkills)
+	catalogSkillsMap, err := s.skillRepo.GetUsersCatalogSkills(ctx, userIDsToLoad)
 	if err != nil {
 		return fmt.Errorf("failed to get catalog skills: %w", err)
 	}
 
-	customSkillsMap, err := s.skillRepo.GetUsersCustomSkills(ctx, userIDsWithPublicSkills)
+	customSkillsMap, err := s.skillRepo.GetUsersCustomSkills(ctx, userIDsToLoad)
 	if err != nil {
 		return fmt.Errorf("failed to get custom skills: %w", err)
 	}
@@ -102,36 +117,45 @@ func (s *Service) enrichSkills(
 
 func (s *Service) enrichContacts(
 	ctx context.Context,
+	actorUserID uuid.UUID,
 	userIDs []uuid.UUID,
 	visibilityMap map[uuid.UUID]*entity.Visibility,
 	userMap map[uuid.UUID]*GetUserOut,
 ) error {
-	userIDsWithPublicContacts := make([]uuid.UUID, 0)
+	userIDsToLoad := make([]uuid.UUID, 0)
 	for _, userID := range userIDs {
+		isMe := actorUserID != uuid.Nil && actorUserID == userID
+		if isMe {
+			userIDsToLoad = append(userIDsToLoad, userID)
+			continue
+		}
+
 		if vis, ok := visibilityMap[userID]; ok && vis.ContactsVisibility == domain.VisibilityLevelPublic {
-			userIDsWithPublicContacts = append(userIDsWithPublicContacts, userID)
+			userIDsToLoad = append(userIDsToLoad, userID)
 		}
 	}
 
-	if len(userIDsWithPublicContacts) == 0 {
+	if len(userIDsToLoad) == 0 {
 		return nil
 	}
 
-	contactsMap, err := s.contactRepo.GetByUserIDs(ctx, userIDsWithPublicContacts)
+	contactsMap, err := s.contactRepo.GetByUserIDs(ctx, userIDsToLoad)
 	if err != nil {
 		return fmt.Errorf("failed to get contacts: %w", err)
 	}
 
 	for userID, contacts := range contactsMap {
-		publicContacts := make([]*entity.Contact, 0)
+		isMe := actorUserID != uuid.Nil && actorUserID == userID
+
+		filteredContacts := make([]*entity.Contact, 0)
 		for _, contact := range contacts {
-			if contact.Visibility == domain.VisibilityLevelPublic {
-				publicContacts = append(publicContacts, contact)
+			if isMe || contact.Visibility == domain.VisibilityLevelPublic {
+				filteredContacts = append(filteredContacts, contact)
 			}
 		}
 
 		if userOut, ok := userMap[userID]; ok {
-			userOut.Contacts = publicContacts
+			userOut.Contacts = filteredContacts
 		}
 	}
 

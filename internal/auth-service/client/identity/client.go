@@ -9,11 +9,13 @@ import (
 	"github.com/belikoooova/hackaton-platform-api/pkg/idempotency"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 )
 
 type Client struct {
-	conn      *grpc.ClientConn
-	meService identityv1.MeServiceClient
+	conn         *grpc.ClientConn
+	meService    identityv1.MeServiceClient
+	serviceToken string
 }
 
 func NewClient(cfg *Config) (*Client, error) {
@@ -25,8 +27,9 @@ func NewClient(cfg *Config) (*Client, error) {
 	meService := identityv1.NewMeServiceClient(conn)
 
 	return &Client{
-		conn:      conn,
-		meService: meService,
+		conn:         conn,
+		meService:    meService,
+		serviceToken: cfg.ServiceToken,
 	}, nil
 }
 
@@ -50,6 +53,11 @@ func (c *Client) CreateUser(ctx context.Context, userID, username, firstName, la
 			Key: idempotencyKeyValue,
 		},
 	}
+
+	md := metadata.New(map[string]string{
+		"x-service-token": c.serviceToken,
+	})
+	ctx = metadata.NewOutgoingContext(ctx, md)
 
 	_, err := c.meService.CreateMe(ctx, req)
 	if err != nil {

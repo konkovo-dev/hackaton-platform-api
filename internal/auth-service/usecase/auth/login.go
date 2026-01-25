@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/domain/entity"
+	authpolicy "github.com/belikoooova/hackaton-platform-api/internal/auth-service/policy"
 )
 
 type LoginIn struct {
@@ -14,8 +15,15 @@ type LoginIn struct {
 }
 
 func (s *Service) Login(ctx context.Context, in LoginIn) (*AuthOut, error) {
-	if err := s.validateLoginIn(in); err != nil {
-		return nil, err
+	loginPolicy := authpolicy.NewLoginPolicy()
+	decision := loginPolicy.ValidateInput(authpolicy.LoginParams{
+		Email:    in.Email,
+		Username: in.Username,
+		Password: in.Password,
+	})
+
+	if !decision.Allowed {
+		return nil, s.mapPolicyDecisionToError(decision)
 	}
 
 	var user *entity.User
@@ -41,16 +49,4 @@ func (s *Service) Login(ctx context.Context, in LoginIn) (*AuthOut, error) {
 	}
 
 	return s.generateTokens(ctx, user.ID)
-}
-
-func (s *Service) validateLoginIn(in LoginIn) error {
-	if in.Email == "" && in.Username == "" {
-		return ErrEmptyLogin
-	}
-
-	if in.Password == "" {
-		return ErrEmptyPassword
-	}
-
-	return nil
 }

@@ -16,7 +16,7 @@ CREATE TABLE auth.outbox_events (
 
 CREATE INDEX idx_outbox_events_status_created 
     ON auth.outbox_events(status, created_at)
-    WHERE status IN ('pending', 'failed');
+    WHERE status = 'pending';
 
 CREATE INDEX idx_outbox_events_aggregate 
     ON auth.outbox_events(aggregate_type, aggregate_id);

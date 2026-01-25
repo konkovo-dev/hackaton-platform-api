@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	identitypolicy "github.com/belikoooova/hackaton-platform-api/internal/identity-service/policy"
 	"github.com/google/uuid"
 )
 
@@ -20,6 +21,17 @@ type BatchGetUsersOut struct {
 }
 
 func (s *Service) BatchGetUsers(ctx context.Context, in BatchGetUsersIn) (*BatchGetUsersOut, error) {
+	policy := identitypolicy.NewRequireAuthPolicy(identitypolicy.ActionBatchGetUsers)
+	pctx, err := policy.LoadContext(ctx, identitypolicy.NoParams{})
+	if err != nil {
+		return nil, err
+	}
+
+	decision := policy.Check(ctx, pctx)
+	if !decision.Allowed {
+		return nil, s.mapPolicyError(decision)
+	}
+
 	if err := s.validateBatchGetUsersIn(in); err != nil {
 		return nil, err
 	}

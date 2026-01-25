@@ -17,12 +17,7 @@ service MeService {
     option (google.api.http) = { get: "/v1/users/me" };
   }
 
-  rpc CreateMe(CreateMeRequest) returns (CreateMeResponse) {
-    option (google.api.http) = {
-      post: "/v1/users/me"
-      body: "*"
-    };
-  }
+  rpc CreateMe(CreateMeRequest) returns (CreateMeResponse) {}
 
   rpc UpdateMe(UpdateMeRequest) returns (UpdateMeResponse) {
     option (google.api.http) = {

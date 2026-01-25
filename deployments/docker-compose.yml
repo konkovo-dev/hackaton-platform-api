@@ -42,6 +42,7 @@ services:
       IDENTITY_SERVICE_URL: identity-service:50051
       OUTBOX_POLL_INTERVAL: 1s
       OUTBOX_MAX_ATTEMPTS: 3
+      SERVICE_AUTH_TOKEN: dev-service-token-change-in-production
     ports:
       - "50057:50057"
     depends_on:
@@ -69,6 +70,7 @@ services:
       AUTH_CLIENT_MAX_CACHE_TTL: 60s
       AUTH_CLIENT_CACHE_CLEANUP_INTERVAL: 1m
       IDEMPOTENCY_TTL: 24h
+      SERVICE_AUTH_TOKEN: dev-service-token-change-in-production
     ports:
       - "50051:50051"
     depends_on:
@@ -86,6 +88,7 @@ services:
     environment:
       ENV: dev
       HACKATON_SERVICE_GRPC_PORT: 50052
+      SERVICE_AUTH_TOKEN: dev-service-token-change-in-production
     ports:
       - "50052:50052"
     depends_on:

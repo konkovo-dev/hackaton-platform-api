@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"time"
+
+	authpolicy "github.com/belikoooova/hackaton-platform-api/internal/auth-service/policy"
 )
 
 type RefreshIn struct {
@@ -11,8 +13,13 @@ type RefreshIn struct {
 }
 
 func (s *Service) Refresh(ctx context.Context, in RefreshIn) (*AuthOut, error) {
-	if err := s.validateRefreshIn(in); err != nil {
-		return nil, err
+	refreshPolicy := authpolicy.NewRefreshPolicy()
+	decision := refreshPolicy.ValidateInput(authpolicy.RefreshParams{
+		RefreshToken: in.RefreshToken,
+	})
+
+	if !decision.Allowed {
+		return nil, s.mapPolicyDecisionToError(decision)
 	}
 
 	tokenHash := s.hashRefreshToken(in.RefreshToken)
@@ -39,12 +46,4 @@ func (s *Service) Refresh(ctx context.Context, in RefreshIn) (*AuthOut, error) {
 	}
 
 	return s.generateTokens(ctx, user.ID)
-}
-
-func (s *Service) validateRefreshIn(in RefreshIn) error {
-	if in.RefreshToken == "" {
-		return ErrTokenInvalid
-	}
-
-	return nil
 }
