@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package hackathon.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/hackathon/v1;hackathonv1";
+
+import "google/api/annotations.proto";
+
+service PingService {
+  rpc Ping(PingRequest) returns (PingResponse) {
+    option (google.api.http) = {
+      get: "/v1/hackathon/ping"
+    };
+  }
+}
+
+message PingRequest {}
+
+message PingResponse {
+  string message = 1;
+}

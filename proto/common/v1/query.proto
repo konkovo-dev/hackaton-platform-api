@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package common.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/common/v1;commonv1";
+
+enum SortDirection {
+  SORT_DIRECTION_UNSPECIFIED = 0;
+  SORT_DIRECTION_ASC = 1;
+  SORT_DIRECTION_DESC = 2;
+}
+
+message Sort {
+  string field = 1;
+  SortDirection direction = 2;
+}
+
+enum FilterOperation {
+  FILTER_OPERATION_UNSPECIFIED = 0;
+  FILTER_OPERATION_EQUAL = 1;
+  FILTER_OPERATION_IN = 2;
+  FILTER_OPERATION_CONTAINS = 3;
+  FILTER_OPERATION_PREFIX = 4;
+}
+
+message StringList {
+  repeated string values = 1;
+}
+
+message Filter {
+  string field = 1;
+  FilterOperation operation = 2;
+
+  oneof value {
+    string string_value = 10;
+    int64 int64_value = 11;
+    bool bool_value = 12;
+    StringList string_list = 20;
+  }
+}
+
+message FilterGroup {
+  repeated Filter filters = 1;
+}
+
+message PageRequest {
+  uint32 page_size = 1; 
+  string page_token = 2;
+}
+
+message PageResponse {
+  string next_page_token = 1;
+}
+
+message Query {
+  string q = 1;
+  // OR between groups, AND inside group.
+  repeated FilterGroup filter_groups = 2;
+
+  repeated Sort sort = 3;
+
+  PageRequest page = 10;
+}

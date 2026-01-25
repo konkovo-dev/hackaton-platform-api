@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package hackathon.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/hackathon/v1;hackathonv1";
+
+enum HackathonStage {
+  HACKATHON_STAGE_UNSPECIFIED = 0;
+  HACKATHON_STAGE_DRAFT = 1;
+  HACKATHON_STAGE_UPCOMING = 2;
+  HACKATHON_STAGE_REGISTRATION = 3;
+  HACKATHON_STAGE_PRE_START = 4;
+  HACKATHON_STAGE_RUNNING = 5;
+  HACKATHON_STAGE_JUDGING = 6;
+  HACKATHON_STAGE_FINISHED = 7;
+}
+
+enum HackathonState {
+  HACKATHON_STATE_UNSPECIFIED = 0;
+  HACKATHON_STATE_DRAFT = 1;
+  HACKATHON_STATE_PUBLISHED = 2;
+}
+
+message ValidationError {
+  string code = 1;
+  string field = 2;
+  string message = 3;
+  map<string, string> meta = 4;
+}

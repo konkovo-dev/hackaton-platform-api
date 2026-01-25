@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package identity.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/identity/v1;identityv1";
+
+import "google/api/annotations.proto";
+import "common/v1/query.proto";
+import "identity/v1/user.proto";
+import "identity/v1/skill.proto";
+import "identity/v1/contact.proto";
+
+service UsersService {
+  rpc GetUser(GetUserRequest) returns (GetUserResponse) {
+    option (google.api.http) = { get: "/v1/users/{user_id}" };
+  }
+
+  rpc BatchGetUsers(BatchGetUsersRequest) returns (BatchGetUsersResponse) {
+    option (google.api.http) = {
+      post: "/v1/users:batchGet"
+      body: "*"
+    };
+  }
+
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {
+    option (google.api.http) = {
+      post: "/v1/users:list"
+      body: "*"
+    };
+  }
+}
+
+message GetUserRequest {
+  string user_id = 1;
+  bool include_skills = 2;
+  bool include_contacts = 3;
+}
+
+message GetUserResponse {
+  User user = 1;
+
+  // Visibility applied on server:
+  // - skills empty if hidden or include_skills=false
+  repeated Skill skills = 2;
+
+  // Contacts here are PUBLIC projection only (no per-contact visibility field).
+  // - empty if hidden or include_contacts=false
+  repeated Contact contacts = 3;
+}
+
+message BatchGetUsersRequest {
+  repeated string user_ids = 1;
+  bool include_skills = 2;
+  bool include_contacts = 3;
+}
+
+message BatchGetUsersResponse {
+  repeated GetUserResponse users = 1;
+}
+
+message ListUsersRequest {
+  common.v1.Query query = 1;
+  bool include_skills = 2;
+  bool include_contacts = 3;
+}
+
+message ListUsersResponse {
+  repeated GetUserResponse users = 1;
+  common.v1.PageResponse page = 2;
+}
