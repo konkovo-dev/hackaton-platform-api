@@ -22,6 +22,8 @@ func (s *HackathonService) GetHackathon(ctx context.Context, req *hackathonv1.Ge
 		IncludeDescription: req.IncludeDescription,
 		IncludeLinks:       req.IncludeLinks,
 		IncludeLimits:      req.IncludeLimits,
+		IncludeTask:        req.IncludeTask,
+		IncludeResult:      req.IncludeResult,
 	}
 
 	out, err := s.hackathonService.GetHackathon(ctx, in)

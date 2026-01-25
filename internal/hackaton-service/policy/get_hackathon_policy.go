@@ -43,7 +43,7 @@ func (p *GetHackathonPolicy) Check(ctx context.Context, pctx policy.PolicyContex
 	decision := policy.NewDecision()
 	hctx := pctx.(*HackathonPolicyContext)
 
-	if hctx.Stage() == string(domain.StageDraft) {
+	if hctx.State() == string(domain.StateDraft) {
 		hasOwnerRole := hctx.HasRole(string(domain.RoleOwner))
 		hasOrganizerRole := hctx.HasRole(string(domain.RoleOrganizer))
 

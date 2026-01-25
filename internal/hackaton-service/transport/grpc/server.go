@@ -25,6 +25,7 @@ func NewGRPCServer(
 
 	optionalMethods := []string{
 		"/hackathon.v1.HackathonService/GetHackathon",
+		"/hackathon.v1.HackathonService/ListHackathons",
 	}
 
 	internalMethods := []string{}

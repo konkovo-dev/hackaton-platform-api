@@ -181,24 +181,24 @@ func (v *HackathonValidator) ValidateUpdate(old, new *entity.Hackathon, newLinks
 				Message: "location is required for published hackathon",
 			})
 		}
+	}
 
-		if stage == domain.StageRunning || stage == domain.StageJudging || stage == domain.StageFinished {
-			if old.LocationCity != new.LocationCity || old.LocationCountry != new.LocationCountry || old.LocationOnline != new.LocationOnline {
-				errors = append(errors, domain.ValidationError{
-					Code:    domain.ValidationCodeTimeLocked,
-					Field:   "location",
-					Message: "location cannot be changed after PRESTART",
-				})
-			}
+	if stage != domain.StageDraft && stage != domain.StageUpcoming && stage != domain.StageRegistration && stage != domain.StagePreStart {
+		if old.LocationCity != new.LocationCity || old.LocationCountry != new.LocationCountry || old.LocationOnline != new.LocationOnline {
+			errors = append(errors, domain.ValidationError{
+				Code:    domain.ValidationCodeForbidden,
+				Field:   "location",
+				Message: "location can only be updated in DRAFT, UPCOMING, REGISTRATION or PRESTART stages",
+			})
 		}
 	}
 
-	if stage == domain.StageRunning || stage == domain.StageJudging || stage == domain.StageFinished {
+	if stage != domain.StageDraft && stage != domain.StageUpcoming {
 		if old.TeamSizeMax != new.TeamSizeMax {
 			errors = append(errors, domain.ValidationError{
-				Code:    domain.ValidationCodeTimeLocked,
+				Code:    domain.ValidationCodeForbidden,
 				Field:   "team_size_max",
-				Message: "team_size_max can only be changed in DRAFT or UPCOMING",
+				Message: "team_size_max can only be changed in DRAFT or UPCOMING stages",
 			})
 		}
 	}
@@ -375,4 +375,59 @@ func (v *HackathonValidator) ValidateUpdate(old, new *entity.Hackathon, newLinks
 	}
 
 	return errors
+}
+
+func (v *HackathonValidator) ValidateTaskUpdate(newTask string, stage domain.HackathonStage) []domain.ValidationError {
+	var errors []domain.ValidationError
+
+	if newTask == "" {
+		errors = append(errors, domain.ValidationError{
+			Code:    domain.ValidationCodeRequired,
+			Field:   "task",
+			Message: "task cannot be empty",
+		})
+	}
+
+	if stage == domain.StageJudging || stage == domain.StageFinished {
+		errors = append(errors, domain.ValidationError{
+			Code:    domain.ValidationCodeForbidden,
+			Field:   "task",
+			Message: "task cannot be updated during JUDGING or FINISHED stages",
+		})
+	}
+
+	return errors
+}
+
+func (v *HackathonValidator) ValidateResultReady(result string) []domain.ValidationError {
+	var errors []domain.ValidationError
+
+	if result == "" {
+		errors = append(errors, domain.ValidationError{
+			Code:    domain.ValidationCodeRequired,
+			Field:   "result",
+			Message: "result is required for publishing",
+		})
+	}
+
+	return errors
+}
+
+func (v *HackathonValidator) HasCriticalErrors(errors []domain.ValidationError, stage domain.HackathonStage) bool {
+	if stage == domain.StageDraft {
+		return false
+	}
+
+	for _, err := range errors {
+		switch err.Code {
+		case domain.ValidationCodeRequired,
+			domain.ValidationCodeTimeRule,
+			domain.ValidationCodeTimeLocked,
+			domain.ValidationCodeForbidden,
+			domain.ValidationCodePolicyRule:
+			return true
+		}
+	}
+
+	return false
 }

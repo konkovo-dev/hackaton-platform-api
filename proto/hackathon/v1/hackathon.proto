@@ -21,6 +21,11 @@ message Hackathon {
   HackathonState state = 11;
 
   google.protobuf.Timestamp published_at = 12;
+  google.protobuf.Timestamp result_published_at = 13;
+
+  // Optional fields, included based on request flags
+  optional string task = 14;
+  optional string result = 15;
 
   google.protobuf.Timestamp created_at = 20;
   google.protobuf.Timestamp updated_at = 21;

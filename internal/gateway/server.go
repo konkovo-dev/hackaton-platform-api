@@ -6,13 +6,17 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"strings"
 
 	authv1 "github.com/belikoooova/hackaton-platform-api/api/auth/v1"
+	hackathonv1 "github.com/belikoooova/hackaton-platform-api/api/hackathon/v1"
 	identityv1 "github.com/belikoooova/hackaton-platform-api/api/identity/v1"
+	participationandrolesv1 "github.com/belikoooova/hackaton-platform-api/api/participationandroles/v1"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 )
 
 func NewListener(cfg *Config) (net.Listener, error) {
@@ -25,7 +29,31 @@ func NewListener(cfg *Config) (net.Listener, error) {
 }
 
 func NewMux() *runtime.ServeMux {
-	return runtime.NewServeMux()
+	return runtime.NewServeMux(
+		runtime.WithMetadata(func(ctx context.Context, req *http.Request) metadata.MD {
+			md := metadata.MD{}
+
+			// Forward Authorization header
+			if auth := req.Header.Get("Authorization"); auth != "" {
+				md.Set("authorization", auth)
+			}
+
+			// Forward X-Service-Token header (for internal service calls)
+			if token := req.Header.Get("X-Service-Token"); token != "" {
+				md.Set("x-service-token", token)
+			}
+
+			return md
+		}),
+		runtime.WithIncomingHeaderMatcher(func(key string) (string, bool) {
+			switch strings.ToLower(key) {
+			case "authorization", "x-service-token":
+				return key, true
+			default:
+				return runtime.DefaultHeaderMatcher(key)
+			}
+		}),
+	)
 }
 
 func NewHTTPServer(mux *runtime.ServeMux, cfg *Config) *http.Server {
@@ -68,10 +96,20 @@ func Run(lc fx.Lifecycle, s *http.Server, lis net.Listener, mux *runtime.ServeMu
 				return fmt.Errorf("failed to register auth gateway handlers: %v", err)
 			}
 
+			if err := hackathonv1.RegisterHackathonServiceHandlerFromEndpoint(bgCtx, mux, cfg.HackatonGRPCEndpoint, opts); err != nil {
+				return fmt.Errorf("failed to register hackathon service gateway handlers: %v", err)
+			}
+
+			if err := participationandrolesv1.RegisterParticipationAndRolesServiceHandlerFromEndpoint(bgCtx, mux, cfg.ParticipationAndRolesGRPCEndpoint, opts); err != nil {
+				return fmt.Errorf("failed to register participation and roles service gateway handlers: %v", err)
+			}
+
 			logger.Info("starting http gateway",
 				slog.String("addr", lis.Addr().String()),
 				slog.String("identity_grpc_endpoint", cfg.IdentityGRPCEndpoint),
 				slog.String("auth_grpc_endpoint", cfg.AuthGRPCEndpoint),
+				slog.String("hackaton_grpc_endpoint", cfg.HackatonGRPCEndpoint),
+				slog.String("participation_roles_grpc_endpoint", cfg.ParticipationAndRolesGRPCEndpoint),
 			)
 
 			go func() {

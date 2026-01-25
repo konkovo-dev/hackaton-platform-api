@@ -9,6 +9,7 @@ var (
 	ErrUnauthorized      = errors.New("unauthorized")
 	ErrForbidden         = errors.New("forbidden")
 	ErrInvalidInput      = errors.New("invalid input")
+	ErrValidationFailed  = errors.New("hackathon validation failed")
 
 	ErrEmptyName             = errors.New("name is required")
 	ErrEmptyShortDescription = errors.New("short description is required")

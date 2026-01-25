@@ -5,7 +5,7 @@ CREATE SCHEMA IF NOT EXISTS hackathon;
 
 CREATE TABLE hackathon.hackathons (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL DEFAULT '',
     short_description TEXT NOT NULL DEFAULT '',
     description TEXT NOT NULL DEFAULT '',
     
@@ -22,8 +22,8 @@ CREATE TABLE hackathon.hackathons (
     submissions_closes_at TIMESTAMPTZ,
     judging_ends_at TIMESTAMPTZ,
     
-    stage VARCHAR(50) NOT NULL DEFAULT 'hackathon_stage_draft',
-    state VARCHAR(50) NOT NULL DEFAULT 'hackathon_state_draft',
+    stage VARCHAR(50) NOT NULL DEFAULT 'draft',
+    state VARCHAR(50) NOT NULL DEFAULT 'draft',
     published_at TIMESTAMPTZ,
     result_published_at TIMESTAMPTZ,
     

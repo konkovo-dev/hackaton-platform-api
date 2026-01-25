@@ -44,20 +44,6 @@ func (c *Client) Close() error {
 	return nil
 }
 
-func (c *Client) CheckAccess(ctx context.Context, hackathonID string, policy participationrolesv1.AccessPolicy) (bool, error) {
-	req := &participationrolesv1.CheckAccessRequest{
-		HackathonId: hackathonID,
-		Policy:      policy,
-	}
-
-	resp, err := c.parService.CheckAccess(ctx, req)
-	if err != nil {
-		return false, fmt.Errorf("failed to check access: %w", err)
-	}
-
-	return resp.Allowed, nil
-}
-
 func (c *Client) AssignHackathonRole(ctx context.Context, hackathonID, userID string, role participationrolesv1.HackathonRole) error {
 	idempotencyKeyValue := idempotency.ComputeHash(hackathonID, userID, role.String())
 
@@ -86,6 +72,12 @@ func (c *Client) AssignHackathonRole(ctx context.Context, hackathonID, userID st
 func (c *Client) GetHackathonContext(ctx context.Context, hackathonID string) (userID, participationStatus, teamID string, roles []string, err error) {
 	req := &participationrolesv1.GetHackathonContextRequest{
 		HackathonId: hackathonID,
+	}
+
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if auth := md.Get("authorization"); len(auth) > 0 {
+			ctx = metadata.AppendToOutgoingContext(ctx, "authorization", auth[0])
+		}
 	}
 
 	resp, err := c.parService.GetHackathonContext(ctx, req)

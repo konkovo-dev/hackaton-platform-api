@@ -4,7 +4,10 @@ import "context"
 
 type contextKey string
 
-const claimsContextKey contextKey = "auth:claims"
+const (
+	claimsContextKey      contextKey = "auth:claims"
+	serviceCallContextKey contextKey = "auth:service_call"
+)
 
 func WithClaims(ctx context.Context, claims *Claims) context.Context {
 	return context.WithValue(ctx, claimsContextKey, claims)
@@ -21,4 +24,13 @@ func GetUserID(ctx context.Context) (string, bool) {
 		return "", false
 	}
 	return claims.UserID, true
+}
+
+func WithServiceCall(ctx context.Context) context.Context {
+	return context.WithValue(ctx, serviceCallContextKey, true)
+}
+
+func IsServiceCall(ctx context.Context) bool {
+	val, ok := ctx.Value(serviceCallContextKey).(bool)
+	return ok && val
 }

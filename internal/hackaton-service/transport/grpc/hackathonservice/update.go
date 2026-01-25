@@ -7,6 +7,7 @@ import (
 
 	hackathonv1 "github.com/belikoooova/hackaton-platform-api/api/hackathon/v1"
 	"github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/transport/grpc/mappers"
+	"github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/usecase/hackathon"
 	"github.com/belikoooova/hackaton-platform-api/pkg/idempotency"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -41,6 +42,30 @@ func (s *HackathonService) UpdateHackathon(ctx context.Context, req *hackathonv1
 
 	result, err := s.hackathonService.UpdateHackathon(ctx, in)
 	if err != nil {
+		if errors.Is(err, hackathon.ErrValidationFailed) && result != nil {
+			validationErrors := make([]*hackathonv1.ValidationError, 0, len(result.ValidationErrors))
+			for _, ve := range result.ValidationErrors {
+				validationErrors = append(validationErrors, &hackathonv1.ValidationError{
+					Code:    ve.Code,
+					Field:   ve.Field,
+					Message: ve.Message,
+					Meta:    ve.Meta,
+				})
+			}
+			resp := &hackathonv1.UpdateHackathonResponse{
+				ValidationErrors: validationErrors,
+			}
+
+			if idempotencyKey != "" {
+				requestHash := idempotency.ComputeHash(req.Name, req.ShortDescription)
+				if err := s.idempotency.Save(ctx, idempotencyKey, "update_hackathon", requestHash, resp); err != nil {
+					s.logger.ErrorContext(ctx, "failed to save idempotency key", slog.String("error", err.Error()))
+				}
+			}
+
+			s.logger.ErrorContext(ctx, "update_hackathon", slog.String("error", "hackathon validation failed"))
+			return resp, nil
+		}
 		return nil, s.handleError(ctx, err, "update_hackathon")
 	}
 

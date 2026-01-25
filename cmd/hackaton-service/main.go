@@ -34,6 +34,8 @@ func main() {
 			func(repo *postgres.HackathonLinkRepository) hackathon.HackathonLinkRepository { return repo },
 			func(repo *postgres.HackathonRepository) announcement.HackathonRepository { return repo },
 			func(repo *postgres.AnnouncementRepository) announcement.AnnouncementRepository { return repo },
+			func(client *participationroles.Client) hackathon.ParticipationAndRolesClient { return client },
+			func(client *participationroles.Client) announcement.ParticipationAndRolesClient { return client },
 			func(pool *pgxpool.Pool) hackathon.UnitOfWork {
 				return pgxutil.NewUnitOfWork(pool, func(tx pgx.Tx) *hackathon.TxRepositories {
 					return &hackathon.TxRepositories{

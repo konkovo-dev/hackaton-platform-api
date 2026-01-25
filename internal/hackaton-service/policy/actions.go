@@ -9,6 +9,13 @@ const (
 	ActionPublishHackathon  policy.Action = "hackathon.publish"
 	ActionValidateHackathon policy.Action = "hackathon.validate"
 
+	ActionReadTask   policy.Action = "hackathon.task.read"
+	ActionUpdateTask policy.Action = "hackathon.task.update"
+
+	ActionReadResult        policy.Action = "hackathon.result.read"
+	ActionUpdateResultDraft policy.Action = "hackathon.result.update_draft"
+	ActionPublishResult     policy.Action = "hackathon.result.publish"
+
 	ActionCreateAnnouncement policy.Action = "hackathon.announcement.create"
 	ActionReadAnnouncements  policy.Action = "hackathon.announcement.read"
 	ActionUpdateAnnouncement policy.Action = "hackathon.announcement.update"

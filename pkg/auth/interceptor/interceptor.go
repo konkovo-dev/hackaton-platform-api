@@ -19,6 +19,7 @@ type unaryInterceptor struct {
 	publicMethods   map[string]bool
 	optionalMethods map[string]bool
 	internalMethods map[string]bool
+	hybridMethods   map[string]bool
 	serviceToken    string
 	logger          *slog.Logger
 }
@@ -28,6 +29,18 @@ func NewUnaryInterceptor(
 	publicMethods []string,
 	optionalMethods []string,
 	internalMethods []string,
+	serviceToken string,
+	logger *slog.Logger,
+) grpc.UnaryServerInterceptor {
+	return NewUnaryInterceptorWithHybrid(authClient, publicMethods, optionalMethods, internalMethods, nil, serviceToken, logger)
+}
+
+func NewUnaryInterceptorWithHybrid(
+	authClient client.AuthClient,
+	publicMethods []string,
+	optionalMethods []string,
+	internalMethods []string,
+	hybridMethods []string,
 	serviceToken string,
 	logger *slog.Logger,
 ) grpc.UnaryServerInterceptor {
@@ -46,11 +59,17 @@ func NewUnaryInterceptor(
 		internalMap[method] = true
 	}
 
+	hybridMap := make(map[string]bool, len(hybridMethods))
+	for _, method := range hybridMethods {
+		hybridMap[method] = true
+	}
+
 	i := &unaryInterceptor{
 		authClient:      authClient,
 		publicMethods:   publicMap,
 		optionalMethods: optionalMap,
 		internalMethods: internalMap,
+		hybridMethods:   hybridMap,
 		serviceToken:    serviceToken,
 		logger:          logger,
 	}
@@ -70,6 +89,29 @@ func (i *unaryInterceptor) intercept(
 		if err := i.verifyServiceToken(ctx, method); err != nil {
 			return nil, err
 		}
+		return handler(ctx, req)
+	}
+
+	if i.hybridMethods[method] {
+		// Try service token first
+		if err := i.verifyServiceToken(ctx, method); err == nil {
+			// Set service-to-service flag in context
+			ctx = auth.WithServiceCall(ctx)
+			return handler(ctx, req)
+		}
+
+		// If service token fails, try user token
+		token, err := i.extractToken(ctx, method)
+		if err != nil {
+			return nil, status.Error(codes.Unauthenticated, "authentication required (either service token or user token)")
+		}
+
+		claims, err := i.authenticate(ctx, token, method)
+		if err != nil {
+			return nil, err
+		}
+
+		ctx = auth.WithClaims(ctx, claims)
 		return handler(ctx, req)
 	}
 

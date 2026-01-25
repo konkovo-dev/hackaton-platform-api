@@ -16,7 +16,10 @@ run:
 	@ENV=local \
 		HACKATON_SERVICE_GRPC_PORT=$(SERVICE_PORT) \
 		DB_DSN="postgres://hackathon:hackathon_dev_password@localhost:5432/hackathon?sslmode=disable" \
-		PARTICIPATION_ROLES_SERVICE_URL=localhost:50053 \
+		AUTH_CLIENT_SERVICE_URL=localhost:50057 \
+		AUTH_CLIENT_MAX_CACHE_TTL=60s \
+		AUTH_CLIENT_CACHE_CLEANUP_INTERVAL=1m \
+		PARTICIPATION_ROLES_SERVICE_URL=localhost:50055 \
 		SERVICE_AUTH_TOKEN=dev-service-token \
 		IDEMPOTENCY_TTL=24h \
 		go run $(CMD_DIR)/main.go
