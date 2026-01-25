@@ -106,7 +106,7 @@ func (p *ReadAnnouncementsPolicy) Check(ctx context.Context, pctx policy.PolicyC
 	isStaff := hctx.HasRole(string(domain.RoleOwner)) ||
 		hctx.HasRole(string(domain.RoleOrganizer)) ||
 		hctx.HasRole(string(domain.RoleMentor)) ||
-		hctx.HasRole(string(domain.RoleJudge))
+		hctx.HasRole(string(domain.RoleJury))
 
 	isParticipant := hctx.ParticipationKind() == string(domain.ParticipationLookingForTeam) ||
 		hctx.ParticipationKind() == string(domain.ParticipationIndividual) ||

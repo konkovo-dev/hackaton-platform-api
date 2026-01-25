@@ -31,9 +31,14 @@ func NewGRPCServer(
 		"/identity.v1.MeService/CreateMe",
 	}
 
+	hybridMethods := []string{
+		"/identity.v1.UsersService/GetUser",
+		"/identity.v1.UsersService/BatchGetUsers",
+	}
+
 	serviceToken := env.GetEnv("SERVICE_AUTH_TOKEN", "")
 
-	authInterceptor := interceptor.NewUnaryInterceptor(authClient, publicMethods, nil, internalMethods, serviceToken, logger)
+	authInterceptor := interceptor.NewUnaryInterceptorWithHybrid(authClient, publicMethods, nil, internalMethods, hybridMethods, serviceToken, logger)
 
 	grpcServer := commongrpc.NewServer(commongrpc.ServerOptions{
 		UnaryInterceptors: []grpc.UnaryServerInterceptor{authInterceptor},

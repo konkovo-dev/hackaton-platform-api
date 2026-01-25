@@ -96,6 +96,13 @@ func (s *Service) UpdateHackathon(ctx context.Context, in UpdateHackathonIn) (*U
 	now := time.Now().UTC()
 	validationErrors := validator.ValidateUpdate(oldHackathon, newHackathon, in.Links, now)
 
+	stage := domain.HackathonStage(oldHackathon.Stage)
+	if validator.HasCriticalErrors(validationErrors, stage) {
+		return &UpdateHackathonOut{
+			ValidationErrors: validationErrors,
+		}, ErrValidationFailed
+	}
+
 	err = s.uow.Do(ctx, func(ctx context.Context, txRepos *TxRepositories) error {
 		if err := txRepos.Hackathons.Update(ctx, newHackathon); err != nil {
 			return err

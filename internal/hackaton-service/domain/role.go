@@ -8,7 +8,7 @@ const (
 	RoleOwner     HackathonRole = "owner"
 	RoleOrganizer HackathonRole = "organizer"
 	RoleMentor    HackathonRole = "mentor"
-	RoleJudge     HackathonRole = "judge"
+	RoleJury      HackathonRole = "jury"
 )
 
 type ParticipationStatus string
@@ -30,7 +30,7 @@ func MapProtoRoleToDomain(protoRole participationrolesv1.HackathonRole) Hackatho
 	case participationrolesv1.HackathonRole_HX_ROLE_MENTOR:
 		return RoleMentor
 	case participationrolesv1.HackathonRole_HX_ROLE_JUDGE:
-		return RoleJudge
+		return RoleJury
 	default:
 		return ""
 	}

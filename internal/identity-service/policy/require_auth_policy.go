@@ -43,6 +43,11 @@ func (p *RequireAuthPolicy) Check(ctx context.Context, pctx policy.PolicyContext
 	decision := policy.NewDecision()
 	ictx := pctx.(*IdentityPolicyContext)
 
+	// Allow service-to-service calls
+	if auth.IsServiceCall(ctx) {
+		return decision
+	}
+
 	if !ictx.IsAuthenticated() {
 		decision.Deny(policy.Violation{
 			Code:    policy.ViolationCodeForbidden,
