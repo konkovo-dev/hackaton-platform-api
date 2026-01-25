@@ -38,26 +38,33 @@ service HackathonService {
     };
   }
 
-  rpc ListOrganizerMessages(ListOrganizerMessagesRequest) returns (ListOrganizerMessagesResponse) {
-    option (google.api.http) = { get: "/v1/hackathons/{hackathon_id}/messages" };
+  rpc ValidateHackathon(ValidateHackathonRequest) returns (ValidateHackathonResponse) {
+    option (google.api.http) = { get: "/v1/hackathons/{hackathon_id}:validate" };
   }
 
-  rpc CreateOrganizerMessage(CreateOrganizerMessageRequest) returns (CreateOrganizerMessageResponse) {
+  rpc PublishHackathon(PublishHackathonRequest) returns (PublishHackathonResponse) {
+    option (google.api.http) = { post: "/v1/hackathons/{hackathon_id}:publish" body: "*" };
+  }
+
+  rpc ListHackathonAnnouncements(ListHackathonAnnouncementsRequest) returns (ListHackathonAnnouncementsResponse) {
+    option (google.api.http) = { get: "/v1/hackathons/{hackathon_id}/announcements" };
+  }
+
+  rpc CreateHackathonAnnouncement(CreateHackathonAnnouncementRequest) returns (CreateHackathonAnnouncementResponse) {
+    option (google.api.http) = { post: "/v1/hackathons/{hackathon_id}/announcements" body: "*" };
+  }
+
+  rpc UpdateHackathonAnnouncement(UpdateHackathonAnnouncementRequest) returns (UpdateHackathonAnnouncementResponse) {
     option (google.api.http) = {
-      post: "/v1/hackathons/{hackathon_id}/messages"
+      put: "/v1/hackathons/{hackathon_id}/announcements/{announcement_id}"
       body: "*"
     };
   }
 
-  rpc UpdateOrganizerMessage(UpdateOrganizerMessageRequest) returns (UpdateOrganizerMessageResponse) {
+  rpc DeleteHackathonAnnouncement(DeleteHackathonAnnouncementRequest) returns (DeleteHackathonAnnouncementResponse) {
     option (google.api.http) = {
-      put: "/v1/hackathons/{hackathon_id}/messages/{message_id}"
-      body: "*"
+      delete: "/v1/hackathons/{hackathon_id}/announcements/{announcement_id}"
     };
-  }
-
-  rpc DeleteOrganizerMessage(DeleteOrganizerMessageRequest) returns (DeleteOrganizerMessageResponse) {
-    option (google.api.http) = { delete: "/v1/hackathons/{hackathon_id}/messages/{message_id}" };
   }
 }
 
@@ -82,7 +89,7 @@ message ListHackathonsRequest {
 }
 
 message ListHackathonsResponse {
-  repeated GetHackathonResponse hackathons = 1;
+  repeated Hackathon hackathons = 1;
   common.v1.PageResponse page = 2;
 }
 
@@ -105,6 +112,8 @@ message CreateHackathonRequest {
 
 message CreateHackathonResponse {
   string hackathon_id = 1;
+
+  repeated ValidationError validation_errors = 2;
 }
 
 message UpdateHackathonRequest {
@@ -126,17 +135,34 @@ message UpdateHackathonRequest {
   common.v1.IdempotencyKey idempotency_key = 20;
 }
 
-message UpdateHackathonResponse {}
+message UpdateHackathonResponse {
+  repeated ValidationError validation_errors = 1;
+}
 
-message ListOrganizerMessagesRequest {
+message ValidateHackathonRequest {
   string hackathon_id = 1;
 }
 
-message ListOrganizerMessagesResponse {
-  repeated hackathon.v1.OrganizerMessage messages = 1;
+message ValidateHackathonResponse {
+  repeated ValidationError validation_errors = 1;
 }
 
-message CreateOrganizerMessageRequest {
+message PublishHackathonRequest {
+  string hackathon_id = 1;
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message PublishHackathonResponse {}
+
+message ListHackathonAnnouncementsRequest {
+  string hackathon_id = 1;
+}
+
+message ListHackathonAnnouncementsResponse {
+  repeated HackathonAnnouncement announcements = 1;
+}
+
+message CreateHackathonAnnouncementRequest {
   string hackathon_id = 1;
 
   string title = 2;
@@ -145,13 +171,13 @@ message CreateOrganizerMessageRequest {
   common.v1.IdempotencyKey idempotency_key = 10;
 }
 
-message CreateOrganizerMessageResponse {
-  string message_id = 1;
+message CreateHackathonAnnouncementResponse {
+  string announcement_id = 1;
 }
 
-message UpdateOrganizerMessageRequest {
+message UpdateHackathonAnnouncementRequest {
   string hackathon_id = 1;
-  string message_id = 2;
+  string announcement_id = 2;
 
   string title = 3;
   string body = 4;
@@ -159,13 +185,13 @@ message UpdateOrganizerMessageRequest {
   common.v1.IdempotencyKey idempotency_key = 10;
 }
 
-message UpdateOrganizerMessageResponse {}
+message UpdateHackathonAnnouncementResponse {}
 
-message DeleteOrganizerMessageRequest {
+message DeleteHackathonAnnouncementRequest {
   string hackathon_id = 1;
-  string message_id = 2;
+  string announcement_id = 2;
 
   common.v1.IdempotencyKey idempotency_key = 10;
 }
 
-message DeleteOrganizerMessageResponse {}
+message DeleteHackathonAnnouncementResponse {}

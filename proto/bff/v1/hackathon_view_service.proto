@@ -19,4 +19,5 @@ message GetHackathonViewForMeRequest {
 
 message GetHackathonViewForMeResponse {
   HackathonViewForMe view = 1;
+  bool is_authenticated = 2;
 }

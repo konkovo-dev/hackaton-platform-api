@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	authpolicy "github.com/belikoooova/hackaton-platform-api/internal/auth-service/policy"
 	"github.com/google/uuid"
 )
 
@@ -18,8 +19,13 @@ type IntrospectTokenOut struct {
 }
 
 func (s *Service) IntrospectToken(ctx context.Context, in IntrospectTokenIn) (*IntrospectTokenOut, error) {
-	if err := s.validateIntrospectTokenIn(in); err != nil {
-		return nil, err
+	introspectPolicy := authpolicy.NewIntrospectPolicy()
+	decision := introspectPolicy.ValidateInput(authpolicy.IntrospectParams{
+		AccessToken: in.AccessToken,
+	})
+
+	if !decision.Allowed {
+		return nil, s.mapPolicyDecisionToError(decision)
 	}
 
 	userID, expiresAt, err := s.jwtService.Verify(in.AccessToken)
@@ -36,12 +42,4 @@ func (s *Service) IntrospectToken(ctx context.Context, in IntrospectTokenIn) (*I
 		UserID:    userID,
 		ExpiresAt: expiresAt,
 	}, nil
-}
-
-func (s *Service) validateIntrospectTokenIn(in IntrospectTokenIn) error {
-	if in.AccessToken == "" {
-		return ErrTokenInvalid
-	}
-
-	return nil
 }

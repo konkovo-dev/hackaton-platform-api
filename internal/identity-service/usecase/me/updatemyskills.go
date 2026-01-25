@@ -6,6 +6,7 @@ import (
 
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/domain"
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/domain/entity"
+	identitypolicy "github.com/belikoooova/hackaton-platform-api/internal/identity-service/policy"
 	"github.com/google/uuid"
 )
 
@@ -23,11 +24,24 @@ type UpdateMySkillsOut struct {
 }
 
 func (s *Service) UpdateMySkills(ctx context.Context, in UpdateMySkillsIn) (*UpdateMySkillsOut, error) {
+	updatePolicy := identitypolicy.NewUpdateMySkillsPolicy()
+	pctx, err := updatePolicy.LoadContext(ctx, identitypolicy.UpdateMySkillsParams{
+		UserID: in.UserID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	decision := updatePolicy.Check(ctx, pctx)
+	if !decision.Allowed {
+		return nil, s.mapPolicyError(decision)
+	}
+
 	if err := s.validateUpdateMySkillsIn(in); err != nil {
 		return nil, err
 	}
 
-	_, err := s.userRepo.GetByID(ctx, in.UserID)
+	_, err = s.userRepo.GetByID(ctx, in.UserID)
 	if err != nil {
 		return nil, ErrUserNotFound
 	}

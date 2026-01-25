@@ -54,6 +54,25 @@ func (r *HackathonLinkRepository) GetByHackathonID(ctx context.Context, hackatho
 	return links, nil
 }
 
+func (r *HackathonLinkRepository) GetByHackathonIDs(ctx context.Context, hackathonIDs []uuid.UUID) ([]*entity.HackathonLink, error) {
+	rows, err := r.Queries().GetHackathonLinksByIDs(ctx, hackathonIDs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get hackathon links: %w", err)
+	}
+
+	links := make([]*entity.HackathonLink, 0, len(rows))
+	for _, row := range rows {
+		links = append(links, &entity.HackathonLink{
+			ID:          row.ID,
+			HackathonID: row.HackathonID,
+			Title:       row.Title,
+			URL:         row.Url,
+		})
+	}
+
+	return links, nil
+}
+
 func (r *HackathonLinkRepository) DeleteByHackathonID(ctx context.Context, hackathonID uuid.UUID) error {
 	err := r.Queries().DeleteHackathonLinks(ctx, hackathonID)
 	if err != nil {

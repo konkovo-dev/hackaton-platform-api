@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/url"
 	"time"
 
 	"github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/domain"
 	"github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/domain/entity"
-	"github.com/belikoooova/hackaton-platform-api/pkg/auth"
+	hackathonpolicy "github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/policy"
 	"github.com/belikoooova/hackaton-platform-api/pkg/outbox"
+	"github.com/belikoooova/hackaton-platform-api/pkg/policy"
 	"github.com/google/uuid"
 )
 
@@ -46,18 +46,24 @@ type CreateHackathonLink struct {
 }
 
 type CreateHackathonOut struct {
-	HackathonID uuid.UUID
+	HackathonID      uuid.UUID
+	ValidationErrors []domain.ValidationError
 }
 
 func (s *Service) CreateHackathon(ctx context.Context, in CreateHackathonIn) (*CreateHackathonOut, error) {
-	userID, ok := auth.GetUserID(ctx)
-	if !ok {
-		return nil, ErrUnauthorized
-	}
-
-	if err := s.validateCreateHackathonIn(in); err != nil {
+	createPolicy := hackathonpolicy.NewCreateHackathonPolicy()
+	pctx, err := createPolicy.LoadContext(ctx, hackathonpolicy.CreateHackathonParams{})
+	if err != nil {
 		return nil, err
 	}
+
+	decision := createPolicy.Check(ctx, pctx)
+	if !decision.Allowed {
+		return nil, s.mapPolicyError(decision)
+	}
+
+	hctx := pctx.(*hackathonpolicy.HackathonPolicyContext)
+	userID := hctx.ActorUserID().String()
 
 	hackathonID := uuid.New()
 
@@ -80,11 +86,17 @@ func (s *Service) CreateHackathon(ctx context.Context, in CreateHackathonIn) (*C
 		TeamSizeMax:          in.TeamSizeMax,
 		AllowIndividual:      in.AllowIndividual,
 		AllowTeam:            in.AllowTeam,
+		State:                string(domain.StateDraft),
+		Stage:                string(domain.StageDraft),
+		PublishedAt:          nil,
+		Task:                 "",
+		Result:               "",
 	}
 
-	hackathon.Stage = computeStage(time.Now().UTC(), hackathon)
+	validator := NewHackathonValidator()
+	validationErrors := validator.ValidateForPublish(hackathon, in.Links)
 
-	err := s.uow.Do(ctx, func(ctx context.Context, txRepos *TxRepositories) error {
+	err = s.uow.Do(ctx, func(ctx context.Context, txRepos *TxRepositories) error {
 		if err := txRepos.Hackathons.Create(ctx, hackathon); err != nil {
 			return fmt.Errorf("failed to create hackathon: %w", err)
 		}
@@ -125,96 +137,20 @@ func (s *Service) CreateHackathon(ctx context.Context, in CreateHackathonIn) (*C
 	}
 
 	return &CreateHackathonOut{
-		HackathonID: hackathonID,
+		HackathonID:      hackathonID,
+		ValidationErrors: validationErrors,
 	}, nil
 }
 
-func (s *Service) validateCreateHackathonIn(in CreateHackathonIn) error {
-	if in.Name == "" {
-		return ErrEmptyName
+func (s *Service) mapPolicyError(decision *policy.Decision) error {
+	if len(decision.Violations) == 0 {
+		return ErrUnauthorized
 	}
 
-	if in.ShortDescription == "" {
-		return ErrEmptyShortDescription
+	v := decision.Violations[0]
+	if v.Code == policy.ViolationCodeForbidden {
+		return ErrUnauthorized
 	}
 
-	if !in.LocationOnline && in.LocationCity == "" && in.LocationCountry == "" {
-		return ErrInvalidLocation
-	}
-
-	if in.StartsAt == nil {
-		return ErrMissingStartsAt
-	}
-	if in.EndsAt == nil {
-		return ErrMissingEndsAt
-	}
-	if in.RegistrationOpensAt == nil {
-		return ErrMissingRegistrationOpensAt
-	}
-	if in.RegistrationClosesAt == nil {
-		return ErrMissingRegistrationClosesAt
-	}
-	if in.SubmissionsOpensAt == nil {
-		return ErrMissingSubmissionsOpensAt
-	}
-	if in.SubmissionsClosesAt == nil {
-		return ErrMissingSubmissionsClosesAt
-	}
-	if in.JudgingEndsAt == nil {
-		return ErrMissingJudgingEndsAt
-	}
-
-	if !in.RegistrationOpensAt.Before(*in.RegistrationClosesAt) {
-		return ErrInvalidDateSequence
-	}
-	if !in.RegistrationClosesAt.Before(*in.StartsAt) {
-		return ErrInvalidDateSequence
-	}
-	if !in.StartsAt.Before(*in.SubmissionsOpensAt) {
-		return ErrInvalidDateSequence
-	}
-	if !in.EndsAt.Before(*in.SubmissionsClosesAt) && !in.EndsAt.Equal(*in.SubmissionsClosesAt) {
-		return ErrInvalidDateSequence
-	}
-	if !in.SubmissionsClosesAt.Before(*in.JudgingEndsAt) {
-		return ErrInvalidDateSequence
-	}
-
-	if in.TeamSizeMax <= 0 {
-		return ErrInvalidTeamSizeMax
-	}
-
-	if !in.AllowIndividual && !in.AllowTeam {
-		return ErrInvalidRegistrationPolicy
-	}
-
-	for _, link := range in.Links {
-		if link.Title == "" {
-			return ErrInvalidLink
-		}
-		if _, err := url.ParseRequestURI(link.URL); err != nil {
-			return ErrInvalidLink
-		}
-	}
-
-	return nil
-}
-
-func computeStage(now time.Time, dates *entity.Hackathon) string {
-	if now.Before(*dates.RegistrationOpensAt) {
-		return string(domain.StageUpcoming)
-	}
-	if now.Before(*dates.RegistrationClosesAt) {
-		return string(domain.StageRegistration)
-	}
-	if now.Before(*dates.StartsAt) {
-		return string(domain.StagePreStart)
-	}
-	if now.Before(*dates.EndsAt) {
-		return string(domain.StageRunning)
-	}
-	if now.Before(*dates.JudgingEndsAt) {
-		return string(domain.StageJudging)
-	}
-	return string(domain.StageFinished)
+	return ErrUnauthorized
 }

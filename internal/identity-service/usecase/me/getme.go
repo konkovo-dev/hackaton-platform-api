@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/domain/entity"
+	identitypolicy "github.com/belikoooova/hackaton-platform-api/internal/identity-service/policy"
+	"github.com/belikoooova/hackaton-platform-api/pkg/policy"
 	"github.com/google/uuid"
 )
 
@@ -30,6 +32,19 @@ type GetMeContact struct {
 }
 
 func (s *Service) GetMe(ctx context.Context, in GetMeIn) (*GetMeOut, error) {
+	policy := identitypolicy.NewReadMePolicy()
+	pctx, err := policy.LoadContext(ctx, identitypolicy.ReadMeParams{
+		UserID: in.UserID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	decision := policy.Check(ctx, pctx)
+	if !decision.Allowed {
+		return nil, s.mapPolicyError(decision)
+	}
+
 	if err := s.validateGetMeIn(in); err != nil {
 		return nil, err
 	}
@@ -84,4 +99,17 @@ func (s *Service) validateGetMeIn(in GetMeIn) error {
 	}
 
 	return nil
+}
+
+func (s *Service) mapPolicyError(decision *policy.Decision) error {
+	if len(decision.Violations) == 0 {
+		return fmt.Errorf("access denied")
+	}
+
+	v := decision.Violations[0]
+	if v.Code == "FORBIDDEN" {
+		return fmt.Errorf("access denied: %s", v.Message)
+	}
+
+	return fmt.Errorf("%s", v.Message)
 }

@@ -6,6 +6,7 @@ import (
 
 	commonv1 "github.com/belikoooova/hackaton-platform-api/api/common/v1"
 	participationrolesv1 "github.com/belikoooova/hackaton-platform-api/api/participationandroles/v1"
+	"github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/domain"
 	"github.com/belikoooova/hackaton-platform-api/pkg/idempotency"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -14,7 +15,7 @@ import (
 
 type Client struct {
 	conn         *grpc.ClientConn
-	client       participationrolesv1.ParticipationAndRolesServiceClient
+	parService   participationrolesv1.ParticipationAndRolesServiceClient
 	serviceToken string
 }
 
@@ -27,11 +28,11 @@ func NewClient(cfg *Config) (*Client, error) {
 		return nil, fmt.Errorf("failed to dial participation-roles service: %w", err)
 	}
 
-	client := participationrolesv1.NewParticipationAndRolesServiceClient(conn)
+	parService := participationrolesv1.NewParticipationAndRolesServiceClient(conn)
 
 	return &Client{
 		conn:         conn,
-		client:       client,
+		parService:   parService,
 		serviceToken: cfg.ServiceToken,
 	}, nil
 }
@@ -49,7 +50,7 @@ func (c *Client) CheckAccess(ctx context.Context, hackathonID string, policy par
 		Policy:      policy,
 	}
 
-	resp, err := c.client.CheckAccess(ctx, req)
+	resp, err := c.parService.CheckAccess(ctx, req)
 	if err != nil {
 		return false, fmt.Errorf("failed to check access: %w", err)
 	}
@@ -58,8 +59,6 @@ func (c *Client) CheckAccess(ctx context.Context, hackathonID string, policy par
 }
 
 func (c *Client) AssignHackathonRole(ctx context.Context, hackathonID, userID string, role participationrolesv1.HackathonRole) error {
-	ctx = c.addServiceToken(ctx)
-
 	idempotencyKeyValue := idempotency.ComputeHash(hackathonID, userID, role.String())
 
 	req := &participationrolesv1.AssignHackathonRoleRequest{
@@ -71,7 +70,12 @@ func (c *Client) AssignHackathonRole(ctx context.Context, hackathonID, userID st
 		},
 	}
 
-	_, err := c.client.AssignHackathonRole(ctx, req)
+	md := metadata.New(map[string]string{
+		"x-service-token": c.serviceToken,
+	})
+	ctx = metadata.NewOutgoingContext(ctx, md)
+
+	_, err := c.parService.AssignHackathonRole(ctx, req)
 	if err != nil {
 		return fmt.Errorf("failed to assign hackathon role: %w", err)
 	}
@@ -79,9 +83,25 @@ func (c *Client) AssignHackathonRole(ctx context.Context, hackathonID, userID st
 	return nil
 }
 
-func (c *Client) addServiceToken(ctx context.Context) context.Context {
-	md := metadata.New(map[string]string{
-		"x-service-token": c.serviceToken,
-	})
-	return metadata.NewOutgoingContext(ctx, md)
+func (c *Client) GetHackathonContext(ctx context.Context, hackathonID string) (userID, participationStatus, teamID string, roles []string, err error) {
+	req := &participationrolesv1.GetHackathonContextRequest{
+		HackathonId: hackathonID,
+	}
+
+	resp, err := c.parService.GetHackathonContext(ctx, req)
+	if err != nil {
+		return "", "", "", nil, fmt.Errorf("failed to get hackathon context: %w", err)
+	}
+
+	rolesStr := make([]string, 0, len(resp.Roles))
+	for _, protoRole := range resp.Roles {
+		domainRole := domain.MapProtoRoleToDomain(protoRole)
+		if domainRole != "" {
+			rolesStr = append(rolesStr, string(domainRole))
+		}
+	}
+
+	domainParticipation := domain.MapProtoParticipationToDomain(resp.ParticipationStatus)
+
+	return resp.UserId, string(domainParticipation), resp.TeamId, rolesStr, nil
 }

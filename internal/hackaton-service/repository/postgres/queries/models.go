@@ -11,6 +11,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type HackathonAnnouncement struct {
+	ID              uuid.UUID          `json:"id"`
+	HackathonID     uuid.UUID          `json:"hackathon_id"`
+	Title           string             `json:"title"`
+	Body            string             `json:"body"`
+	CreatedByUserID uuid.UUID          `json:"created_by_user_id"`
+	CreatedAt       time.Time          `json:"created_at"`
+	UpdatedAt       time.Time          `json:"updated_at"`
+	DeletedAt       pgtype.Timestamptz `json:"deleted_at"`
+}
+
 type HackathonHackathon struct {
 	ID                   uuid.UUID          `json:"id"`
 	Name                 string             `json:"name"`
@@ -28,6 +39,11 @@ type HackathonHackathon struct {
 	SubmissionsClosesAt  pgtype.Timestamptz `json:"submissions_closes_at"`
 	JudgingEndsAt        pgtype.Timestamptz `json:"judging_ends_at"`
 	Stage                string             `json:"stage"`
+	State                string             `json:"state"`
+	PublishedAt          pgtype.Timestamptz `json:"published_at"`
+	ResultPublishedAt    pgtype.Timestamptz `json:"result_published_at"`
+	Task                 string             `json:"task"`
+	Result               string             `json:"result"`
 	TeamSizeMax          int32              `json:"team_size_max"`
 	AllowIndividual      bool               `json:"allow_individual"`
 	AllowTeam            bool               `json:"allow_team"`

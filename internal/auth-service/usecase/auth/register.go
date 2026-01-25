@@ -7,7 +7,9 @@ import (
 	"strings"
 
 	"github.com/belikoooova/hackaton-platform-api/internal/auth-service/domain/entity"
+	authpolicy "github.com/belikoooova/hackaton-platform-api/internal/auth-service/policy"
 	"github.com/belikoooova/hackaton-platform-api/pkg/outbox"
+	"github.com/belikoooova/hackaton-platform-api/pkg/policy"
 	"github.com/google/uuid"
 )
 
@@ -21,20 +23,23 @@ type RegisterIn struct {
 }
 
 func (s *Service) Register(ctx context.Context, in RegisterIn) (*AuthOut, error) {
-	if err := s.validateRegisterIn(in); err != nil {
-		return nil, err
+	// Validate input using policy
+	registerPolicy := authpolicy.NewRegisterPolicy(s.userRepo)
+	decision := registerPolicy.ValidateInput(ctx, authpolicy.RegisterParams{
+		Email:     in.Email,
+		Username:  in.Username,
+		Password:  in.Password,
+		FirstName: in.FirstName,
+		LastName:  in.LastName,
+		Timezone:  in.Timezone,
+	})
+
+	if !decision.Allowed {
+		return nil, s.mapPolicyDecisionToError(decision)
 	}
 
+	// Normalize username to lowercase
 	username := strings.ToLower(in.Username)
-	existingUser, err := s.userRepo.GetByUsername(ctx, username)
-	if err == nil && existingUser != nil {
-		return nil, ErrUserAlreadyExists
-	}
-
-	existingUser, err = s.userRepo.GetByEmail(ctx, in.Email)
-	if err == nil && existingUser != nil {
-		return nil, ErrUserAlreadyExists
-	}
 
 	passwordHash, err := s.passwordService.Hash(in.Password)
 	if err != nil {
@@ -88,41 +93,50 @@ func (s *Service) Register(ctx context.Context, in RegisterIn) (*AuthOut, error)
 	return s.generateTokens(ctx, user.ID)
 }
 
-func (s *Service) validateRegisterIn(input RegisterIn) error {
-	if input.Username == "" {
-		return ErrEmptyUsername
+// mapPolicyDecisionToError maps policy violations to legacy errors for backward compatibility
+func (s *Service) mapPolicyDecisionToError(decision *policy.Decision) error {
+	if len(decision.Violations) == 0 {
+		return ErrInvalidCredentials
 	}
 
-	if input.Email == "" {
-		return ErrEmptyEmail
-	}
-
-	if input.Password == "" {
-		return ErrEmptyPassword
-	}
-
-	if input.FirstName == "" {
-		return ErrEmptyFirstName
-	}
-
-	if input.LastName == "" {
-		return ErrEmptyLastName
-	}
-
-	if input.Timezone == "" {
-		return ErrEmptyTimezone
-	}
-
-	username := strings.ToLower(input.Username)
-	for _, r := range username {
-		if !((r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '_' || r == '-') {
+	// Map first violation to legacy error
+	v := decision.Violations[0]
+	switch v.Field {
+	case "username":
+		if v.Code == "REQUIRED" {
+			return ErrEmptyUsername
+		}
+		if v.Code == "FORMAT" {
 			return ErrInvalidUsername
 		}
+		if v.Code == "CONFLICT" {
+			return ErrUserAlreadyExists
+		}
+	case "email":
+		if v.Code == "REQUIRED" {
+			return ErrEmptyEmail
+		}
+		if v.Code == "CONFLICT" {
+			return ErrUserAlreadyExists
+		}
+	case "password":
+		if v.Code == "REQUIRED" {
+			return ErrEmptyPassword
+		}
+		if v.Code == "FORMAT" {
+			return ErrInvalidPassword
+		}
+	case "first_name":
+		return ErrEmptyFirstName
+	case "last_name":
+		return ErrEmptyLastName
+	case "timezone":
+		return ErrEmptyTimezone
+	case "login":
+		return ErrEmptyLogin
+	case "refresh_token", "access_token":
+		return ErrTokenInvalid
 	}
 
-	if len(input.Password) < 8 {
-		return ErrInvalidPassword
-	}
-
-	return nil
+	return ErrInvalidCredentials
 }

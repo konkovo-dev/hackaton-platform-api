@@ -26,11 +26,18 @@ type Hackathon struct {
 	JudgingEndsAt        *time.Time
 
 	Stage string
+	State string
+
+	PublishedAt       *time.Time
+	ResultPublishedAt *time.Time
 
 	TeamSizeMax int32
 
 	AllowIndividual bool
 	AllowTeam       bool
+
+	Task   string
+	Result string
 
 	CreatedAt time.Time
 	UpdatedAt time.Time

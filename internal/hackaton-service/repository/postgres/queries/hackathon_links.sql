@@ -8,6 +8,12 @@ FROM hackathon.hackathon_links
 WHERE hackathon_id = $1
 ORDER BY id;
 
+-- name: GetHackathonLinksByIDs :many
+SELECT id, hackathon_id, title, url
+FROM hackathon.hackathon_links
+WHERE hackathon_id = ANY($1::uuid[])
+ORDER BY hackathon_id, id;
+
 -- name: DeleteHackathonLinks :exec
 DELETE FROM hackathon.hackathon_links
 WHERE hackathon_id = $1;

@@ -13,3 +13,16 @@ enum HackathonStage {
   HACKATHON_STAGE_JUDGING = 5;
   HACKATHON_STAGE_FINISHED = 6;
 }
+
+enum HackathonState {
+  HACKATHON_STATE_UNSPECIFIED = 0;
+  HACKATHON_STATE_DRAFT = 1;
+  HACKATHON_STATE_PUBLISHED = 2;
+}
+
+message ValidationError {
+  string code = 1;
+  string field = 2;
+  string message = 3;
+  map<string, string> meta = 4;
+}

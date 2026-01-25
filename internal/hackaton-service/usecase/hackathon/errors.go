@@ -8,6 +8,7 @@ var (
 	ErrHackathonNotFound = errors.New("hackathon not found")
 	ErrUnauthorized      = errors.New("unauthorized")
 	ErrForbidden         = errors.New("forbidden")
+	ErrInvalidInput      = errors.New("invalid input")
 
 	ErrEmptyName             = errors.New("name is required")
 	ErrEmptyShortDescription = errors.New("short description is required")

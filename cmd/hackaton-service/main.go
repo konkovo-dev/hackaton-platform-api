@@ -4,6 +4,7 @@ import (
 	"github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/client/participationroles"
 	"github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/repository/postgres"
 	"github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/transport/grpc"
+	"github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/usecase/announcement"
 	"github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/usecase/hackathon"
 	outboxHandlers "github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/usecase/outbox"
 	authclient "github.com/belikoooova/hackaton-platform-api/pkg/auth/client"
@@ -24,12 +25,15 @@ func main() {
 		participationroles.Module,
 		idempotency.Module,
 		hackathon.Module,
+		announcement.Module,
 		outboxHandlers.Module,
 		outbox.Module,
 		grpc.Module,
 		fx.Provide(
 			func(repo *postgres.HackathonRepository) hackathon.HackathonRepository { return repo },
 			func(repo *postgres.HackathonLinkRepository) hackathon.HackathonLinkRepository { return repo },
+			func(repo *postgres.HackathonRepository) announcement.HackathonRepository { return repo },
+			func(repo *postgres.AnnouncementRepository) announcement.AnnouncementRepository { return repo },
 			func(pool *pgxpool.Pool) hackathon.UnitOfWork {
 				return pgxutil.NewUnitOfWork(pool, func(tx pgx.Tx) *hackathon.TxRepositories {
 					return &hackathon.TxRepositories{

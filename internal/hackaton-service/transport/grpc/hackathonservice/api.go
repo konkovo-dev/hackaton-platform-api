@@ -6,6 +6,7 @@ import (
 	"log/slog"
 
 	hackathonv1 "github.com/belikoooova/hackaton-platform-api/api/hackathon/v1"
+	"github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/usecase/announcement"
 	"github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/usecase/hackathon"
 	"github.com/belikoooova/hackaton-platform-api/pkg/idempotency"
 	"google.golang.org/grpc/codes"
@@ -14,22 +15,25 @@ import (
 
 type HackathonService struct {
 	hackathonv1.UnimplementedHackathonServiceServer
-	hackathonService *hackathon.Service
-	idempotency      *idempotency.Helper
-	logger           *slog.Logger
+	hackathonService    *hackathon.Service
+	announcementService *announcement.Service
+	idempotency         *idempotency.Helper
+	logger              *slog.Logger
 }
 
 var _ hackathonv1.HackathonServiceServer = (*HackathonService)(nil)
 
 func NewHackathonService(
 	hackathonService *hackathon.Service,
+	announcementService *announcement.Service,
 	idempotencyHelper *idempotency.Helper,
 	logger *slog.Logger,
 ) *HackathonService {
 	return &HackathonService{
-		hackathonService: hackathonService,
-		idempotency:      idempotencyHelper,
-		logger:           logger,
+		hackathonService:    hackathonService,
+		announcementService: announcementService,
+		idempotency:         idempotencyHelper,
+		logger:              logger,
 	}
 }
 
@@ -60,6 +64,26 @@ func (s *HackathonService) handleError(ctx context.Context, err error, operation
 		errors.Is(err, hackathon.ErrInvalidLink):
 		s.logger.WarnContext(ctx, operation, slog.String("error", err.Error()))
 		return status.Error(codes.InvalidArgument, err.Error())
+	default:
+		s.logger.ErrorContext(ctx, operation, slog.String("error", err.Error()))
+		return status.Error(codes.Internal, "internal error")
+	}
+}
+
+func (s *HackathonService) handleAnnouncementError(ctx context.Context, err error, operation string) error {
+	switch {
+	case errors.Is(err, announcement.ErrAnnouncementNotFound):
+		s.logger.WarnContext(ctx, operation, slog.String("error", err.Error()))
+		return status.Error(codes.NotFound, err.Error())
+	case errors.Is(err, announcement.ErrHackathonNotFound):
+		s.logger.WarnContext(ctx, operation, slog.String("error", err.Error()))
+		return status.Error(codes.NotFound, err.Error())
+	case errors.Is(err, announcement.ErrUnauthorized):
+		s.logger.WarnContext(ctx, operation, slog.String("error", err.Error()))
+		return status.Error(codes.Unauthenticated, err.Error())
+	case errors.Is(err, announcement.ErrForbidden):
+		s.logger.WarnContext(ctx, operation, slog.String("error", err.Error()))
+		return status.Error(codes.PermissionDenied, err.Error())
 	default:
 		s.logger.ErrorContext(ctx, operation, slog.String("error", err.Error()))
 		return status.Error(codes.Internal, "internal error")

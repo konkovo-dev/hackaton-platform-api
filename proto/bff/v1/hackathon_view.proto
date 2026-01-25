@@ -5,6 +5,7 @@ package bff.v1;
 option go_package = "github.com/belikoooova/hackaton-platform-api/api/bff/hackathon/v1;bffhackathonv1";
 
 import "hackathon/v1/hackathon.proto";
+import "hackathon/v1/common.proto";
 import "participationandroles/v1/common.proto";
 
 message HackathonViewForMe {
@@ -15,6 +16,10 @@ message HackathonViewForMe {
   participationandroles.v1.ParticipationStatus participation_status = 3;
   string team_id = 4;
   repeated participationandroles.v1.HackathonRole roles = 5;
+
+  repeated participationandroles.v1.AccessPolicy policies = 6;
+
+  repeated hackathon.v1.ValidationError draft_validation_errors = 7;
 
   repeated SidebarItem sidebar = 10;
   CallToAction cta = 11;
@@ -28,6 +33,8 @@ enum SidebarSection {
   SIDEBAR_SECTION_MENTORS = 4;
   SIDEBAR_SECTION_JUDGING = 5;
   SIDEBAR_SECTION_RESULTS = 6;
+  SIDEBAR_SECTION_ANNOUNCEMENTS = 7;
+  SIDEBAR_SECTION_MANAGE = 8;
 }
 
 message SidebarItem {
@@ -44,6 +51,11 @@ enum CtaAction {
   CTA_HACKATHON_REGISTER_INDIVIDUAL = 2;
   CTA_HACKATHON_CREATE_TEAM = 3;
   CTA_HACKATHON_JOIN_TEAM = 4;
+
+  CTA_HACKATHON_EDIT = 10;
+  CTA_HACKATHON_VALIDATE = 11;
+  CTA_HACKATHON_PUBLISH = 12;
+  CTA_HACKATHON_MANAGE_ANNOUNCEMENTS = 13;
 }
 
 message CallToAction {

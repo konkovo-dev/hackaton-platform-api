@@ -18,6 +18,12 @@ message Hackathon {
   HackathonLimits limits = 8;
   repeated HackathonLink links = 9;
   HackathonRegistrationPolicy registration_policy = 10;
+  HackathonState state = 11;
+
+  google.protobuf.Timestamp published_at = 12;
+
+  google.protobuf.Timestamp created_at = 20;
+  google.protobuf.Timestamp updated_at = 21;
 }
 
 message HackathonRegistrationPolicy {

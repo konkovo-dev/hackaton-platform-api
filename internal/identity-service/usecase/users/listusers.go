@@ -7,6 +7,7 @@ import (
 
 	commonv1 "github.com/belikoooova/hackaton-platform-api/api/common/v1"
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/domain/entity"
+	identitypolicy "github.com/belikoooova/hackaton-platform-api/internal/identity-service/policy"
 	"github.com/belikoooova/hackaton-platform-api/pkg/queryutil"
 	"github.com/belikoooova/hackaton-platform-api/pkg/queryutil/sqlbuilder"
 	"github.com/google/uuid"
@@ -24,6 +25,17 @@ type ListUsersOut struct {
 }
 
 func (s *Service) ListUsers(ctx context.Context, in ListUsersIn) (*ListUsersOut, error) {
+	policy := identitypolicy.NewRequireAuthPolicy(identitypolicy.ActionListUsers)
+	pctx, err := policy.LoadContext(ctx, identitypolicy.NoParams{})
+	if err != nil {
+		return nil, err
+	}
+
+	decision := policy.Check(ctx, pctx)
+	if !decision.Allowed {
+		return nil, s.mapPolicyError(decision)
+	}
+
 	if err := s.validateListUsersIn(in); err != nil {
 		return nil, err
 	}

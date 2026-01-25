@@ -43,6 +43,11 @@ func (r *HackathonRepository) Create(ctx context.Context, hackathon *entity.Hack
 		SubmissionsClosesAt:  pgxutil.TimePtrToPgtype(hackathon.SubmissionsClosesAt),
 		JudgingEndsAt:        pgxutil.TimePtrToPgtype(hackathon.JudgingEndsAt),
 		Stage:                hackathon.Stage,
+		State:                hackathon.State,
+		PublishedAt:          pgxutil.TimePtrToPgtype(hackathon.PublishedAt),
+		ResultPublishedAt:    pgxutil.TimePtrToPgtype(hackathon.ResultPublishedAt),
+		Task:                 hackathon.Task,
+		Result:               hackathon.Result,
 		TeamSizeMax:          hackathon.TeamSizeMax,
 		AllowIndividual:      hackathon.AllowIndividual,
 		AllowTeam:            hackathon.AllowTeam,
@@ -88,6 +93,11 @@ func (r *HackathonRepository) GetByID(ctx context.Context, id uuid.UUID) (*entit
 		SubmissionsClosesAt:  pgxutil.PgtypeTimestampToTimePtr(row.SubmissionsClosesAt),
 		JudgingEndsAt:        pgxutil.PgtypeTimestampToTimePtr(row.JudgingEndsAt),
 		Stage:                row.Stage,
+		State:                row.State,
+		PublishedAt:          pgxutil.PgtypeTimestampToTimePtr(row.PublishedAt),
+		ResultPublishedAt:    pgxutil.PgtypeTimestampToTimePtr(row.ResultPublishedAt),
+		Task:                 row.Task,
+		Result:               row.Result,
 		TeamSizeMax:          row.TeamSizeMax,
 		AllowIndividual:      row.AllowIndividual,
 		AllowTeam:            row.AllowTeam,
@@ -116,6 +126,11 @@ func (r *HackathonRepository) Update(ctx context.Context, hackathon *entity.Hack
 		SubmissionsClosesAt:  pgxutil.TimePtrToPgtype(hackathon.SubmissionsClosesAt),
 		JudgingEndsAt:        pgxutil.TimePtrToPgtype(hackathon.JudgingEndsAt),
 		Stage:                hackathon.Stage,
+		State:                hackathon.State,
+		PublishedAt:          pgxutil.TimePtrToPgtype(hackathon.PublishedAt),
+		ResultPublishedAt:    pgxutil.TimePtrToPgtype(hackathon.ResultPublishedAt),
+		Task:                 hackathon.Task,
+		Result:               hackathon.Result,
 		TeamSizeMax:          hackathon.TeamSizeMax,
 		AllowIndividual:      hackathon.AllowIndividual,
 		AllowTeam:            hackathon.AllowTeam,
@@ -131,4 +146,56 @@ func (r *HackathonRepository) Update(ctx context.Context, hackathon *entity.Hack
 	}
 
 	return nil
+}
+
+func (r *HackathonRepository) List(ctx context.Context, limit, offset int32) ([]*entity.Hackathon, error) {
+	rows, err := r.Queries().ListHackathons(ctx, queries.ListHackathonsParams{
+		Limit:  limit,
+		Offset: offset,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list hackathons: %w", pgxutil.MapDBError(err))
+	}
+
+	hackathons := make([]*entity.Hackathon, 0, len(rows))
+	for _, row := range rows {
+		hackathons = append(hackathons, &entity.Hackathon{
+			ID:                   row.ID,
+			Name:                 row.Name,
+			ShortDescription:     row.ShortDescription,
+			Description:          row.Description,
+			LocationOnline:       row.LocationOnline,
+			LocationCity:         row.LocationCity,
+			LocationCountry:      row.LocationCountry,
+			LocationVenue:        row.LocationVenue,
+			StartsAt:             pgxutil.PgtypeTimestampToTimePtr(row.StartsAt),
+			EndsAt:               pgxutil.PgtypeTimestampToTimePtr(row.EndsAt),
+			RegistrationOpensAt:  pgxutil.PgtypeTimestampToTimePtr(row.RegistrationOpensAt),
+			RegistrationClosesAt: pgxutil.PgtypeTimestampToTimePtr(row.RegistrationClosesAt),
+			SubmissionsOpensAt:   pgxutil.PgtypeTimestampToTimePtr(row.SubmissionsOpensAt),
+			SubmissionsClosesAt:  pgxutil.PgtypeTimestampToTimePtr(row.SubmissionsClosesAt),
+			JudgingEndsAt:        pgxutil.PgtypeTimestampToTimePtr(row.JudgingEndsAt),
+			Stage:                row.Stage,
+			State:                row.State,
+			PublishedAt:          pgxutil.PgtypeTimestampToTimePtr(row.PublishedAt),
+			ResultPublishedAt:    pgxutil.PgtypeTimestampToTimePtr(row.ResultPublishedAt),
+			Task:                 row.Task,
+			Result:               row.Result,
+			TeamSizeMax:          row.TeamSizeMax,
+			AllowIndividual:      row.AllowIndividual,
+			AllowTeam:            row.AllowTeam,
+			CreatedAt:            row.CreatedAt,
+			UpdatedAt:            row.UpdatedAt,
+		})
+	}
+
+	return hackathons, nil
+}
+
+func (r *HackathonRepository) CountPublished(ctx context.Context) (int64, error) {
+	count, err := r.Queries().CountPublishedHackathons(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count published hackathons: %w", pgxutil.MapDBError(err))
+	}
+	return count, nil
 }

@@ -9,7 +9,7 @@ import "google/api/annotations.proto";
 service PingService {
   rpc Ping(PingRequest) returns (PingResponse) {
     option (google.api.http) = {
-      get: "/api/v1/auth/ping"
+      get: "/v1/hackathon/ping"
     };
   }
 }

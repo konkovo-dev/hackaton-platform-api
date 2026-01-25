@@ -44,8 +44,19 @@ func (s *HackathonService) CreateHackathon(ctx context.Context, req *hackathonv1
 		return nil, s.handleError(ctx, err, "create_hackathon")
 	}
 
+	validationErrors := make([]*hackathonv1.ValidationError, 0, len(result.ValidationErrors))
+	for _, ve := range result.ValidationErrors {
+		validationErrors = append(validationErrors, &hackathonv1.ValidationError{
+			Code:    ve.Code,
+			Field:   ve.Field,
+			Message: ve.Message,
+			Meta:    ve.Meta,
+		})
+	}
+
 	resp := &hackathonv1.CreateHackathonResponse{
-		HackathonId: result.HackathonID.String(),
+		HackathonId:      result.HackathonID.String(),
+		ValidationErrors: validationErrors,
 	}
 
 	if idempotencyKey != "" {
