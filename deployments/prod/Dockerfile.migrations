@@ -1,0 +1,19 @@
+FROM alpine:3.21
+
+WORKDIR /migrations
+
+# Устанавливаем goose
+RUN apk add --no-cache curl bash postgresql-client && \
+    curl -fsSL https://raw.githubusercontent.com/pressly/goose/master/install.sh | sh
+
+# Копируем все миграции из всех сервисов
+COPY internal/auth-service/migrations ./auth
+COPY internal/identity-service/migrations ./identity
+COPY internal/hackaton-service/migrations ./hackaton
+COPY internal/participation-and-roles-service/migrations ./participation
+
+# Скрипт для запуска миграций во всех 4 БД
+COPY deployments/prod/run-migrations.sh /run-migrations.sh
+RUN chmod +x /run-migrations.sh
+
+CMD ["/run-migrations.sh"]

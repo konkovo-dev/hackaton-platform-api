@@ -1,0 +1,29 @@
+FROM golang:1.24.0-alpine AS builder
+
+WORKDIR /build
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=linux go build \
+    -ldflags="-s -w" \
+    -o /app/hackaton-service ./cmd/hackaton-service
+
+# ──────────────────────────────────────────────────────────
+FROM alpine:3.21
+
+WORKDIR /app
+
+RUN apk --no-cache add ca-certificates && \
+    adduser -D -u 1000 appuser && \
+    chown -R appuser:appuser /app
+
+COPY --from=builder /app/hackaton-service .
+
+USER appuser
+
+EXPOSE 50052
+
+CMD ["./hackaton-service"]
