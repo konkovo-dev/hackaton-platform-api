@@ -31,3 +31,5 @@ go.work
 *.pb.go
 *.pb.gw.go
 *.sql.go
+
+docs/new-service-implementation-guide.md
