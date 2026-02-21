@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package participationandroles.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/participationandroles/v1;participationandrolesv1";
+
+import "google/protobuf/timestamp.proto";
+import "participationandroles/v1/common.proto";
+
+message TeamRole {
+  string id = 1;
+  string name = 2;
+}
+
+message HackathonParticipation {
+  string hackathon_id = 1;
+  string user_id = 2;
+
+  ParticipationStatus status = 3;
+
+  string team_id = 4;
+
+  ParticipationProfile profile = 5;
+
+  google.protobuf.Timestamp registered_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+}
+
+message ParticipationProfile {
+  repeated TeamRole wished_roles = 1;
+
+  string motivation_text = 2;
+}

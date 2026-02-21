@@ -1,4 +1,4 @@
-package participationandrolesservice
+package staffservice
 
 import (
 	"context"
@@ -57,8 +57,7 @@ func (a *API) GetHackathonContext(ctx context.Context, req *participationrolesv1
 
 	return &participationrolesv1.GetHackathonContextResponse{
 		UserId:              result.UserID.String(),
-		Roles:               protoRoles,
 		ParticipationStatus: protoParticipationStatus,
-		TeamId:              result.TeamID,
+		Roles:               protoRoles,
 	}, nil
 }

@@ -15,7 +15,7 @@ import (
 
 type Client struct {
 	conn         *grpc.ClientConn
-	parService   participationrolesv1.ParticipationAndRolesServiceClient
+	staffService participationrolesv1.StaffServiceClient
 	serviceToken string
 }
 
@@ -28,11 +28,11 @@ func NewClient(cfg *Config) (*Client, error) {
 		return nil, fmt.Errorf("failed to dial participation-roles service: %w", err)
 	}
 
-	parService := participationrolesv1.NewParticipationAndRolesServiceClient(conn)
+	staffService := participationrolesv1.NewStaffServiceClient(conn)
 
 	return &Client{
 		conn:         conn,
-		parService:   parService,
+		staffService: staffService,
 		serviceToken: cfg.ServiceToken,
 	}, nil
 }
@@ -61,7 +61,7 @@ func (c *Client) AssignHackathonRole(ctx context.Context, hackathonID, userID st
 	})
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
-	_, err := c.parService.AssignHackathonRole(ctx, req)
+	_, err := c.staffService.AssignHackathonRole(ctx, req)
 	if err != nil {
 		return fmt.Errorf("failed to assign hackathon role: %w", err)
 	}
@@ -80,7 +80,7 @@ func (c *Client) GetHackathonContext(ctx context.Context, hackathonID string) (u
 		}
 	}
 
-	resp, err := c.parService.GetHackathonContext(ctx, req)
+	resp, err := c.staffService.GetHackathonContext(ctx, req)
 	if err != nil {
 		return "", "", "", nil, fmt.Errorf("failed to get hackathon context: %w", err)
 	}
@@ -95,5 +95,5 @@ func (c *Client) GetHackathonContext(ctx context.Context, hackathonID string) (u
 
 	domainParticipation := domain.MapProtoParticipationToDomain(resp.ParticipationStatus)
 
-	return resp.UserId, string(domainParticipation), resp.TeamId, rolesStr, nil
+	return resp.UserId, string(domainParticipation), "", rolesStr, nil
 }

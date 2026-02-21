@@ -1,4 +1,4 @@
-package participationandrolesservice
+package participationservice
 
 import (
 	"context"
@@ -6,54 +6,51 @@ import (
 	"log/slog"
 
 	participationrolesv1 "github.com/belikoooova/hackaton-platform-api/api/participationandroles/v1"
-	"github.com/belikoooova/hackaton-platform-api/internal/participation-and-roles-service/usecase/role"
+	"github.com/belikoooova/hackaton-platform-api/internal/participation-and-roles-service/usecase/participation"
 	"github.com/belikoooova/hackaton-platform-api/pkg/idempotency"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 type API struct {
-	participationrolesv1.UnimplementedParticipationAndRolesServiceServer
-	roleService       *role.Service
-	idempotencyHelper *idempotency.Helper
-	logger            *slog.Logger
+	participationrolesv1.UnimplementedParticipationServiceServer
+	participationService *participation.Service
+	teamRoleRepo         participation.TeamRoleRepository
+	idempotencyHelper    *idempotency.Helper
+	logger               *slog.Logger
 }
 
-var _ participationrolesv1.ParticipationAndRolesServiceServer = (*API)(nil)
+var _ participationrolesv1.ParticipationServiceServer = (*API)(nil)
 
 func New(
-	roleService *role.Service,
+	participationService *participation.Service,
+	teamRoleRepo participation.TeamRoleRepository,
 	idempotencyHelper *idempotency.Helper,
 	logger *slog.Logger,
 ) *API {
 	return &API{
-		roleService:       roleService,
-		idempotencyHelper: idempotencyHelper,
-		logger:            logger,
+		participationService: participationService,
+		teamRoleRepo:         teamRoleRepo,
+		idempotencyHelper:    idempotencyHelper,
+		logger:               logger,
 	}
 }
 
 func (a *API) handleError(ctx context.Context, err error, operation string) error {
 	switch {
-	case errors.Is(err, role.ErrUnauthorized):
+	case errors.Is(err, participation.ErrUnauthorized):
 		a.logger.WarnContext(ctx, operation, slog.String("error", err.Error()))
 		return status.Error(codes.Unauthenticated, err.Error())
-	case errors.Is(err, role.ErrForbidden):
+	case errors.Is(err, participation.ErrForbidden):
 		a.logger.WarnContext(ctx, operation, slog.String("error", err.Error()))
 		return status.Error(codes.PermissionDenied, err.Error())
-	case errors.Is(err, role.ErrInvalidInput):
+	case errors.Is(err, participation.ErrInvalidInput):
 		a.logger.WarnContext(ctx, operation, slog.String("error", err.Error()))
 		return status.Error(codes.InvalidArgument, err.Error())
-	case errors.Is(err, role.ErrHackathonNotFound):
-		a.logger.WarnContext(ctx, operation, slog.String("error", err.Error()))
-		return status.Error(codes.NotFound, err.Error())
-	case errors.Is(err, role.ErrUserNotFound):
-		a.logger.WarnContext(ctx, operation, slog.String("error", err.Error()))
-		return status.Error(codes.NotFound, err.Error())
-	case errors.Is(err, role.ErrConflict):
+	case errors.Is(err, participation.ErrConflict):
 		a.logger.WarnContext(ctx, operation, slog.String("error", err.Error()))
 		return status.Error(codes.AlreadyExists, err.Error())
-	case errors.Is(err, role.ErrNotFound):
+	case errors.Is(err, participation.ErrNotFound):
 		a.logger.WarnContext(ctx, operation, slog.String("error", err.Error()))
 		return status.Error(codes.NotFound, err.Error())
 	default:

@@ -1,4 +1,4 @@
-package participationandrolesservice
+package staffservice
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"log/slog"
 
 	participationrolesv1 "github.com/belikoooova/hackaton-platform-api/api/participationandroles/v1"
-	"github.com/belikoooova/hackaton-platform-api/internal/participation-and-roles-service/domain"
 	"github.com/belikoooova/hackaton-platform-api/internal/participation-and-roles-service/usecase/role"
 	"github.com/belikoooova/hackaton-platform-api/pkg/idempotency"
 	"github.com/google/uuid"
@@ -14,16 +13,16 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (a *API) RemoveHackathonRole(ctx context.Context, req *participationrolesv1.RemoveHackathonRoleRequest) (*participationrolesv1.RemoveHackathonRoleResponse, error) {
+func (a *API) CancelStaffInvitation(ctx context.Context, req *participationrolesv1.CancelStaffInvitationRequest) (*participationrolesv1.CancelStaffInvitationResponse, error) {
 	var idempotencyKey string
 	if req.IdempotencyKey != nil {
 		idempotencyKey = req.IdempotencyKey.Key
 	}
 
 	if idempotencyKey != "" {
-		requestHash := idempotency.ComputeHash(req.HackathonId, req.UserId, req.Role.String())
-		resp := &participationrolesv1.RemoveHackathonRoleResponse{}
-		found, err := a.idempotencyHelper.CheckAndGet(ctx, idempotencyKey, "remove_hackathon_role", requestHash, resp)
+		requestHash := idempotency.ComputeHash(req.HackathonId, req.InvitationId)
+		resp := &participationrolesv1.CancelStaffInvitationResponse{}
+		found, err := a.idempotencyHelper.CheckAndGet(ctx, idempotencyKey, "cancel_staff_invitation", requestHash, resp)
 		if err != nil {
 			var conflictErr *idempotency.ConflictError
 			if errors.As(err, &conflictErr) {
@@ -44,38 +43,31 @@ func (a *API) RemoveHackathonRole(ctx context.Context, req *participationrolesv1
 		return nil, status.Error(codes.InvalidArgument, "invalid hackathon_id")
 	}
 
-	targetUserID, err := uuid.Parse(req.UserId)
+	invitationID, err := uuid.Parse(req.InvitationId)
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid user_id")
+		return nil, status.Error(codes.InvalidArgument, "invalid invitation_id")
 	}
 
-	roleToRemove := domain.MapProtoRoleToDomain(req.Role)
-	if roleToRemove == "" {
-		return nil, status.Error(codes.InvalidArgument, "invalid role")
-	}
-
-	_, err = a.roleService.RemoveRole(ctx, role.RemoveRoleIn{
+	_, err = a.roleService.CancelInvitation(ctx, role.CancelInvitationIn{
 		HackathonID:  hackathonID,
-		TargetUserID: targetUserID,
-		Role:         string(roleToRemove),
+		InvitationID: invitationID,
 	})
 	if err != nil {
-		return nil, a.handleError(ctx, err, "remove_hackathon_role")
+		return nil, a.handleError(ctx, err, "cancel_staff_invitation")
 	}
 
-	resp := &participationrolesv1.RemoveHackathonRoleResponse{}
+	resp := &participationrolesv1.CancelStaffInvitationResponse{}
 
 	if idempotencyKey != "" {
-		requestHash := idempotency.ComputeHash(req.HackathonId, req.UserId, req.Role.String())
-		if err := a.idempotencyHelper.Save(ctx, idempotencyKey, "remove_hackathon_role", requestHash, resp); err != nil {
+		requestHash := idempotency.ComputeHash(req.HackathonId, req.InvitationId)
+		if err := a.idempotencyHelper.Save(ctx, idempotencyKey, "cancel_staff_invitation", requestHash, resp); err != nil {
 			a.logger.ErrorContext(ctx, "failed to save idempotency key", slog.String("error", err.Error()))
 		}
 	}
 
-	a.logger.InfoContext(ctx, "remove_hackathon_role: success",
+	a.logger.InfoContext(ctx, "cancel_staff_invitation: success",
 		slog.String("hackathon_id", req.HackathonId),
-		slog.String("user_id", req.UserId),
-		slog.String("role", string(roleToRemove)),
+		slog.String("invitation_id", req.InvitationId),
 	)
 
 	return resp, nil

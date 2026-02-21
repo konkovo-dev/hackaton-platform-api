@@ -1,4 +1,4 @@
-package participationandrolesservice
+package staffservice
 
 import (
 	"context"

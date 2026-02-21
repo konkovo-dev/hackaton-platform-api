@@ -6,7 +6,7 @@ type ParticipationStatus string
 
 const (
 	ParticipationNone           ParticipationStatus = "none"
-	ParticipationIndividual     ParticipationStatus = "individual_active"
+	ParticipationIndividual     ParticipationStatus = "individual"
 	ParticipationLookingForTeam ParticipationStatus = "looking_for_team"
 	ParticipationTeamMember     ParticipationStatus = "team_member"
 	ParticipationTeamCaptain    ParticipationStatus = "team_captain"
@@ -16,7 +16,7 @@ func MapProtoParticipationToDomain(protoStatus participationrolesv1.Participatio
 	switch protoStatus {
 	case participationrolesv1.ParticipationStatus_PART_NONE:
 		return ParticipationNone
-	case participationrolesv1.ParticipationStatus_PART_INDIVIDUAL_ACTIVE:
+	case participationrolesv1.ParticipationStatus_PART_INDIVIDUAL:
 		return ParticipationIndividual
 	case participationrolesv1.ParticipationStatus_PART_LOOKING_FOR_TEAM:
 		return ParticipationLookingForTeam
@@ -34,7 +34,7 @@ func MapDomainParticipationToProto(status ParticipationStatus) participationrole
 	case ParticipationNone:
 		return participationrolesv1.ParticipationStatus_PART_NONE
 	case ParticipationIndividual:
-		return participationrolesv1.ParticipationStatus_PART_INDIVIDUAL_ACTIVE
+		return participationrolesv1.ParticipationStatus_PART_INDIVIDUAL
 	case ParticipationLookingForTeam:
 		return participationrolesv1.ParticipationStatus_PART_LOOKING_FOR_TEAM
 	case ParticipationTeamMember:

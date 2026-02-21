@@ -100,8 +100,12 @@ func Run(lc fx.Lifecycle, s *http.Server, lis net.Listener, mux *runtime.ServeMu
 				return fmt.Errorf("failed to register hackathon service gateway handlers: %v", err)
 			}
 
-			if err := participationandrolesv1.RegisterParticipationAndRolesServiceHandlerFromEndpoint(bgCtx, mux, cfg.ParticipationAndRolesGRPCEndpoint, opts); err != nil {
-				return fmt.Errorf("failed to register participation and roles service gateway handlers: %v", err)
+			if err := participationandrolesv1.RegisterStaffServiceHandlerFromEndpoint(bgCtx, mux, cfg.ParticipationAndRolesGRPCEndpoint, opts); err != nil {
+				return fmt.Errorf("failed to register staff service gateway handlers: %v", err)
+			}
+
+			if err := participationandrolesv1.RegisterParticipationServiceHandlerFromEndpoint(bgCtx, mux, cfg.ParticipationAndRolesGRPCEndpoint, opts); err != nil {
+				return fmt.Errorf("failed to register participation service gateway handlers: %v", err)
 			}
 
 			logger.Info("starting http gateway",
