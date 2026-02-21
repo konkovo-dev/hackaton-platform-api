@@ -1,23 +1,40 @@
-FROM golang:1.24-alpine AS builder
+FROM golang:1.24.0-alpine AS builder
 
 WORKDIR /build
+
+RUN apk add --no-cache git curl bash
+
+RUN go install github.com/bufbuild/buf/cmd/buf@latest && \
+    go install google.golang.org/protobuf/cmd/protoc-gen-go@latest && \
+    go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest && \
+    go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@latest && \
+    go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest && \
+    go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 
 COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o /app/team-service ./cmd/team-service
+RUN buf generate
 
-FROM alpine:latest
+RUN cd internal/team-service && sqlc generate
+
+RUN CGO_ENABLED=0 GOOS=linux go build \
+    -ldflags="-s -w" \
+    -o /app/team-service ./cmd/team-service
+
+# ──────────────────────────────────────────────────────────
+FROM alpine:3.21
 
 WORKDIR /app
 
-RUN apk --no-cache add ca-certificates
+RUN apk --no-cache add ca-certificates && \
+    adduser -D -u 1000 appuser && \
+    chown -R appuser:appuser /app
 
 COPY --from=builder /app/team-service .
 
-RUN adduser -D -u 1000 appuser
 USER appuser
 
 EXPOSE 50053

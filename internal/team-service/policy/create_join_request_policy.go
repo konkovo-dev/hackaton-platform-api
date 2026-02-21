@@ -87,12 +87,12 @@ func (c *CreateJoinRequestContext) ParticipationStatus() string {
 
 func (c *CreateJoinRequestContext) CanSeekTeam() bool {
 	status := strings.ToLower(c.participationStatus)
-	return status == "part_looking_for_team" || status == "part_individual"
+	return status == "looking_for_team" || status == "individual"
 }
 
 func (c *CreateJoinRequestContext) IsTeamMember() bool {
 	status := strings.ToLower(c.participationStatus)
-	return status == "part_team_member" || status == "part_team_captain"
+	return status == "team_member" || status == "team_captain"
 }
 
 func (c *CreateJoinRequestContext) SetSlotsOpen(slots int64) {

@@ -94,7 +94,7 @@ FROM team.memberships
 WHERE assigned_vacancy_id = $1::uuid;
 
 -- name: CountTotalOpenSlots :one
-SELECT COALESCE(SUM(slots_open), 0)
+SELECT COALESCE(SUM(slots_open), 0)::bigint
 FROM team.vacancies
 WHERE team_id = $1;
 

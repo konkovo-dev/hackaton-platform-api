@@ -7,7 +7,7 @@ import (
 
 	"github.com/belikoooova/hackaton-platform-api/internal/team-service/domain/entity"
 	teampolicy "github.com/belikoooova/hackaton-platform-api/internal/team-service/policy"
-	"github.com/belikoooova/hackaton-platform-api/internal/team-service/repository/postgres"
+	"github.com/belikoooova/hackaton-platform-api/internal/team-service/txrepo"
 	"github.com/belikoooova/hackaton-platform-api/pkg/auth"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -103,12 +103,12 @@ func (s *Service) CreateTeam(ctx context.Context, in CreateTeamIn) (*CreateTeamO
 	}
 
 	err = s.txManager.WithTx(ctx, func(tx pgx.Tx) error {
-		teamRepoTx := NewTeamRepositoryWithTx(tx)
+		teamRepoTx := txrepo.NewTeamRepository(tx)
 		if err := teamRepoTx.Create(ctx, team); err != nil {
 			return fmt.Errorf("failed to create team: %w", err)
 		}
 
-		membershipRepoTx := NewMembershipRepositoryWithTx(tx)
+		membershipRepoTx := txrepo.NewMembershipRepository(tx)
 		if err := membershipRepoTx.Create(ctx, membership); err != nil {
 			return fmt.Errorf("failed to create membership: %w", err)
 		}
@@ -132,12 +132,4 @@ func (s *Service) CreateTeam(ctx context.Context, in CreateTeamIn) (*CreateTeamO
 	return &CreateTeamOut{
 		TeamID: teamID,
 	}, nil
-}
-
-func NewTeamRepositoryWithTx(tx pgx.Tx) TeamRepository {
-	return postgres.NewTeamRepository(tx)
-}
-
-func NewMembershipRepositoryWithTx(tx pgx.Tx) MembershipRepository {
-	return postgres.NewMembershipRepository(tx)
 }

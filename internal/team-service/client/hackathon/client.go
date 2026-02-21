@@ -43,12 +43,13 @@ func (c *Client) Close() error {
 
 func (c *Client) GetHackathon(ctx context.Context, hackathonID string) (stage string, allowTeam bool, teamSizeMax int32, err error) {
 	req := &hackathonv1.GetHackathonRequest{
-		HackathonId:    hackathonID,
-		IncludeLimits:  true,
+		HackathonId:   hackathonID,
+		IncludeLimits: true,
 	}
 
-	if md, ok := metadata.FromIncomingContext(ctx); ok {
-		if auth := md.Get("authorization"); len(auth) > 0 {
+	ctx = metadata.AppendToOutgoingContext(ctx, "x-service-token", c.serviceToken)
+	if incomingMD, ok := metadata.FromIncomingContext(ctx); ok {
+		if auth := incomingMD.Get("authorization"); len(auth) > 0 {
 			ctx = metadata.AppendToOutgoingContext(ctx, "authorization", auth[0])
 		}
 	}

@@ -30,6 +30,7 @@ func main() {
 		fx.Provide(
 			func(repo *postgres.TeamRepository) team.TeamRepository { return repo },
 			func(repo *postgres.VacancyRepository) team.VacancyRepository { return repo },
+			func(repo *postgres.MembershipRepository) team.MembershipRepository { return repo },
 			func(client *hackathon.Client) team.HackathonClient { return client },
 			func(client *participationroles.Client) team.ParticipationAndRolesClient { return client },
 			func(repo *postgres.VacancyRepository) vacancy.VacancyRepository { return repo },

@@ -20,33 +20,35 @@ type GetUserOut struct {
 }
 
 func (s *Service) GetUser(ctx context.Context, in GetUserIn) (*GetUserOut, error) {
-	userID, ok := auth.GetUserID(ctx)
-	if !ok {
-		return nil, ErrUnauthorized
-	}
+	if !auth.IsServiceCall(ctx) {
+		userID, ok := auth.GetUserID(ctx)
+		if !ok {
+			return nil, ErrUnauthorized
+		}
 
-	_, err := uuid.Parse(userID)
-	if err != nil {
-		return nil, ErrUnauthorized
-	}
+		_, err := uuid.Parse(userID)
+		if err != nil {
+			return nil, ErrUnauthorized
+		}
 
-	adapter := &policyRepositoryAdapter{
-		roleRepo:     s.roleRepo,
-		participRepo: s.participRepo,
-	}
+		adapter := &policyRepositoryAdapter{
+			roleRepo:     s.roleRepo,
+			participRepo: s.participRepo,
+		}
 
-	getUserPolicy := participationpolicy.NewGetUserParticipationPolicy(adapter)
-	pctx, err := getUserPolicy.LoadContext(ctx, participationpolicy.GetUserParticipationParams{
-		HackathonID:  in.HackathonID,
-		TargetUserID: in.TargetUserID,
-	})
-	if err != nil {
-		return nil, err
-	}
+		getUserPolicy := participationpolicy.NewGetUserParticipationPolicy(adapter)
+		pctx, err := getUserPolicy.LoadContext(ctx, participationpolicy.GetUserParticipationParams{
+			HackathonID:  in.HackathonID,
+			TargetUserID: in.TargetUserID,
+		})
+		if err != nil {
+			return nil, err
+		}
 
-	decision := getUserPolicy.Check(ctx, pctx)
-	if !decision.Allowed {
-		return nil, mapPolicyError(decision)
+		decision := getUserPolicy.Check(ctx, pctx)
+		if !decision.Allowed {
+			return nil, mapPolicyError(decision)
+		}
 	}
 
 	participation, err := s.participRepo.Get(ctx, in.HackathonID, in.TargetUserID)

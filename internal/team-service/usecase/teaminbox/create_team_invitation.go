@@ -73,7 +73,7 @@ func (s *Service) CreateTeamInvitation(ctx context.Context, in CreateTeamInvitat
 
 	targetIsTeamMember := false
 	status := strings.ToLower(targetParticipationStatus)
-	if status == "part_team_member" || status == "part_team_captain" {
+	if status == "team_member" || status == "team_captain" {
 		targetIsTeamMember = true
 	}
 

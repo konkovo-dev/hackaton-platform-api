@@ -3,6 +3,7 @@ package participationroles
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	participationrolesv1 "github.com/belikoooova/hackaton-platform-api/api/participationandroles/v1"
 	"google.golang.org/grpc"
@@ -11,10 +12,10 @@ import (
 )
 
 type Client struct {
-	conn         *grpc.ClientConn
-	staffService participationrolesv1.StaffServiceClient
+	conn                 *grpc.ClientConn
+	staffService         participationrolesv1.StaffServiceClient
 	participationService participationrolesv1.ParticipationServiceClient
-	serviceToken string
+	serviceToken         string
 }
 
 func NewClient(cfg *Config) (*Client, error) {
@@ -30,10 +31,10 @@ func NewClient(cfg *Config) (*Client, error) {
 	participationService := participationrolesv1.NewParticipationServiceClient(conn)
 
 	return &Client{
-		conn:         conn,
-		staffService: staffService,
+		conn:                 conn,
+		staffService:         staffService,
 		participationService: participationService,
-		serviceToken: cfg.ServiceToken,
+		serviceToken:         cfg.ServiceToken,
 	}, nil
 }
 
@@ -49,11 +50,17 @@ func (c *Client) GetHackathonContext(ctx context.Context, hackathonID string) (u
 		HackathonId: hackathonID,
 	}
 
-	if md, ok := metadata.FromIncomingContext(ctx); ok {
-		if auth := md.Get("authorization"); len(auth) > 0 {
+	hasAuth := false
+	if incomingMD, ok := metadata.FromIncomingContext(ctx); ok {
+		if auth := incomingMD.Get("authorization"); len(auth) > 0 {
 			ctx = metadata.AppendToOutgoingContext(ctx, "authorization", auth[0])
+			hasAuth = true
 		}
 	}
+
+	slog.Info("calling GetHackathonContext",
+		"hackathon_id", hackathonID,
+		"has_authorization", hasAuth)
 
 	resp, err := c.staffService.GetHackathonContext(ctx, req)
 	if err != nil {
@@ -103,12 +110,12 @@ func (c *Client) ConvertToTeamParticipation(ctx context.Context, hackathonID, us
 		IsCaptain:   isCaptain,
 	}
 
-	if md, ok := metadata.FromIncomingContext(ctx); ok {
-		if auth := md.Get("authorization"); len(auth) > 0 {
+	ctx = metadata.AppendToOutgoingContext(ctx, "x-service-token", c.serviceToken)
+	if incomingMD, ok := metadata.FromIncomingContext(ctx); ok {
+		if auth := incomingMD.Get("authorization"); len(auth) > 0 {
 			ctx = metadata.AppendToOutgoingContext(ctx, "authorization", auth[0])
 		}
 	}
-	ctx = metadata.AppendToOutgoingContext(ctx, "x-service-token", c.serviceToken)
 
 	_, err := c.participationService.ConvertToTeamParticipation(ctx, req)
 	if err != nil {
@@ -124,12 +131,12 @@ func (c *Client) ConvertFromTeamParticipation(ctx context.Context, hackathonID, 
 		UserId:      userID,
 	}
 
-	if md, ok := metadata.FromIncomingContext(ctx); ok {
-		if auth := md.Get("authorization"); len(auth) > 0 {
+	ctx = metadata.AppendToOutgoingContext(ctx, "x-service-token", c.serviceToken)
+	if incomingMD, ok := metadata.FromIncomingContext(ctx); ok {
+		if auth := incomingMD.Get("authorization"); len(auth) > 0 {
 			ctx = metadata.AppendToOutgoingContext(ctx, "authorization", auth[0])
 		}
 	}
-	ctx = metadata.AppendToOutgoingContext(ctx, "x-service-token", c.serviceToken)
 
 	_, err := c.participationService.ConvertFromTeamParticipation(ctx, req)
 	if err != nil {
@@ -145,12 +152,12 @@ func (c *Client) GetUserParticipation(ctx context.Context, hackathonID, userID s
 		UserId:      userID,
 	}
 
-	if md, ok := metadata.FromIncomingContext(ctx); ok {
-		if auth := md.Get("authorization"); len(auth) > 0 {
+	ctx = metadata.AppendToOutgoingContext(ctx, "x-service-token", c.serviceToken)
+	if incomingMD, ok := metadata.FromIncomingContext(ctx); ok {
+		if auth := incomingMD.Get("authorization"); len(auth) > 0 {
 			ctx = metadata.AppendToOutgoingContext(ctx, "authorization", auth[0])
 		}
 	}
-	ctx = metadata.AppendToOutgoingContext(ctx, "x-service-token", c.serviceToken)
 
 	resp, err := c.participationService.GetUserParticipation(ctx, req)
 	if err != nil {

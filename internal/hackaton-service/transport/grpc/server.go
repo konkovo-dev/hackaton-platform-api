@@ -24,19 +24,23 @@ func NewGRPCServer(
 	}
 
 	optionalMethods := []string{
-		"/hackathon.v1.HackathonService/GetHackathon",
 		"/hackathon.v1.HackathonService/ListHackathons",
 	}
 
 	internalMethods := []string{}
 
+	hybridMethods := []string{
+		"/hackathon.v1.HackathonService/GetHackathon",
+	}
+
 	serviceToken := env.GetEnv("SERVICE_AUTH_TOKEN", "")
 
-	authInterceptor := interceptor.NewUnaryInterceptor(
+	authInterceptor := interceptor.NewUnaryInterceptorWithHybrid(
 		authClient,
 		publicMethods,
 		optionalMethods,
 		internalMethods,
+		hybridMethods,
 		serviceToken,
 		logger,
 	)

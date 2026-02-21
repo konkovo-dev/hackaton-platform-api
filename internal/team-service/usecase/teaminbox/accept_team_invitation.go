@@ -8,7 +8,7 @@ import (
 
 	"github.com/belikoooova/hackaton-platform-api/internal/team-service/domain/entity"
 	"github.com/belikoooova/hackaton-platform-api/internal/team-service/policy"
-	"github.com/belikoooova/hackaton-platform-api/internal/team-service/repository/postgres"
+	"github.com/belikoooova/hackaton-platform-api/internal/team-service/txrepo"
 	"github.com/belikoooova/hackaton-platform-api/pkg/auth"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -98,17 +98,17 @@ func (s *Service) AcceptTeamInvitation(ctx context.Context, in AcceptTeamInvitat
 	}
 
 	err = s.txManager.WithTx(ctx, func(tx pgx.Tx) error {
-		invitationRepoTx := postgres.NewTeamInvitationRepository(tx)
+		invitationRepoTx := txrepo.NewTeamInvitationRepository(tx)
 		if err := invitationRepoTx.UpdateStatus(ctx, in.InvitationID, "accepted"); err != nil {
 			return fmt.Errorf("failed to accept invitation: %w", err)
 		}
 
-		membershipRepoTx := postgres.NewMembershipRepository(tx)
+		membershipRepoTx := txrepo.NewMembershipRepository(tx)
 		if err := membershipRepoTx.Create(ctx, membership); err != nil {
 			return fmt.Errorf("failed to create membership: %w", err)
 		}
 
-		vacancyRepoTx := postgres.NewVacancyRepository(tx)
+		vacancyRepoTx := txrepo.NewVacancyRepository(tx)
 		if err := vacancyRepoTx.DecrementSlotsOpen(ctx, invitation.VacancyID); err != nil {
 			return fmt.Errorf("failed to decrement slots: %w", err)
 		}
@@ -117,7 +117,7 @@ func (s *Service) AcceptTeamInvitation(ctx context.Context, in AcceptTeamInvitat
 			return fmt.Errorf("failed to cancel competing invitations: %w", err)
 		}
 
-		joinRequestRepoTx := postgres.NewJoinRequestRepository(tx)
+		joinRequestRepoTx := txrepo.NewJoinRequestRepository(tx)
 		if err := joinRequestRepoTx.CancelCompeting(ctx, userUUID, invitation.HackathonID); err != nil {
 			return fmt.Errorf("failed to cancel competing join requests: %w", err)
 		}
@@ -134,17 +134,17 @@ func (s *Service) AcceptTeamInvitation(ctx context.Context, in AcceptTeamInvitat
 		s.logger.Error("failed to convert to team participation, compensating", "error", err, "hackathon_id", invitation.HackathonID, "team_id", invitation.TeamID, "user_id", userUUID)
 		
 		compErr := s.txManager.WithTx(ctx, func(tx pgx.Tx) error {
-			invRepoTx := postgres.NewTeamInvitationRepository(tx)
+			invRepoTx := txrepo.NewTeamInvitationRepository(tx)
 			if err := invRepoTx.UpdateStatus(ctx, in.InvitationID, "pending"); err != nil {
 				return err
 			}
 			
-			membershipRepoTx := postgres.NewMembershipRepository(tx)
+			membershipRepoTx := txrepo.NewMembershipRepository(tx)
 			if err := membershipRepoTx.Delete(ctx, invitation.TeamID, userUUID); err != nil {
 				return err
 			}
 			
-			vacancyRepoTx := postgres.NewVacancyRepository(tx)
+			vacancyRepoTx := txrepo.NewVacancyRepository(tx)
 			if err := vacancyRepoTx.IncrementSlotsOpen(ctx, invitation.VacancyID); err != nil {
 				return err
 			}

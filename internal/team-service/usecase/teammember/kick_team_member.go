@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/belikoooova/hackaton-platform-api/internal/team-service/policy"
-	"github.com/belikoooova/hackaton-platform-api/internal/team-service/repository/postgres"
+	"github.com/belikoooova/hackaton-platform-api/internal/team-service/txrepo"
 	"github.com/belikoooova/hackaton-platform-api/pkg/auth"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -76,13 +76,13 @@ func (s *Service) KickTeamMember(ctx context.Context, in KickTeamMemberIn) (*Kic
 	}
 
 	err = s.txManager.WithTx(ctx, func(tx pgx.Tx) error {
-		membershipRepoTx := postgres.NewMembershipRepository(tx)
+		membershipRepoTx := txrepo.NewMembershipRepository(tx)
 		if err := membershipRepoTx.Delete(ctx, in.TeamID, in.TargetUserID); err != nil {
 			return fmt.Errorf("failed to delete membership: %w", err)
 		}
 
 		if targetMembership.AssignedVacancyID != nil {
-			vacancyRepoTx := postgres.NewVacancyRepository(tx)
+			vacancyRepoTx := txrepo.NewVacancyRepository(tx)
 			if err := vacancyRepoTx.IncrementSlotsOpen(ctx, *targetMembership.AssignedVacancyID); err != nil {
 				return fmt.Errorf("failed to increment slots: %w", err)
 			}
@@ -100,13 +100,13 @@ func (s *Service) KickTeamMember(ctx context.Context, in KickTeamMemberIn) (*Kic
 		s.logger.Error("failed to convert from team participation, compensating", "error", err, "hackathon_id", in.HackathonID, "team_id", in.TeamID, "kicked_user_id", in.TargetUserID)
 		
 		compErr := s.txManager.WithTx(ctx, func(tx pgx.Tx) error {
-			membershipRepoTx := postgres.NewMembershipRepository(tx)
+			membershipRepoTx := txrepo.NewMembershipRepository(tx)
 			if err := membershipRepoTx.Create(ctx, targetMembership); err != nil {
 				return err
 			}
 			
 			if targetMembership.AssignedVacancyID != nil {
-				vacancyRepoTx := postgres.NewVacancyRepository(tx)
+				vacancyRepoTx := txrepo.NewVacancyRepository(tx)
 				if err := vacancyRepoTx.DecrementSlotsOpen(ctx, *targetMembership.AssignedVacancyID); err != nil {
 					return err
 				}

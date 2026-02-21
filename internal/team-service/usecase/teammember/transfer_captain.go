@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/belikoooova/hackaton-platform-api/internal/team-service/policy"
-	"github.com/belikoooova/hackaton-platform-api/internal/team-service/repository/postgres"
+	"github.com/belikoooova/hackaton-platform-api/internal/team-service/txrepo"
 	"github.com/belikoooova/hackaton-platform-api/pkg/auth"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -74,7 +74,7 @@ func (s *Service) TransferCaptain(ctx context.Context, in TransferCaptainIn) (*T
 	}
 
 	err = s.txManager.WithTx(ctx, func(tx pgx.Tx) error {
-		membershipRepoTx := postgres.NewMembershipRepository(tx)
+		membershipRepoTx := txrepo.NewMembershipRepository(tx)
 
 		if err := membershipRepoTx.UpdateCaptainStatus(ctx, in.TeamID, userUUID, false); err != nil {
 			return fmt.Errorf("failed to demote old captain: %w", err)
@@ -95,7 +95,7 @@ func (s *Service) TransferCaptain(ctx context.Context, in TransferCaptainIn) (*T
 		s.logger.Error("failed to convert old captain to member, compensating", "error", err, "hackathon_id", in.HackathonID, "team_id", in.TeamID)
 		
 		compErr := s.txManager.WithTx(ctx, func(tx pgx.Tx) error {
-			membershipRepoTx := postgres.NewMembershipRepository(tx)
+			membershipRepoTx := txrepo.NewMembershipRepository(tx)
 			if err := membershipRepoTx.UpdateCaptainStatus(ctx, in.TeamID, userUUID, true); err != nil {
 				return err
 			}
@@ -120,7 +120,7 @@ func (s *Service) TransferCaptain(ctx context.Context, in TransferCaptainIn) (*T
 		}
 		
 		compErr := s.txManager.WithTx(ctx, func(tx pgx.Tx) error {
-			membershipRepoTx := postgres.NewMembershipRepository(tx)
+			membershipRepoTx := txrepo.NewMembershipRepository(tx)
 			if err := membershipRepoTx.UpdateCaptainStatus(ctx, in.TeamID, userUUID, true); err != nil {
 				return err
 			}

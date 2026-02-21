@@ -20,7 +20,7 @@ run:
 		AUTH_CLIENT_MAX_CACHE_TTL=60s \
 		AUTH_CLIENT_CACHE_CLEANUP_INTERVAL=1m \
 		PARTICIPATION_ROLES_SERVICE_URL=localhost:50055 \
-		SERVICE_AUTH_TOKEN=dev-service-token \
+		SERVICE_AUTH_TOKEN=dev-service-token-change-in-production \
 		IDEMPOTENCY_TTL=24h \
 		go run $(CMD_DIR)/main.go
 

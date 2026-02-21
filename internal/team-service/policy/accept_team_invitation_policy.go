@@ -93,7 +93,7 @@ func (c *AcceptTeamInvitationContext) ParticipationStatus() string {
 
 func (c *AcceptTeamInvitationContext) IsTeamMember() bool {
 	status := strings.ToLower(c.participationStatus)
-	return status == "part_team_member" || status == "part_team_captain"
+	return status == "team_member" || status == "team_captain"
 }
 
 type AcceptTeamInvitationPolicy struct{}

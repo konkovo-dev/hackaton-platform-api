@@ -149,11 +149,7 @@ func (r *VacancyRepository) CountTotalOpenSlots(ctx context.Context, teamID uuid
 		return 0, fmt.Errorf("failed to count total open slots: %w", err)
 	}
 
-	if count, ok := result.(int64); ok {
-		return count, nil
-	}
-
-	return 0, fmt.Errorf("unexpected type for count: %T", result)
+	return result, nil
 }
 
 func (r *VacancyRepository) DecrementSlotsOpen(ctx context.Context, vacancyID uuid.UUID) error {
