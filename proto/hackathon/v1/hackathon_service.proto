@@ -1,0 +1,272 @@
+syntax = "proto3";
+
+package hackathon.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/hackathon/v1;hackathonv1";
+
+import "google/api/annotations.proto";
+import "common/v1/query.proto";
+import "common/v1/idempotency.proto";
+import "hackathon/v1/hackathon.proto";
+import "hackathon/v1/common.proto";
+import "hackathon/v1/message.proto";
+
+service HackathonService {
+  rpc GetHackathon(GetHackathonRequest) returns (GetHackathonResponse) {
+    option (google.api.http) = {
+      get: "/v1/hackathons/{hackathon_id}"
+    };
+  }
+
+  rpc ListHackathons(ListHackathonsRequest) returns (ListHackathonsResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons:list"
+      body: "*"
+    };
+  }
+
+  rpc CreateHackathon(CreateHackathonRequest) returns (CreateHackathonResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons"
+      body: "*"
+    };
+  }
+
+  rpc UpdateHackathon(UpdateHackathonRequest) returns (UpdateHackathonResponse) {
+    option (google.api.http) = {
+      put: "/v1/hackathons/{hackathon_id}"
+      body: "*"
+    };
+  }
+
+  rpc ValidateHackathon(ValidateHackathonRequest) returns (ValidateHackathonResponse) {
+    option (google.api.http) = {
+      get: "/v1/hackathons/{hackathon_id}:validate"
+    };
+  }
+
+  rpc PublishHackathon(PublishHackathonRequest) returns (PublishHackathonResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}:publish"
+      body: "*"
+    };
+  }
+
+  rpc GetHackathonTask(GetHackathonTaskRequest) returns (GetHackathonTaskResponse) {
+    option (google.api.http) = {
+      get: "/v1/hackathons/{hackathon_id}/task"
+    };
+  }
+
+  rpc UpdateHackathonTask(UpdateHackathonTaskRequest) returns (UpdateHackathonTaskResponse) {
+    option (google.api.http) = {
+      put: "/v1/hackathons/{hackathon_id}/task"
+      body: "*"
+    };
+  }
+
+  rpc GetHackathonResult(GetHackathonResultRequest) returns (GetHackathonResultResponse) {
+    option (google.api.http) = {
+      get: "/v1/hackathons/{hackathon_id}/result"
+    };
+  }
+
+  rpc UpdateHackathonResultDraft(UpdateHackathonResultDraftRequest) returns (UpdateHackathonResultDraftResponse) {
+    option (google.api.http) = {
+      put: "/v1/hackathons/{hackathon_id}/result"
+      body: "*"
+    };
+  }
+
+  rpc PublishHackathonResult(PublishHackathonResultRequest) returns (PublishHackathonResultResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/result:publish"
+      body: "*"
+    };
+  }
+
+  rpc ListHackathonAnnouncements(ListHackathonAnnouncementsRequest) returns (ListHackathonAnnouncementsResponse) {
+    option (google.api.http) = {
+      get: "/v1/hackathons/{hackathon_id}/announcements"
+    };
+  }
+
+  rpc CreateHackathonAnnouncement(CreateHackathonAnnouncementRequest) returns (CreateHackathonAnnouncementResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/announcements"
+      body: "*"
+    };
+  }
+
+  rpc UpdateHackathonAnnouncement(UpdateHackathonAnnouncementRequest) returns (UpdateHackathonAnnouncementResponse) {
+    option (google.api.http) = {
+      put: "/v1/hackathons/{hackathon_id}/announcements/{announcement_id}"
+      body: "*"
+    };
+  }
+
+  rpc DeleteHackathonAnnouncement(DeleteHackathonAnnouncementRequest) returns (DeleteHackathonAnnouncementResponse) {
+    option (google.api.http) = {
+      delete: "/v1/hackathons/{hackathon_id}/announcements/{announcement_id}"
+    };
+  }
+}
+
+// ─── Hackathon CRUD ───────────────────────────────────────────────────────────
+
+message GetHackathonRequest {
+  string hackathon_id = 1;
+  bool include_description = 2;
+  bool include_links = 3;
+  bool include_limits = 4;
+  bool include_task = 5;
+  bool include_result = 6;
+}
+
+message GetHackathonResponse {
+  Hackathon hackathon = 1;
+}
+
+message ListHackathonsRequest {
+  common.v1.Query query = 1;
+  bool include_description = 2;
+  bool include_links = 3;
+  bool include_limits = 4;
+}
+
+message ListHackathonsResponse {
+  repeated Hackathon hackathons = 1;
+  common.v1.PageResponse page = 2;
+}
+
+message CreateHackathonRequest {
+  string name = 1;
+  string short_description = 2;
+  string description = 3;
+  HackathonLocation location = 4;
+  HackathonDates dates = 5;
+  HackathonLimits limits = 6;
+  repeated HackathonLink links = 8;
+  HackathonRegistrationPolicy registration_policy = 9;
+  common.v1.IdempotencyKey idempotency_key = 20;
+}
+
+message CreateHackathonResponse {
+  string hackathon_id = 1;
+  repeated ValidationError validation_errors = 2;
+}
+
+message UpdateHackathonRequest {
+  string hackathon_id = 1;
+  string name = 2;
+  string short_description = 3;
+  string description = 4;
+  HackathonLocation location = 5;
+  HackathonDates dates = 6;
+  HackathonLimits limits = 8;
+  repeated HackathonLink links = 10;
+  HackathonRegistrationPolicy registration_policy = 11;
+  common.v1.IdempotencyKey idempotency_key = 20;
+}
+
+message UpdateHackathonResponse {
+  repeated ValidationError validation_errors = 1;
+}
+
+message ValidateHackathonRequest {
+  string hackathon_id = 1;
+}
+
+message ValidateHackathonResponse {
+  repeated ValidationError validation_errors = 1;
+}
+
+message PublishHackathonRequest {
+  string hackathon_id = 1;
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message PublishHackathonResponse {}
+
+// ─── Task ─────────────────────────────────────────────────────────────────────
+
+message GetHackathonTaskRequest {
+  string hackathon_id = 1;
+}
+
+message GetHackathonTaskResponse {
+  string task = 1;
+}
+
+message UpdateHackathonTaskRequest {
+  string hackathon_id = 1;
+  string task = 2;
+}
+
+message UpdateHackathonTaskResponse {
+  repeated ValidationError validation_errors = 1;
+}
+
+// ─── Result ───────────────────────────────────────────────────────────────────
+
+message GetHackathonResultRequest {
+  string hackathon_id = 1;
+}
+
+message GetHackathonResultResponse {
+  string result = 1;
+}
+
+message UpdateHackathonResultDraftRequest {
+  string hackathon_id = 1;
+  string result = 2;
+}
+
+message UpdateHackathonResultDraftResponse {
+  repeated ValidationError validation_errors = 1;
+}
+
+message PublishHackathonResultRequest {
+  string hackathon_id = 1;
+}
+
+message PublishHackathonResultResponse {}
+
+// ─── Announcements ────────────────────────────────────────────────────────────
+
+message ListHackathonAnnouncementsRequest {
+  string hackathon_id = 1;
+}
+
+message ListHackathonAnnouncementsResponse {
+  repeated HackathonAnnouncement announcements = 1;
+}
+
+message CreateHackathonAnnouncementRequest {
+  string hackathon_id = 1;
+  string title = 2;
+  string body = 3;
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message CreateHackathonAnnouncementResponse {
+  string announcement_id = 1;
+}
+
+message UpdateHackathonAnnouncementRequest {
+  string hackathon_id = 1;
+  string announcement_id = 2;
+  string title = 3;
+  string body = 4;
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message UpdateHackathonAnnouncementResponse {}
+
+message DeleteHackathonAnnouncementRequest {
+  string hackathon_id = 1;
+  string announcement_id = 2;
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message DeleteHackathonAnnouncementResponse {}
