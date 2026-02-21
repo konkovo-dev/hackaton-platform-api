@@ -26,7 +26,7 @@ service HackathonService {
 
   rpc ListHackathons(ListHackathonsRequest) returns (ListHackathonsResponse) {
     option (google.api.http) = {
-      post: "/v1/hackathons:list"
+      post: "/v1/hackathons/list"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -62,7 +62,7 @@ service HackathonService {
 
   rpc ValidateHackathon(ValidateHackathonRequest) returns (ValidateHackathonResponse) {
     option (google.api.http) = {
-      get: "/v1/hackathons/{hackathon_id}:validate"
+      get: "/v1/hackathons/{hackathon_id}/validate"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Validate a hackathon"
@@ -73,7 +73,7 @@ service HackathonService {
 
   rpc PublishHackathon(PublishHackathonRequest) returns (PublishHackathonResponse) {
     option (google.api.http) = {
-      post: "/v1/hackathons/{hackathon_id}:publish"
+      post: "/v1/hackathons/{hackathon_id}/publish"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -131,7 +131,7 @@ service HackathonService {
 
   rpc PublishHackathonResult(PublishHackathonResultRequest) returns (PublishHackathonResultResponse) {
     option (google.api.http) = {
-      post: "/v1/hackathons/{hackathon_id}/result:publish"
+      post: "/v1/hackathons/{hackathon_id}/result/publish"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {

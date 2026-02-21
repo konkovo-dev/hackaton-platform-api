@@ -21,7 +21,7 @@ run:
 		AUTH_CLIENT_CACHE_CLEANUP_INTERVAL=1m \
 		HACKATHON_SERVICE_URL=localhost:50052 \
 		IDENTITY_SERVICE_URL=localhost:50051 \
-		SERVICE_AUTH_TOKEN=dev-service-token \
+		SERVICE_AUTH_TOKEN=dev-service-token-change-in-production \
 		IDEMPOTENCY_TTL=24h \
 		go run $(CMD_DIR)/main.go
 

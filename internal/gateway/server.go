@@ -12,6 +12,7 @@ import (
 	hackathonv1 "github.com/belikoooova/hackaton-platform-api/api/hackathon/v1"
 	identityv1 "github.com/belikoooova/hackaton-platform-api/api/identity/v1"
 	participationandrolesv1 "github.com/belikoooova/hackaton-platform-api/api/participationandroles/v1"
+	teamv1 "github.com/belikoooova/hackaton-platform-api/api/team/v1"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
@@ -114,12 +115,25 @@ func Run(lc fx.Lifecycle, s *http.Server, lis net.Listener, mux *runtime.ServeMu
 				return fmt.Errorf("failed to register participation service gateway handlers: %v", err)
 			}
 
+			if err := teamv1.RegisterTeamServiceHandlerFromEndpoint(bgCtx, mux, cfg.TeamGRPCEndpoint, opts); err != nil {
+				return fmt.Errorf("failed to register team service gateway handlers: %v", err)
+			}
+
+			if err := teamv1.RegisterTeamMembersServiceHandlerFromEndpoint(bgCtx, mux, cfg.TeamGRPCEndpoint, opts); err != nil {
+				return fmt.Errorf("failed to register team members service gateway handlers: %v", err)
+			}
+
+			if err := teamv1.RegisterTeamInboxServiceHandlerFromEndpoint(bgCtx, mux, cfg.TeamGRPCEndpoint, opts); err != nil {
+				return fmt.Errorf("failed to register team inbox service gateway handlers: %v", err)
+			}
+
 			logger.Info("starting http gateway",
 				slog.String("addr", lis.Addr().String()),
 				slog.String("identity_grpc_endpoint", cfg.IdentityGRPCEndpoint),
 				slog.String("auth_grpc_endpoint", cfg.AuthGRPCEndpoint),
 				slog.String("hackaton_grpc_endpoint", cfg.HackatonGRPCEndpoint),
 				slog.String("participation_roles_grpc_endpoint", cfg.ParticipationAndRolesGRPCEndpoint),
+				slog.String("team_grpc_endpoint", cfg.TeamGRPCEndpoint),
 			)
 
 			go func() {

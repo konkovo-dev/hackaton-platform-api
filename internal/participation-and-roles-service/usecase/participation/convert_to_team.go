@@ -30,9 +30,14 @@ func (s *Service) ConvertToTeam(ctx context.Context, in ConvertToTeamIn) (*Conve
 		return nil, ErrNotFound
 	}
 
-	if participation.Status != string(domain.ParticipationIndividual) &&
-		participation.Status != string(domain.ParticipationLookingForTeam) {
-		return nil, fmt.Errorf("%w: can only convert from INDIVIDUAL_ACTIVE or LOOKING_FOR_TEAM", ErrInvalidInput)
+	isAlreadyInTeam := participation.Status == string(domain.ParticipationTeamMember) ||
+		participation.Status == string(domain.ParticipationTeamCaptain)
+
+	if !isAlreadyInTeam {
+		if participation.Status != string(domain.ParticipationIndividual) &&
+			participation.Status != string(domain.ParticipationLookingForTeam) {
+			return nil, fmt.Errorf("%w: can only convert from INDIVIDUAL_ACTIVE or LOOKING_FOR_TEAM", ErrInvalidInput)
+		}
 	}
 
 	var newStatus string

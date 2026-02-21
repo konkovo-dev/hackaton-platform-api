@@ -1,0 +1,569 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "team/v1/teams_service.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "team.v1.TeamService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/hackathons/{hackathonId}/teams": {
+      "post": {
+        "summary": "Create a team",
+        "description": "Creates a team in the hackathon and makes the authenticated user its captain. Allowed only during the REGISTRATION stage when team participation is enabled by the hackathon policy.",
+        "operationId": "TeamService_CreateTeam",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateTeamResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TeamServiceCreateTeamBody"
+            }
+          }
+        ],
+        "tags": [
+          "Team"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/teams/list": {
+      "post": {
+        "summary": "List teams",
+        "description": "Returns a paginated list of teams for the hackathon. Requires the caller to be staff (OWNER/ORGANIZER/MENTOR) or a registered participant. Available starting from the REGISTRATION stage.",
+        "operationId": "TeamService_ListTeams",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListTeamsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TeamServiceListTeamsBody"
+            }
+          }
+        ],
+        "tags": [
+          "Team"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/teams/{teamId}": {
+      "get": {
+        "summary": "Get a team",
+        "description": "Returns a team and, optionally, its vacancies. Requires the caller to be staff (OWNER/ORGANIZER/MENTOR) or a registered participant. Available starting from the REGISTRATION stage.",
+        "operationId": "TeamService_GetTeam",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetTeamResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "teamId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "includeVacancies",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "Team"
+        ]
+      },
+      "delete": {
+        "summary": "Delete a team",
+        "description": "Deletes the team. Only the team captain can perform this action, and only if they are the sole member. Allowed only during the REGISTRATION stage.",
+        "operationId": "TeamService_DeleteTeam",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteTeamResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "teamId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "idempotencyKey.key",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Team"
+        ]
+      },
+      "put": {
+        "summary": "Update a team",
+        "description": "Updates team fields (name, description, is_joinable). Only the team captain can perform this action. Allowed only during the REGISTRATION stage.",
+        "operationId": "TeamService_UpdateTeam",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UpdateTeamResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "teamId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TeamServiceUpdateTeamBody"
+            }
+          }
+        ],
+        "tags": [
+          "Team"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "TeamServiceCreateTeamBody": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "isJoinable": {
+          "type": "boolean",
+          "description": "If not provided by client, server may default to true."
+        },
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "TeamServiceListTeamsBody": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "$ref": "#/definitions/v1Query"
+        },
+        "includeVacancies": {
+          "type": "boolean",
+          "description": "If false, server may omit vacancies for performance."
+        }
+      }
+    },
+    "TeamServiceUpdateTeamBody": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "isJoinable": {
+          "type": "boolean"
+        },
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1CreateTeamResponse": {
+      "type": "object",
+      "properties": {
+        "teamId": {
+          "type": "string"
+        }
+      }
+    },
+    "v1DeleteTeamResponse": {
+      "type": "object"
+    },
+    "v1Filter": {
+      "type": "object",
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "operation": {
+          "$ref": "#/definitions/v1FilterOperation"
+        },
+        "stringValue": {
+          "type": "string"
+        },
+        "int64Value": {
+          "type": "string",
+          "format": "int64"
+        },
+        "boolValue": {
+          "type": "boolean"
+        },
+        "stringList": {
+          "$ref": "#/definitions/v1StringList"
+        }
+      }
+    },
+    "v1FilterGroup": {
+      "type": "object",
+      "properties": {
+        "filters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Filter"
+          }
+        }
+      }
+    },
+    "v1FilterOperation": {
+      "type": "string",
+      "enum": [
+        "FILTER_OPERATION_UNSPECIFIED",
+        "FILTER_OPERATION_EQUAL",
+        "FILTER_OPERATION_IN",
+        "FILTER_OPERATION_CONTAINS",
+        "FILTER_OPERATION_PREFIX"
+      ],
+      "default": "FILTER_OPERATION_UNSPECIFIED"
+    },
+    "v1GetTeamResponse": {
+      "type": "object",
+      "properties": {
+        "team": {
+          "$ref": "#/definitions/v1TeamWithVacancies"
+        }
+      }
+    },
+    "v1IdempotencyKey": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string"
+        }
+      }
+    },
+    "v1ListTeamsResponse": {
+      "type": "object",
+      "properties": {
+        "teams": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1TeamWithVacancies"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/v1PageResponse"
+        }
+      }
+    },
+    "v1PageRequest": {
+      "type": "object",
+      "properties": {
+        "pageSize": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "pageToken": {
+          "type": "string"
+        }
+      }
+    },
+    "v1PageResponse": {
+      "type": "object",
+      "properties": {
+        "nextPageToken": {
+          "type": "string"
+        }
+      }
+    },
+    "v1Query": {
+      "type": "object",
+      "properties": {
+        "q": {
+          "type": "string"
+        },
+        "filterGroups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1FilterGroup"
+          },
+          "description": "OR between groups, AND inside group."
+        },
+        "sort": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Sort"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/v1PageRequest"
+        }
+      }
+    },
+    "v1Sort": {
+      "type": "object",
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "direction": {
+          "$ref": "#/definitions/v1SortDirection"
+        }
+      }
+    },
+    "v1SortDirection": {
+      "type": "string",
+      "enum": [
+        "SORT_DIRECTION_UNSPECIFIED",
+        "SORT_DIRECTION_ASC",
+        "SORT_DIRECTION_DESC"
+      ],
+      "default": "SORT_DIRECTION_UNSPECIFIED"
+    },
+    "v1StringList": {
+      "type": "object",
+      "properties": {
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "v1Team": {
+      "type": "object",
+      "properties": {
+        "teamId": {
+          "type": "string"
+        },
+        "hackathonId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "isJoinable": {
+          "type": "boolean",
+          "description": "When true, participants can create JoinRequests to this team."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1TeamWithVacancies": {
+      "type": "object",
+      "properties": {
+        "team": {
+          "$ref": "#/definitions/v1Team"
+        },
+        "vacancies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Vacancy"
+          }
+        }
+      }
+    },
+    "v1UpdateTeamResponse": {
+      "type": "object",
+      "properties": {
+        "team": {
+          "$ref": "#/definitions/v1Team"
+        }
+      }
+    },
+    "v1Vacancy": {
+      "type": "object",
+      "properties": {
+        "vacancyId": {
+          "type": "string"
+        },
+        "teamId": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "desiredRoleIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Client may use a special value like \"any\" to represent \"ANY\"."
+        },
+        "desiredSkillIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Client may use a special value like \"any\" to represent \"ANY\"."
+        },
+        "slotsTotal": {
+          "type": "string",
+          "format": "int64"
+        },
+        "slotsOpen": {
+          "type": "string",
+          "format": "int64"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

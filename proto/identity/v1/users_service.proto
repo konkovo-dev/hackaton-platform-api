@@ -23,7 +23,7 @@ service UsersService {
 
   rpc BatchGetUsers(BatchGetUsersRequest) returns (BatchGetUsersResponse) {
     option (google.api.http) = {
-      post: "/v1/users:batchGet"
+      post: "/v1/users/batchGet"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -35,7 +35,7 @@ service UsersService {
 
   rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {
     option (google.api.http) = {
-      post: "/v1/users:list"
+      post: "/v1/users/list"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {

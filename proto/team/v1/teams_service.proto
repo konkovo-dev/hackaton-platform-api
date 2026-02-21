@@ -1,0 +1,135 @@
+syntax = "proto3";
+
+package team.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/team/v1;teamv1";
+
+import "google/api/annotations.proto";
+
+import "common/v1/idempotency.proto";
+import "common/v1/query.proto";
+
+import "team/v1/team.proto";
+
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+service TeamService {
+  rpc ListTeams(ListTeamsRequest) returns (ListTeamsResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/teams/list"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List teams"
+      description: "Returns a paginated list of teams for the hackathon. Requires the caller to be staff (OWNER/ORGANIZER/MENTOR) or a registered participant. Available starting from the REGISTRATION stage."
+      tags: "Team"
+    };
+  }
+
+  rpc GetTeam(GetTeamRequest) returns (GetTeamResponse) {
+    option (google.api.http) = { get: "/v1/hackathons/{hackathon_id}/teams/{team_id}" };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get a team"
+      description: "Returns a team and, optionally, its vacancies. Requires the caller to be staff (OWNER/ORGANIZER/MENTOR) or a registered participant. Available starting from the REGISTRATION stage."
+      tags: "Team"
+    };
+  }
+
+  rpc CreateTeam(CreateTeamRequest) returns (CreateTeamResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/teams"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create a team"
+      description: "Creates a team in the hackathon and makes the authenticated user its captain. Allowed only during the REGISTRATION stage when team participation is enabled by the hackathon policy."
+      tags: "Team"
+    };
+  }
+
+  rpc UpdateTeam(UpdateTeamRequest) returns (UpdateTeamResponse) {
+    option (google.api.http) = {
+      put: "/v1/hackathons/{hackathon_id}/teams/{team_id}"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update a team"
+      description: "Updates team fields (name, description, is_joinable). Only the team captain can perform this action. Allowed only during the REGISTRATION stage."
+      tags: "Team"
+    };
+  }
+
+  rpc DeleteTeam(DeleteTeamRequest) returns (DeleteTeamResponse) {
+    option (google.api.http) = { delete: "/v1/hackathons/{hackathon_id}/teams/{team_id}" };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Delete a team"
+      description: "Deletes the team. Only the team captain can perform this action, and only if they are the sole member. Allowed only during the REGISTRATION stage."
+      tags: "Team"
+    };
+  }
+}
+
+message ListTeamsRequest {
+  string hackathon_id = 1;
+  common.v1.Query query = 10;
+
+  // If false, server may omit vacancies for performance.
+  bool include_vacancies = 11;
+}
+
+message ListTeamsResponse {
+  repeated TeamWithVacancies teams = 1;
+  common.v1.PageResponse page = 2;
+}
+
+message GetTeamRequest {
+  string hackathon_id = 1;
+  string team_id = 2;
+
+  bool include_vacancies = 3;
+}
+
+message GetTeamResponse {
+  TeamWithVacancies team = 1;
+}
+
+message CreateTeamRequest {
+  string hackathon_id = 1;
+
+  string name = 2;
+  string description = 3;
+
+  // If not provided by client, server may default to true.
+  bool is_joinable = 4;
+
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message CreateTeamResponse {
+  string team_id = 1;
+}
+
+message UpdateTeamRequest {
+  string hackathon_id = 1;
+  string team_id = 2;
+
+  string name = 3;
+  string description = 4;
+  bool is_joinable = 5;
+
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message UpdateTeamResponse {
+  Team team = 1;
+}
+
+message DeleteTeamRequest {
+  string hackathon_id = 1;
+  string team_id = 2;
+
+  // For DELETE, will be passed as query param by grpc-gateway.
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message DeleteTeamResponse {}    

@@ -53,7 +53,7 @@ func TestUpdateMySkillsWithCatalogAndCustom(t *testing.T) {
 	tc := NewTestContext(t)
 	creds := tc.RegisterUser()
 
-	resp, body := tc.DoRequest("POST", "/v1/skills:list", map[string]interface{}{
+	resp, body := tc.DoRequest("POST", "/v1/skills/list", map[string]interface{}{
 		"query": map[string]interface{}{
 			"page": map[string]interface{}{
 				"page_size": 5,
@@ -146,7 +146,7 @@ func TestListSkillCatalogBasic(t *testing.T) {
 		},
 	}
 
-	resp, body := tc.DoAuthenticatedRequest("POST", "/v1/skills:list", creds.AccessToken, reqBody)
+	resp, body := tc.DoAuthenticatedRequest("POST", "/v1/skills/list", creds.AccessToken, reqBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to list skills: %s", string(body))
 
 	data := tc.ParseJSON(body)
@@ -173,7 +173,7 @@ func TestListSkillCatalogWithSearch(t *testing.T) {
 		},
 	}
 
-	resp, body := tc.DoAuthenticatedRequest("POST", "/v1/skills:list", creds.AccessToken, reqBody)
+	resp, body := tc.DoAuthenticatedRequest("POST", "/v1/skills/list", creds.AccessToken, reqBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to search skills: %s", string(body))
 
 	data := tc.ParseJSON(body)
@@ -211,7 +211,7 @@ func TestListSkillCatalogWithFilterContains(t *testing.T) {
 		},
 	}
 
-	resp, body := tc.DoAuthenticatedRequest("POST", "/v1/skills:list", creds.AccessToken, reqBody)
+	resp, body := tc.DoAuthenticatedRequest("POST", "/v1/skills/list", creds.AccessToken, reqBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to filter skills: %s", string(body))
 
 	data := tc.ParseJSON(body)
@@ -247,7 +247,7 @@ func TestListSkillCatalogWithFilterPrefix(t *testing.T) {
 		},
 	}
 
-	resp, body := tc.DoAuthenticatedRequest("POST", "/v1/skills:list", creds.AccessToken, reqBody)
+	resp, body := tc.DoAuthenticatedRequest("POST", "/v1/skills/list", creds.AccessToken, reqBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to filter skills by prefix: %s", string(body))
 
 	data := tc.ParseJSON(body)
@@ -278,7 +278,7 @@ func TestListSkillCatalogWithSortDesc(t *testing.T) {
 		},
 	}
 
-	resp, body := tc.DoAuthenticatedRequest("POST", "/v1/skills:list", creds.AccessToken, reqBody)
+	resp, body := tc.DoAuthenticatedRequest("POST", "/v1/skills/list", creds.AccessToken, reqBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to sort skills: %s", string(body))
 
 	data := tc.ParseJSON(body)
@@ -304,7 +304,7 @@ func TestListSkillCatalogWithPagination(t *testing.T) {
 		},
 	}
 
-	resp, body := tc.DoAuthenticatedRequest("POST", "/v1/skills:list", creds.AccessToken, reqBody)
+	resp, body := tc.DoAuthenticatedRequest("POST", "/v1/skills/list", creds.AccessToken, reqBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
 	data := tc.ParseJSON(body)
@@ -319,7 +319,7 @@ func TestListSkillCatalogWithPagination(t *testing.T) {
 
 	reqBody["query"].(map[string]interface{})["page"].(map[string]interface{})["page_token"] = nextToken
 
-	resp, body = tc.DoAuthenticatedRequest("POST", "/v1/skills:list", creds.AccessToken, reqBody)
+	resp, body = tc.DoAuthenticatedRequest("POST", "/v1/skills/list", creds.AccessToken, reqBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to get second page: %s", string(body))
 
 	data2 := tc.ParseJSON(body)
@@ -409,7 +409,7 @@ func TestBatchGetUsers(t *testing.T) {
 		"include_skills": false,
 	}
 
-	resp, body := tc.DoAuthenticatedRequest("POST", "/v1/users:batchGet", user1.AccessToken, reqBody)
+	resp, body := tc.DoAuthenticatedRequest("POST", "/v1/users/batchGet", user1.AccessToken, reqBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to batch get users: %s", string(body))
 
 	data := tc.ParseJSON(body)
@@ -439,7 +439,7 @@ func TestListUsersWithSearch(t *testing.T) {
 		},
 	}
 
-	resp, body = tc.DoAuthenticatedRequest("POST", "/v1/users:list", creds.AccessToken, reqBody)
+	resp, body = tc.DoAuthenticatedRequest("POST", "/v1/users/list", creds.AccessToken, reqBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to search users: %s", string(body))
 
 	data := tc.ParseJSON(body)
@@ -481,7 +481,7 @@ func TestListUsersWithFilterUsernamePrefix(t *testing.T) {
 		},
 	}
 
-	resp, body := tc.DoAuthenticatedRequest("POST", "/v1/users:list", creds.AccessToken, reqBody)
+	resp, body := tc.DoAuthenticatedRequest("POST", "/v1/users/list", creds.AccessToken, reqBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to filter users: %s", string(body))
 
 	data := tc.ParseJSON(body)
@@ -524,7 +524,7 @@ func TestListUsersWithFilterSkills(t *testing.T) {
 		"include_skills": true,
 	}
 
-	resp, body = tc.DoAuthenticatedRequest("POST", "/v1/users:list", user1.AccessToken, reqBody)
+	resp, body = tc.DoAuthenticatedRequest("POST", "/v1/users/list", user1.AccessToken, reqBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to filter by skills: %s", string(body))
 
 	data := tc.ParseJSON(body)
@@ -570,7 +570,7 @@ func TestListUsersWithFilterUserIDIn(t *testing.T) {
 		},
 	}
 
-	resp, body := tc.DoAuthenticatedRequest("POST", "/v1/users:list", user1.AccessToken, reqBody)
+	resp, body := tc.DoAuthenticatedRequest("POST", "/v1/users/list", user1.AccessToken, reqBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to filter by user IDs: %s", string(body))
 
 	data := tc.ParseJSON(body)

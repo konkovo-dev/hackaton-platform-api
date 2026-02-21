@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package team.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/team/v1;teamv1";
+
+import "google/protobuf/timestamp.proto";
+import "team/v1/common.proto";
+
+message TeamInvitation {
+  string invitation_id = 1;
+
+  string hackathon_id = 2;
+  string team_id = 3;
+
+  string target_user_id = 4;
+
+  // Always set by policy.
+  string vacancy_id = 5;
+
+  string created_by_user_id = 6;
+
+  string message = 7;
+
+  TeamInboxStatus status = 8;
+
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+  google.protobuf.Timestamp expires_at = 12;
+}
+
+message JoinRequest {
+  string request_id = 1;
+
+  string hackathon_id = 2;
+  string team_id = 3;
+
+  string requester_user_id = 4;
+
+  // Always set by policy.
+  string vacancy_id = 5;
+
+  string message = 6;
+
+  TeamInboxStatus status = 7;
+
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+  google.protobuf.Timestamp expires_at = 12;
+}

@@ -1,0 +1,1008 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "team/v1/team_inbox_service.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "team.v1.TeamInboxService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/hackathons/{hackathonId}/teams/{teamId}/join-requests": {
+      "post": {
+        "summary": "Create a join request",
+        "description": "Requests to join a team for a specific vacancy. The authenticated user must be a registered participant. Allowed only during the REGISTRATION stage.",
+        "operationId": "TeamInboxService_CreateJoinRequest",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateJoinRequestResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "teamId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TeamInboxServiceCreateJoinRequestBody"
+            }
+          }
+        ],
+        "tags": [
+          "Team"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/teams/{teamId}/join-requests/list": {
+      "post": {
+        "summary": "List join requests for a team",
+        "description": "Returns join requests received by the team (incoming requests). Only the team captain can access this list. Available starting from the REGISTRATION stage.",
+        "operationId": "TeamInboxService_ListJoinRequests",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListJoinRequestsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "teamId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TeamInboxServiceListJoinRequestsBody"
+            }
+          }
+        ],
+        "tags": [
+          "Team"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/teams/{teamId}/join-requests/{requestId}/accept": {
+      "post": {
+        "summary": "Accept a join request",
+        "description": "Accepts a pending join request. The requester joins the team as a member, a vacancy slot is consumed, and competing pending invitations/requests in the same hackathon are canceled. Only the team captain can perform this action. Allowed only during the REGISTRATION stage.",
+        "operationId": "TeamInboxService_AcceptJoinRequest",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AcceptJoinRequestResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "teamId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TeamInboxServiceAcceptJoinRequestBody"
+            }
+          }
+        ],
+        "tags": [
+          "Team"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/teams/{teamId}/join-requests/{requestId}/reject": {
+      "post": {
+        "summary": "Reject a join request",
+        "description": "Rejects a pending join request. The request is marked as rejected and cannot be accepted later. Only the team captain can perform this action. Allowed only during the REGISTRATION stage.",
+        "operationId": "TeamInboxService_RejectJoinRequest",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1RejectJoinRequestResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "teamId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TeamInboxServiceRejectJoinRequestBody"
+            }
+          }
+        ],
+        "tags": [
+          "Team"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/teams/{teamId}/team-invitations": {
+      "post": {
+        "summary": "Create a team invitation",
+        "description": "Invites a user to join the team for a specific vacancy. Only the team captain can perform this action. Allowed only during the REGISTRATION stage.",
+        "operationId": "TeamInboxService_CreateTeamInvitation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateTeamInvitationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "teamId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TeamInboxServiceCreateTeamInvitationBody"
+            }
+          }
+        ],
+        "tags": [
+          "Team"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/teams/{teamId}/team-invitations/list": {
+      "post": {
+        "summary": "List team invitations for a team",
+        "description": "Returns invitations created by the team (outgoing invitations). Only the team captain can access this list. Available starting from the REGISTRATION stage.",
+        "operationId": "TeamInboxService_ListTeamInvitations",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListTeamInvitationsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "teamId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TeamInboxServiceListTeamInvitationsBody"
+            }
+          }
+        ],
+        "tags": [
+          "Team"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/teams/{teamId}/team-invitations/{invitationId}/cancel": {
+      "post": {
+        "summary": "Cancel a team invitation",
+        "description": "Cancels a pending team invitation so the target user can no longer accept it. Only the team captain can perform this action. Allowed only during the REGISTRATION stage.",
+        "operationId": "TeamInboxService_CancelTeamInvitation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CancelTeamInvitationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "teamId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "invitationId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TeamInboxServiceCancelTeamInvitationBody"
+            }
+          }
+        ],
+        "tags": [
+          "Team"
+        ]
+      }
+    },
+    "/v1/users/me/join-requests/list": {
+      "post": {
+        "summary": "List my join requests",
+        "description": "Returns join requests created by the authenticated user.",
+        "operationId": "TeamInboxService_ListMyJoinRequests",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListMyJoinRequestsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ListMyJoinRequestsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Team"
+        ]
+      }
+    },
+    "/v1/users/me/join-requests/{requestId}/cancel": {
+      "post": {
+        "summary": "Cancel a join request",
+        "description": "Cancels a pending join request. Only the requester can cancel their own request. Allowed only during the REGISTRATION stage.",
+        "operationId": "TeamInboxService_CancelJoinRequest",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CancelJoinRequestResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TeamInboxServiceCancelJoinRequestBody"
+            }
+          }
+        ],
+        "tags": [
+          "Team"
+        ]
+      }
+    },
+    "/v1/users/me/team-invitations/list": {
+      "post": {
+        "summary": "List my team invitations",
+        "description": "Returns team invitations addressed to the authenticated user.",
+        "operationId": "TeamInboxService_ListMyTeamInvitations",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListMyTeamInvitationsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ListMyTeamInvitationsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Team"
+        ]
+      }
+    },
+    "/v1/users/me/team-invitations/{invitationId}/accept": {
+      "post": {
+        "summary": "Accept a team invitation",
+        "description": "Accepts a pending team invitation. The authenticated user joins the team as a member, a vacancy slot is consumed, and competing pending invitations/requests in the same hackathon are canceled. Allowed only during the REGISTRATION stage.",
+        "operationId": "TeamInboxService_AcceptTeamInvitation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AcceptTeamInvitationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "invitationId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TeamInboxServiceAcceptTeamInvitationBody"
+            }
+          }
+        ],
+        "tags": [
+          "Team"
+        ]
+      }
+    },
+    "/v1/users/me/team-invitations/{invitationId}/reject": {
+      "post": {
+        "summary": "Reject a team invitation",
+        "description": "Rejects a pending team invitation. The invitation is marked as rejected and cannot be accepted later. Allowed only during the REGISTRATION stage.",
+        "operationId": "TeamInboxService_RejectTeamInvitation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1RejectTeamInvitationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "invitationId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TeamInboxServiceRejectTeamInvitationBody"
+            }
+          }
+        ],
+        "tags": [
+          "Team"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "TeamInboxServiceAcceptJoinRequestBody": {
+      "type": "object",
+      "properties": {
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "TeamInboxServiceAcceptTeamInvitationBody": {
+      "type": "object",
+      "properties": {
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "TeamInboxServiceCancelJoinRequestBody": {
+      "type": "object",
+      "properties": {
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "TeamInboxServiceCancelTeamInvitationBody": {
+      "type": "object",
+      "properties": {
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "TeamInboxServiceCreateJoinRequestBody": {
+      "type": "object",
+      "properties": {
+        "vacancyId": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "TeamInboxServiceCreateTeamInvitationBody": {
+      "type": "object",
+      "properties": {
+        "targetUserId": {
+          "type": "string"
+        },
+        "vacancyId": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "TeamInboxServiceListJoinRequestsBody": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "$ref": "#/definitions/v1Query"
+        }
+      }
+    },
+    "TeamInboxServiceListTeamInvitationsBody": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "$ref": "#/definitions/v1Query"
+        }
+      }
+    },
+    "TeamInboxServiceRejectJoinRequestBody": {
+      "type": "object",
+      "properties": {
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "TeamInboxServiceRejectTeamInvitationBody": {
+      "type": "object",
+      "properties": {
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1AcceptJoinRequestResponse": {
+      "type": "object"
+    },
+    "v1AcceptTeamInvitationResponse": {
+      "type": "object"
+    },
+    "v1CancelJoinRequestResponse": {
+      "type": "object"
+    },
+    "v1CancelTeamInvitationResponse": {
+      "type": "object"
+    },
+    "v1CreateJoinRequestResponse": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string"
+        }
+      }
+    },
+    "v1CreateTeamInvitationResponse": {
+      "type": "object",
+      "properties": {
+        "invitationId": {
+          "type": "string"
+        }
+      }
+    },
+    "v1Filter": {
+      "type": "object",
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "operation": {
+          "$ref": "#/definitions/v1FilterOperation"
+        },
+        "stringValue": {
+          "type": "string"
+        },
+        "int64Value": {
+          "type": "string",
+          "format": "int64"
+        },
+        "boolValue": {
+          "type": "boolean"
+        },
+        "stringList": {
+          "$ref": "#/definitions/v1StringList"
+        }
+      }
+    },
+    "v1FilterGroup": {
+      "type": "object",
+      "properties": {
+        "filters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Filter"
+          }
+        }
+      }
+    },
+    "v1FilterOperation": {
+      "type": "string",
+      "enum": [
+        "FILTER_OPERATION_UNSPECIFIED",
+        "FILTER_OPERATION_EQUAL",
+        "FILTER_OPERATION_IN",
+        "FILTER_OPERATION_CONTAINS",
+        "FILTER_OPERATION_PREFIX"
+      ],
+      "default": "FILTER_OPERATION_UNSPECIFIED"
+    },
+    "v1IdempotencyKey": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string"
+        }
+      }
+    },
+    "v1JoinRequest": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string"
+        },
+        "hackathonId": {
+          "type": "string"
+        },
+        "teamId": {
+          "type": "string"
+        },
+        "requesterUserId": {
+          "type": "string"
+        },
+        "vacancyId": {
+          "type": "string",
+          "description": "Always set by policy."
+        },
+        "message": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/v1TeamInboxStatus"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1ListJoinRequestsResponse": {
+      "type": "object",
+      "properties": {
+        "requests": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1JoinRequest"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/v1PageResponse"
+        }
+      }
+    },
+    "v1ListMyJoinRequestsRequest": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "$ref": "#/definitions/v1Query"
+        }
+      }
+    },
+    "v1ListMyJoinRequestsResponse": {
+      "type": "object",
+      "properties": {
+        "requests": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1JoinRequest"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/v1PageResponse"
+        }
+      }
+    },
+    "v1ListMyTeamInvitationsRequest": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "$ref": "#/definitions/v1Query"
+        }
+      }
+    },
+    "v1ListMyTeamInvitationsResponse": {
+      "type": "object",
+      "properties": {
+        "invitations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1TeamInvitation"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/v1PageResponse"
+        }
+      }
+    },
+    "v1ListTeamInvitationsResponse": {
+      "type": "object",
+      "properties": {
+        "invitations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1TeamInvitation"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/v1PageResponse"
+        }
+      }
+    },
+    "v1PageRequest": {
+      "type": "object",
+      "properties": {
+        "pageSize": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "pageToken": {
+          "type": "string"
+        }
+      }
+    },
+    "v1PageResponse": {
+      "type": "object",
+      "properties": {
+        "nextPageToken": {
+          "type": "string"
+        }
+      }
+    },
+    "v1Query": {
+      "type": "object",
+      "properties": {
+        "q": {
+          "type": "string"
+        },
+        "filterGroups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1FilterGroup"
+          },
+          "description": "OR between groups, AND inside group."
+        },
+        "sort": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Sort"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/v1PageRequest"
+        }
+      }
+    },
+    "v1RejectJoinRequestResponse": {
+      "type": "object"
+    },
+    "v1RejectTeamInvitationResponse": {
+      "type": "object"
+    },
+    "v1Sort": {
+      "type": "object",
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "direction": {
+          "$ref": "#/definitions/v1SortDirection"
+        }
+      }
+    },
+    "v1SortDirection": {
+      "type": "string",
+      "enum": [
+        "SORT_DIRECTION_UNSPECIFIED",
+        "SORT_DIRECTION_ASC",
+        "SORT_DIRECTION_DESC"
+      ],
+      "default": "SORT_DIRECTION_UNSPECIFIED"
+    },
+    "v1StringList": {
+      "type": "object",
+      "properties": {
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "v1TeamInboxStatus": {
+      "type": "string",
+      "enum": [
+        "TEAM_INBOX_STATUS_UNSPECIFIED",
+        "TEAM_INBOX_PENDING",
+        "TEAM_INBOX_ACCEPTED",
+        "TEAM_INBOX_DECLINED",
+        "TEAM_INBOX_CANCELED",
+        "TEAM_INBOX_EXPIRED"
+      ],
+      "default": "TEAM_INBOX_STATUS_UNSPECIFIED"
+    },
+    "v1TeamInvitation": {
+      "type": "object",
+      "properties": {
+        "invitationId": {
+          "type": "string"
+        },
+        "hackathonId": {
+          "type": "string"
+        },
+        "teamId": {
+          "type": "string"
+        },
+        "targetUserId": {
+          "type": "string"
+        },
+        "vacancyId": {
+          "type": "string",
+          "description": "Always set by policy."
+        },
+        "createdByUserId": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/v1TeamInboxStatus"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package team.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/team/v1;teamv1";
+
+enum TeamInboxStatus {
+  TEAM_INBOX_STATUS_UNSPECIFIED = 0;
+
+  TEAM_INBOX_PENDING = 1;
+  TEAM_INBOX_ACCEPTED = 2;
+  TEAM_INBOX_DECLINED = 3;
+  TEAM_INBOX_CANCELED = 4;
+  TEAM_INBOX_EXPIRED = 5;
+}

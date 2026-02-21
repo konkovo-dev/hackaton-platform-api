@@ -1,0 +1,134 @@
+syntax = "proto3";
+
+package team.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/team/v1;teamv1";
+
+import "google/api/annotations.proto";
+
+import "common/v1/idempotency.proto";
+
+import "team/v1/team.proto";
+
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+service TeamMembersService {
+  // Upsert semantics:
+  // - if vacancy_id is empty => create new vacancy
+  // - if vacancy_id is set   => update existing vacancy
+  rpc UpsertVacancy(UpsertVacancyRequest) returns (UpsertVacancyResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/teams/{team_id}/vacancies/upsert"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create or update a vacancy"
+      description: "Creates or updates a vacancy for the team. Only the team captain can perform this action. Slots constraints and team size limits are enforced. Allowed only during the REGISTRATION stage."
+      tags: "Team"
+    };
+  }
+
+  rpc ListTeamMembers(ListTeamMembersRequest) returns (ListTeamMembersResponse) {
+    option (google.api.http) = { get: "/v1/hackathons/{hackathon_id}/teams/{team_id}/members" };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List team members"
+      description: "Returns the team roster. Requires the caller to be staff (OWNER/ORGANIZER/MENTOR) or a registered participant. Available starting from the REGISTRATION stage."
+      tags: "Team"
+    };
+  }
+
+  rpc KickTeamMember(KickTeamMemberRequest) returns (KickTeamMemberResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/teams/{team_id}/members/{user_id}/kick"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Kick a team member"
+      description: "Removes a member from the team. Only the team captain can perform this action. Kicking the captain is forbidden. Allowed only during the REGISTRATION stage."
+      tags: "Team"
+    };
+  }
+
+  rpc LeaveTeam(LeaveTeamRequest) returns (LeaveTeamResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/teams/{team_id}/members/leave"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Leave a team"
+      description: "Removes the authenticated user from the team. Only non-captain members can leave. This action is allowed outside REGISTRATION (from REGISTRATION through FINISHED), provided team participation is enabled by the hackathon policy."
+      tags: "Team"
+    };
+  }
+
+  rpc TransferCaptain(TransferCaptainRequest) returns (TransferCaptainResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/teams/{team_id}/transferCaptain"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Transfer team captainship"
+      description: "Transfers captainship to another team member. Only the current captain can perform this action. Allowed only during the REGISTRATION stage."
+      tags: "Team"
+    };
+  }
+}
+
+message UpsertVacancyRequest {
+  string hackathon_id = 1;
+  string team_id = 2;
+
+  // Empty => create new vacancy. Set => update existing.
+  string vacancy_id = 3;
+
+  string description = 4;
+  repeated string desired_role_ids = 5;
+  repeated string desired_skill_ids = 6;
+
+  int64 slots_total = 7;
+
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message UpsertVacancyResponse {
+  string vacancy_id = 1;
+}
+
+message ListTeamMembersRequest {
+  string hackathon_id = 1;
+  string team_id = 2;
+}
+
+message ListTeamMembersResponse {
+  repeated TeamMember members = 1;
+}
+
+message KickTeamMemberRequest {
+  string hackathon_id = 1;
+  string team_id = 2;
+  string user_id = 3;
+
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message KickTeamMemberResponse {}
+
+message LeaveTeamRequest {
+  string hackathon_id = 1;
+  string team_id = 2;
+
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message LeaveTeamResponse {}
+
+message TransferCaptainRequest {
+  string hackathon_id = 1;
+  string team_id = 2;
+
+  string target_user_id = 3;
+
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message TransferCaptainResponse {}

@@ -13,7 +13,14 @@ help:
 
 run:
 	@echo "starting $(SERVICE_NAME) on port $(SERVICE_PORT)"
-	@GATEWAY_HTTP_PORT=$(SERVICE_PORT) IDENTITY_GRPC_ENDPOINT=localhost:50051 go run $(CMD_DIR)/main.go
+	@ENV=local \
+		GATEWAY_HTTP_PORT=$(SERVICE_PORT) \
+		IDENTITY_GRPC_ENDPOINT=localhost:50051 \
+		AUTH_GRPC_ENDPOINT=localhost:50057 \
+		HACKATON_GRPC_ENDPOINT=localhost:50052 \
+		TEAM_GRPC_ENDPOINT=localhost:50053 \
+		PARTICIPATION_ROLES_GRPC_ENDPOINT=localhost:50055 \
+		go run $(CMD_DIR)/main.go
 
 build:
 	@echo "building $(SERVICE_NAME)"

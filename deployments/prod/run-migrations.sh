@@ -35,4 +35,10 @@ GOOSE_DRIVER=postgres \
 GOOSE_DBSTRING="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/hackathon_participation?sslmode=disable" \
 goose -dir /migrations/participation up
 
+# Team DB
+echo "→ Migrating hackathon_team..."
+GOOSE_DRIVER=postgres \
+GOOSE_DBSTRING="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/hackathon_team?sslmode=disable" \
+goose -dir /migrations/team up
+
 echo "✓ All migrations completed successfully."

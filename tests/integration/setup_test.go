@@ -2,6 +2,7 @@ package integration
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,6 +21,7 @@ type TestContext struct {
 	BaseURL    string
 	HTTPClient *http.Client
 	T          *testing.T
+	DB         *pgxpool.Pool
 }
 
 // UserCredentials holds user registration and authentication data
@@ -37,12 +40,23 @@ func NewTestContext(t *testing.T) *TestContext {
 		baseURL = "http://localhost:8080"
 	}
 
+	dbDSN := os.Getenv("DB_DSN")
+	if dbDSN == "" {
+		dbDSN = "postgres://hackathon:hackathon_dev_password@localhost:5432/hackathon?sslmode=disable"
+	}
+
+	db, err := pgxpool.New(context.Background(), dbDSN)
+	if err != nil {
+		t.Fatalf("Failed to connect to database: %v", err)
+	}
+
 	return &TestContext{
 		BaseURL: baseURL,
 		HTTPClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
-		T: t,
+		T:  t,
+		DB: db,
 	}
 }
 
@@ -211,7 +225,7 @@ func (tc *TestContext) WaitForHackathonOwnerRole(hackathonID string, token strin
 			tc.T.Logf("Owner role assigned after %d attempts", i+1)
 			// Additional delay to ensure all transactions are committed and replicated
 			time.Sleep(500 * time.Millisecond)
-			
+
 			// Verify we can still access the hackathon (double-check)
 			resp2, _ := tc.DoAuthenticatedRequest("GET", fmt.Sprintf("/v1/hackathons/%s", hackathonID), token, nil)
 			if resp2.StatusCode == http.StatusOK {

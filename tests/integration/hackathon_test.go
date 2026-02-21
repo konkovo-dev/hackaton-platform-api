@@ -219,7 +219,7 @@ func TestValidateHackathon(t *testing.T) {
 
 	tc.WaitForHackathonOwnerRole(hackathonID, owner.AccessToken)
 
-	resp, body = tc.DoAuthenticatedRequest("GET", fmt.Sprintf("/v1/hackathons/%s:validate", hackathonID), owner.AccessToken, nil)
+	resp, body = tc.DoAuthenticatedRequest("GET", fmt.Sprintf("/v1/hackathons/%s/validate", hackathonID), owner.AccessToken, nil)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Validate should return 200: %s", string(body))
 
 	validateData := tc.ParseJSON(body)
@@ -271,7 +271,7 @@ func TestPublishHackathon(t *testing.T) {
 	resp, body = tc.DoAuthenticatedRequest("PUT", fmt.Sprintf("/v1/hackathons/%s/task", hackathonID), owner.AccessToken, taskBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to set task: %s", string(body))
 
-	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s:publish", hackathonID), owner.AccessToken, map[string]interface{}{})
+	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/publish", hackathonID), owner.AccessToken, map[string]interface{}{})
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to publish hackathon: %s", string(body))
 
 	resp, body = tc.DoAuthenticatedRequest("GET", fmt.Sprintf("/v1/hackathons/%s", hackathonID), owner.AccessToken, nil)
@@ -403,12 +403,12 @@ func TestListHackathons(t *testing.T) {
 		"task": "Build something cool",
 	}
 	tc.DoAuthenticatedRequest("PUT", fmt.Sprintf("/v1/hackathons/%s/task", hackathonID), owner.AccessToken, taskBody)
-	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s:publish", hackathonID), owner.AccessToken, map[string]interface{}{})
+	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/publish", hackathonID), owner.AccessToken, map[string]interface{}{})
 
 	listBody := map[string]interface{}{
 		"pageSize": 10,
 	}
-	resp, body = tc.DoRequest("POST", "/v1/hackathons:list", listBody, nil)
+	resp, body = tc.DoRequest("POST", "/v1/hackathons/list", listBody, nil)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to list hackathons: %s", string(body))
 
 	listData := tc.ParseJSON(body)
@@ -461,7 +461,7 @@ func TestListHackathonAnnouncements(t *testing.T) {
 	registerBody := map[string]interface{}{
 		"desired_status": "PART_INDIVIDUAL",
 	}
-	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations:register", hackathonID), participant.AccessToken, registerBody)
+	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/register", hackathonID), participant.AccessToken, registerBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to register participant: %s", string(body))
 
 	tc.WaitForParticipationRegistered(hackathonID, participant.AccessToken)
@@ -570,7 +570,7 @@ func createAndPublishHackathon(tc *TestContext, owner *UserCredentials) string {
 	}
 	tc.DoAuthenticatedRequest("PUT", fmt.Sprintf("/v1/hackathons/%s/task", hackathonID), owner.AccessToken, taskBody)
 
-	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s:publish", hackathonID), owner.AccessToken, map[string]interface{}{})
+	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/publish", hackathonID), owner.AccessToken, map[string]interface{}{})
 
 	return hackathonID
 }

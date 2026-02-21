@@ -16,6 +16,74 @@
     "application/json"
   ],
   "paths": {
+    "/v1/users/batchGet": {
+      "post": {
+        "summary": "Batch get users",
+        "description": "Fetches multiple users' public profiles in a single request. Useful for enriching participant lists.",
+        "operationId": "UsersService_BatchGetUsers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1BatchGetUsersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1BatchGetUsersRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/v1/users/list": {
+      "post": {
+        "summary": "List users",
+        "description": "Returns a paginated list of users. Supports text search and ordering via the `query` field.",
+        "operationId": "UsersService_ListUsers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListUsersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ListUsersRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Users"
+        ]
+      }
+    },
     "/v1/users/{userId}": {
       "get": {
         "summary": "Get user by ID",
@@ -53,74 +121,6 @@
             "in": "query",
             "required": false,
             "type": "boolean"
-          }
-        ],
-        "tags": [
-          "Users"
-        ]
-      }
-    },
-    "/v1/users:batchGet": {
-      "post": {
-        "summary": "Batch get users",
-        "description": "Fetches multiple users' public profiles in a single request. Useful for enriching participant lists.",
-        "operationId": "UsersService_BatchGetUsers",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1BatchGetUsersResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1BatchGetUsersRequest"
-            }
-          }
-        ],
-        "tags": [
-          "Users"
-        ]
-      }
-    },
-    "/v1/users:list": {
-      "post": {
-        "summary": "List users",
-        "description": "Returns a paginated list of users. Supports text search and ordering via the `query` field.",
-        "operationId": "UsersService_ListUsers",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1ListUsersResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1ListUsersRequest"
-            }
           }
         ],
         "tags": [
