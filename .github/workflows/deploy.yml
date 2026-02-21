@@ -33,10 +33,7 @@ jobs:
             set -e
             cd /opt/hackplatform
             
-            # Обновляем IMAGE_TAG в .env
-            sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=${{ steps.meta.outputs.sha_short }}/" .env
-            
-            # Скачиваем новые образы (публичные, логин не нужен)
+            # Скачиваем новые образы
             docker compose --env-file .env -f deployments/prod/docker-compose.yml pull
             
             # Перезапускаем изменённые контейнеры
@@ -45,7 +42,7 @@ jobs:
             # Показываем статус
             docker compose --env-file .env -f deployments/prod/docker-compose.yml ps
             
-            echo "✓ Deployment completed with image tag: ${{ steps.meta.outputs.sha_short }}"
+            echo "✓ Deployment completed"
 
       - name: Verify deployment
         uses: appleboy/ssh-action@v1.0.3
