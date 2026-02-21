@@ -40,3 +40,23 @@ healthcheck:
 list-services:
 	@grpcurl -plaintext localhost:$(SERVICE_PORT) list
 
+migrate-up:
+	@echo "running migrations for $(SERVICE_NAME)"
+	@goose -table goose_db_version_team -dir $(ROOT_DIR)/internal/$(SERVICE_NAME)/migrations postgres "$(DB_DSN)" up
+
+migrate-down:
+	@echo "rolling back migrations for $(SERVICE_NAME)"
+	@goose -table goose_db_version_team -dir $(ROOT_DIR)/internal/$(SERVICE_NAME)/migrations postgres "$(DB_DSN)" down
+
+migrate-status:
+	@echo "checking migration status for $(SERVICE_NAME)"
+	@goose -table goose_db_version_team -dir $(ROOT_DIR)/internal/$(SERVICE_NAME)/migrations postgres "$(DB_DSN)" status
+
+migrate-create:
+	@echo "creating new migration: $(NAME)"
+	@goose -dir $(ROOT_DIR)/internal/$(SERVICE_NAME)/migrations create $(NAME) sql
+
+sqlc-generate:
+	@echo "generating sqlc code for $(SERVICE_NAME)"
+	@cd $(ROOT_DIR)/internal/$(SERVICE_NAME) && sqlc generate
+

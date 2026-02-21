@@ -16,7 +16,7 @@
     "application/json"
   ],
   "paths": {
-    "/v1/skills:list": {
+    "/v1/skills/list": {
       "post": {
         "summary": "List skill catalog",
         "description": "Returns a paginated list of skills from the global catalog. Use when displaying a skill picker.",

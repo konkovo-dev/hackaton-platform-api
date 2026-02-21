@@ -83,7 +83,7 @@ func TestFullHackathonFlow(t *testing.T) {
 
 	// Step 4: Owner publishes hackathon
 	t.Log("Step 4: Publishing hackathon...")
-	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s:publish", hackathonID), owner.AccessToken, map[string]interface{}{})
+	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/publish", hackathonID), owner.AccessToken, map[string]interface{}{})
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to publish: %s", string(body))
 
 	// Step 5: Owner invites staff
@@ -116,10 +116,10 @@ func TestFullHackathonFlow(t *testing.T) {
 	// Step 6: Mentor and judge accept invitations
 	t.Log("Step 6: Staff accepting invitations...")
 
-	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/users/me/staff-invitations/%s:accept", mentorInvitationID), mentor.AccessToken, map[string]interface{}{})
+	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/users/me/staff-invitations/%s/accept", mentorInvitationID), mentor.AccessToken, map[string]interface{}{})
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Mentor failed to accept: %s", string(body))
 
-	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/users/me/staff-invitations/%s:accept", judgeInvitationID), judge.AccessToken, map[string]interface{}{})
+	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/users/me/staff-invitations/%s/accept", judgeInvitationID), judge.AccessToken, map[string]interface{}{})
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Judge failed to accept: %s", string(body))
 
 	// Step 7: Verify staff list
@@ -157,7 +157,7 @@ func TestFullHackathonFlow(t *testing.T) {
 		"wished_role_ids": []string{frontendRoleID},
 		"motivation_text": "I'm passionate about frontend development and want to build something amazing!",
 	}
-	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations:register", hackathonID), participant1.AccessToken, register1Body)
+	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/register", hackathonID), participant1.AccessToken, register1Body)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Participant1 failed to register: %s", string(body))
 
 	// Participant2 registers as looking for team
@@ -166,7 +166,7 @@ func TestFullHackathonFlow(t *testing.T) {
 		"wished_role_ids": []string{backendRoleID},
 		"motivation_text": "Looking for a team to collaborate with on backend development.",
 	}
-	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations:register", hackathonID), participant2.AccessToken, register2Body)
+	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/register", hackathonID), participant2.AccessToken, register2Body)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Participant2 failed to register: %s", string(body))
 
 	// Participant3 registers as individual
@@ -174,7 +174,7 @@ func TestFullHackathonFlow(t *testing.T) {
 		"desired_status":  "PART_INDIVIDUAL",
 		"motivation_text": "Excited to participate!",
 	}
-	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations:register", hackathonID), participant3.AccessToken, register3Body)
+	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/register", hackathonID), participant3.AccessToken, register3Body)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Participant3 failed to register: %s", string(body))
 
 	// Step 9: Participant1 updates profile
@@ -190,7 +190,7 @@ func TestFullHackathonFlow(t *testing.T) {
 	switchBody := map[string]interface{}{
 		"new_status": "PART_LOOKING_FOR_TEAM",
 	}
-	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/me:switchMode", hackathonID), participant1.AccessToken, switchBody)
+	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/me/switchMode", hackathonID), participant1.AccessToken, switchBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to switch mode: %s", string(body))
 
 	// Step 11: Participants view each other
@@ -201,7 +201,7 @@ func TestFullHackathonFlow(t *testing.T) {
 	// Step 12: List all participants
 	t.Log("Step 12: Listing all participants...")
 	listBody := map[string]interface{}{}
-	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations:list", hackathonID), participant1.AccessToken, listBody)
+	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/list", hackathonID), participant1.AccessToken, listBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to list participants: %s", string(body))
 
 	participantsData := tc.ParseJSON(body)
@@ -215,7 +215,7 @@ func TestFullHackathonFlow(t *testing.T) {
 			"statuses": []string{"PART_LOOKING_FOR_TEAM"},
 		},
 	}
-	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations:list", hackathonID), participant1.AccessToken, filterBody)
+	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/list", hackathonID), participant1.AccessToken, filterBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to filter participants: %s", string(body))
 
 	filteredData := tc.ParseJSON(body)
@@ -243,7 +243,7 @@ func TestFullHackathonFlow(t *testing.T) {
 	// Step 16: Participant3 unregisters
 	t.Log("Step 16: Participant3 unregistering...")
 	unregisterBody := map[string]interface{}{}
-	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/me:unregister", hackathonID), participant3.AccessToken, unregisterBody)
+	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/me/unregister", hackathonID), participant3.AccessToken, unregisterBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to unregister: %s", string(body))
 
 	// Step 17: Verify participant3 is no longer registered
@@ -275,7 +275,7 @@ func TestFullHackathonFlow(t *testing.T) {
 	selfRemoveBody := map[string]interface{}{
 		"role": "HACKATHON_ROLE_MENTOR",
 	}
-	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff:selfRemoveRole", hackathonID), mentor.AccessToken, selfRemoveBody)
+	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff/selfRemoveRole", hackathonID), mentor.AccessToken, selfRemoveBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to self-remove: %s", string(body))
 
 	// Step 20: Verify final state
@@ -299,7 +299,7 @@ func TestFullHackathonFlow(t *testing.T) {
 	assert.False(t, mentorFound, "Mentor should be removed from staff")
 
 	// Check participants list
-	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations:list", hackathonID), participant1.AccessToken, map[string]interface{}{})
+	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/list", hackathonID), participant1.AccessToken, map[string]interface{}{})
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
 	finalParticipantsData := tc.ParseJSON(body)

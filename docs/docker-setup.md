@@ -1,6 +1,6 @@
 # Hackathon Platform - Docker Setup
 
-Полная инструкция по запуску всей платформы (Gateway + Auth + Identity + Hackathon + Participation & Roles)
+Полная инструкция по запуску всей платформы (Gateway + Auth + Identity + Hackathon + Participation & Roles + Team)
 
 ## Предусловия
 
@@ -30,6 +30,7 @@ make auth-service-sqlc-generate
 make identity-service-sqlc-generate
 make hackaton-service-sqlc-generate
 make participation-and-roles-service-sqlc-generate
+make team-service-sqlc-generate
 ```
 
 ### 4. Генерация RSA ключей для auth-service
@@ -60,6 +61,8 @@ make hackaton-service-migrate-up
 make hackaton-service-migrate-status
 make participation-and-roles-service-migrate-up
 make participation-and-roles-service-migrate-status
+make team-service-migrate-up
+make team-service-migrate-status
 ```
 
 ### 7. Запуск сервисов
@@ -96,6 +99,14 @@ docker-compose -f deployments/docker-compose.yml up -d participation-and-roles-s
 docker-compose -f deployments/docker-compose.yml logs --tail=20 participation-and-roles-service
 ```
 
+#### Team Service
+
+```bash
+docker-compose -f deployments/docker-compose.yml build team-service
+docker-compose -f deployments/docker-compose.yml up -d team-service
+docker-compose -f deployments/docker-compose.yml logs --tail=20 team-service
+```
+
 #### Gateway
 
 ```bash
@@ -116,6 +127,7 @@ make ps
 - `hackathon-auth-service`
 - `hackathon-hackaton-service`
 - `hackathon-participation-and-roles-service`
+- `hackathon-team-service`
 - `hackathon-gateway`
 
 ## Endpoints
@@ -123,6 +135,7 @@ make ps
 - **Gateway HTTP**: `http://localhost:8080` (REST API для всех сервисов)
 - **Identity gRPC**: `localhost:50051` (прямой gRPC)
 - **Hackathon gRPC**: `localhost:50052` (прямой gRPC)
+- **Team gRPC**: `localhost:50053` (прямой gRPC)
 - **Participation & Roles gRPC**: `localhost:50055` (прямой gRPC)
 - **Auth gRPC**: `localhost:50057` (прямой gRPC)
 - **Postgres**: `localhost:5432`
@@ -211,6 +224,9 @@ docker-compose -f deployments/docker-compose.yml restart hackaton-service
 # Participation and Roles
 docker-compose -f deployments/docker-compose.yml restart participation-and-roles-service
 
+# Team
+docker-compose -f deployments/docker-compose.yml restart team-service
+
 # Gateway
 docker-compose -f deployments/docker-compose.yml restart gateway
 ```
@@ -242,6 +258,12 @@ docker-compose -f deployments/docker-compose.yml rm -f participation-and-roles-s
 docker-compose -f deployments/docker-compose.yml build participation-and-roles-service
 docker-compose -f deployments/docker-compose.yml up -d participation-and-roles-service
 
+# Team
+docker-compose -f deployments/docker-compose.yml stop team-service
+docker-compose -f deployments/docker-compose.yml rm -f team-service
+docker-compose -f deployments/docker-compose.yml build team-service
+docker-compose -f deployments/docker-compose.yml up -d team-service
+
 # Gateway
 docker-compose -f deployments/docker-compose.yml stop gateway
 docker-compose -f deployments/docker-compose.yml rm -f gateway
@@ -260,6 +282,7 @@ docker-compose -f deployments/docker-compose.yml logs -f identity-service
 docker-compose -f deployments/docker-compose.yml logs -f auth-service
 docker-compose -f deployments/docker-compose.yml logs -f hackaton-service
 docker-compose -f deployments/docker-compose.yml logs -f participation-and-roles-service
+docker-compose -f deployments/docker-compose.yml logs -f team-service
 docker-compose -f deployments/docker-compose.yml logs -f gateway
 ```
 
@@ -299,12 +322,14 @@ make auth-service-migrate-status
 make identity-service-migrate-status
 make hackaton-service-migrate-status
 make participation-and-roles-service-migrate-status
+make team-service-migrate-status
 
 # Примените заново
 make auth-service-migrate-up
 make identity-service-migrate-up
 make hackaton-service-migrate-up
 make participation-and-roles-service-migrate-up
+make team-service-migrate-up
 ```
 
 ### Postgres не стартует
@@ -382,6 +407,7 @@ sudo apt-get install jq
 - **Identity Service**: [README](./identity/README.md) | [REST Guides](./identity/)
 - **Hackathon Service**: [README](./hackathon/README.md) | [REST](./hackathon/rest-guide.md) | [gRPC](./hackathon/grpc-guide.md)
 - **Participation & Roles Service**: [README](./participation-and-roles/README.md) | [REST](./participation-and-roles/rest-guide.md) | [gRPC](./participation-and-roles/grpc-guide.md)
+- **Team Service**: [README](./team/README.md)
 
 ### Automated Scripts
 

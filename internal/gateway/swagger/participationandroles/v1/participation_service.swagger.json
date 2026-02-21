@@ -16,6 +16,46 @@
     "application/json"
   ],
   "paths": {
+    "/v1/hackathons/{hackathonId}/participations/list": {
+      "post": {
+        "summary": "List hackathon participants",
+        "description": "Returns a paginated list of participants. Filterable by status and wished roles. Requires the caller to be staff or a registered participant.",
+        "operationId": "ParticipationService_ListHackathonParticipants",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListHackathonParticipantsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ParticipationServiceListHackathonParticipantsBody"
+            }
+          }
+        ],
+        "tags": [
+          "Participation"
+        ]
+      }
+    },
     "/v1/hackathons/{hackathonId}/participations/me": {
       "get": {
         "summary": "Get my participation",
@@ -86,7 +126,7 @@
         ]
       }
     },
-    "/v1/hackathons/{hackathonId}/participations/me:switchMode": {
+    "/v1/hackathons/{hackathonId}/participations/me/switchMode": {
       "post": {
         "summary": "Switch participation mode",
         "description": "Switches the authenticated user between individual and looking-for-team participation modes.",
@@ -126,7 +166,7 @@
         ]
       }
     },
-    "/v1/hackathons/{hackathonId}/participations/me:unregister": {
+    "/v1/hackathons/{hackathonId}/participations/me/unregister": {
       "post": {
         "summary": "Unregister from hackathon",
         "description": "Withdraws the authenticated user from the hackathon. The participation record is soft-deleted.",
@@ -166,85 +206,7 @@
         ]
       }
     },
-    "/v1/hackathons/{hackathonId}/participations/users/{userId}": {
-      "get": {
-        "summary": "Get a user's participation",
-        "description": "Returns another user's participation record. Requires the caller to be staff or themselves a registered participant of the hackathon.",
-        "operationId": "ParticipationService_GetUserParticipation",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1GetUserParticipationResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "hackathonId",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "userId",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "Participation"
-        ]
-      }
-    },
-    "/v1/hackathons/{hackathonId}/participations:list": {
-      "post": {
-        "summary": "List hackathon participants",
-        "description": "Returns a paginated list of participants. Filterable by status and wished roles. Requires the caller to be staff or a registered participant.",
-        "operationId": "ParticipationService_ListHackathonParticipants",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1ListHackathonParticipantsResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "hackathonId",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/ParticipationServiceListHackathonParticipantsBody"
-            }
-          }
-        ],
-        "tags": [
-          "Participation"
-        ]
-      }
-    },
-    "/v1/hackathons/{hackathonId}/participations:register": {
+    "/v1/hackathons/{hackathonId}/participations/register": {
       "post": {
         "summary": "Register for a hackathon",
         "description": "Registers the authenticated user for a hackathon. Depending on `desiredStatus`, the user joins as an individual (`PART_INDIVIDUAL`) or applies to join a team (`PART_LOOKING_FOR_TEAM`).",
@@ -277,6 +239,44 @@
             "schema": {
               "$ref": "#/definitions/ParticipationServiceRegisterForHackathonBody"
             }
+          }
+        ],
+        "tags": [
+          "Participation"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/participations/users/{userId}": {
+      "get": {
+        "summary": "Get a user's participation",
+        "description": "Returns another user's participation record. Requires the caller to be staff or themselves a registered participant of the hackathon.",
+        "operationId": "ParticipationService_GetUserParticipation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetUserParticipationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "type": "string"
           }
         ],
         "tags": [

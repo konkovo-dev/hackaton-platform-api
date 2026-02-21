@@ -1,0 +1,392 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "team/v1/team_members_service.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "team.v1.TeamMembersService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/hackathons/{hackathonId}/teams/{teamId}/members": {
+      "get": {
+        "summary": "List team members",
+        "description": "Returns the team roster. Requires the caller to be staff (OWNER/ORGANIZER/MENTOR) or a registered participant. Available starting from the REGISTRATION stage.",
+        "operationId": "TeamMembersService_ListTeamMembers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListTeamMembersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "teamId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Team"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/teams/{teamId}/members/leave": {
+      "post": {
+        "summary": "Leave a team",
+        "description": "Removes the authenticated user from the team. Only non-captain members can leave. This action is allowed outside REGISTRATION (from REGISTRATION through FINISHED), provided team participation is enabled by the hackathon policy.",
+        "operationId": "TeamMembersService_LeaveTeam",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1LeaveTeamResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "teamId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TeamMembersServiceLeaveTeamBody"
+            }
+          }
+        ],
+        "tags": [
+          "Team"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/teams/{teamId}/members/{userId}/kick": {
+      "post": {
+        "summary": "Kick a team member",
+        "description": "Removes a member from the team. Only the team captain can perform this action. Kicking the captain is forbidden. Allowed only during the REGISTRATION stage.",
+        "operationId": "TeamMembersService_KickTeamMember",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1KickTeamMemberResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "teamId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TeamMembersServiceKickTeamMemberBody"
+            }
+          }
+        ],
+        "tags": [
+          "Team"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/teams/{teamId}/transferCaptain": {
+      "post": {
+        "summary": "Transfer team captainship",
+        "description": "Transfers captainship to another team member. Only the current captain can perform this action. Allowed only during the REGISTRATION stage.",
+        "operationId": "TeamMembersService_TransferCaptain",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1TransferCaptainResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "teamId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TeamMembersServiceTransferCaptainBody"
+            }
+          }
+        ],
+        "tags": [
+          "Team"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/teams/{teamId}/vacancies/upsert": {
+      "post": {
+        "summary": "Create or update a vacancy",
+        "description": "Creates or updates a vacancy for the team. Only the team captain can perform this action. Slots constraints and team size limits are enforced. Allowed only during the REGISTRATION stage.",
+        "operationId": "TeamMembersService_UpsertVacancy",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UpsertVacancyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "teamId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TeamMembersServiceUpsertVacancyBody"
+            }
+          }
+        ],
+        "tags": [
+          "Team"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "TeamMembersServiceKickTeamMemberBody": {
+      "type": "object",
+      "properties": {
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "TeamMembersServiceLeaveTeamBody": {
+      "type": "object",
+      "properties": {
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "TeamMembersServiceTransferCaptainBody": {
+      "type": "object",
+      "properties": {
+        "targetUserId": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "TeamMembersServiceUpsertVacancyBody": {
+      "type": "object",
+      "properties": {
+        "vacancyId": {
+          "type": "string",
+          "description": "Empty =\u003e create new vacancy. Set =\u003e update existing."
+        },
+        "description": {
+          "type": "string"
+        },
+        "desiredRoleIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "desiredSkillIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "slotsTotal": {
+          "type": "string",
+          "format": "int64"
+        },
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1IdempotencyKey": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string"
+        }
+      }
+    },
+    "v1KickTeamMemberResponse": {
+      "type": "object"
+    },
+    "v1LeaveTeamResponse": {
+      "type": "object"
+    },
+    "v1ListTeamMembersResponse": {
+      "type": "object",
+      "properties": {
+        "members": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1TeamMember"
+          }
+        }
+      }
+    },
+    "v1TeamMember": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "isCaptain": {
+          "type": "boolean"
+        },
+        "assignedVacancyId": {
+          "type": "string",
+          "description": "Empty if the member is not assigned to any vacancy (e.g. team creator/captain)."
+        },
+        "joinedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1TransferCaptainResponse": {
+      "type": "object"
+    },
+    "v1UpsertVacancyResponse": {
+      "type": "object",
+      "properties": {
+        "vacancyId": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

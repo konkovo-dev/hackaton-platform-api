@@ -50,6 +50,40 @@
         ]
       }
     },
+    "/v1/hackathons/list": {
+      "post": {
+        "summary": "List hackathons",
+        "description": "Returns a paginated list of hackathons. Supports filtering and ordering via the `query` field.",
+        "operationId": "HackathonService_ListHackathons",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListHackathonsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ListHackathonsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Hackathons"
+        ]
+      }
+    },
     "/v1/hackathons/{hackathonId}": {
       "get": {
         "summary": "Get hackathon by ID",
@@ -308,6 +342,46 @@
         ]
       }
     },
+    "/v1/hackathons/{hackathonId}/publish": {
+      "post": {
+        "summary": "Publish a hackathon",
+        "description": "Transitions the hackathon from DRAFT to PUBLISHED, making it visible to participants. The hackathon must pass validation first.",
+        "operationId": "HackathonService_PublishHackathon",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1PublishHackathonResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/HackathonServicePublishHackathonBody"
+            }
+          }
+        ],
+        "tags": [
+          "Hackathons"
+        ]
+      }
+    },
     "/v1/hackathons/{hackathonId}/result": {
       "get": {
         "summary": "Get hackathon result",
@@ -378,7 +452,7 @@
         ]
       }
     },
-    "/v1/hackathons/{hackathonId}/result:publish": {
+    "/v1/hackathons/{hackathonId}/result/publish": {
       "post": {
         "summary": "Publish hackathon result",
         "description": "Makes the result draft visible to all participants. Requires OWNER or MANAGER role.",
@@ -488,47 +562,7 @@
         ]
       }
     },
-    "/v1/hackathons/{hackathonId}:publish": {
-      "post": {
-        "summary": "Publish a hackathon",
-        "description": "Transitions the hackathon from DRAFT to PUBLISHED, making it visible to participants. The hackathon must pass validation first.",
-        "operationId": "HackathonService_PublishHackathon",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1PublishHackathonResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "hackathonId",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/HackathonServicePublishHackathonBody"
-            }
-          }
-        ],
-        "tags": [
-          "Hackathons"
-        ]
-      }
-    },
-    "/v1/hackathons/{hackathonId}:validate": {
+    "/v1/hackathons/{hackathonId}/validate": {
       "get": {
         "summary": "Validate a hackathon",
         "description": "Checks whether a hackathon is ready to be published. Returns all blocking validation errors; an empty list means it is safe to publish.",
@@ -553,40 +587,6 @@
             "in": "path",
             "required": true,
             "type": "string"
-          }
-        ],
-        "tags": [
-          "Hackathons"
-        ]
-      }
-    },
-    "/v1/hackathons:list": {
-      "post": {
-        "summary": "List hackathons",
-        "description": "Returns a paginated list of hackathons. Supports filtering and ordering via the `query` field.",
-        "operationId": "HackathonService_ListHackathons",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1ListHackathonsResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1ListHackathonsRequest"
-            }
           }
         ],
         "tags": [

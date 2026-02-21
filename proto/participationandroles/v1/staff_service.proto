@@ -41,7 +41,7 @@ service StaffService {
 
   rpc CancelStaffInvitation(CancelStaffInvitationRequest) returns (CancelStaffInvitationResponse) {
     option (google.api.http) = {
-      post: "/v1/hackathons/{hackathon_id}/staff-invitations/{invitation_id}:cancel"
+      post: "/v1/hackathons/{hackathon_id}/staff-invitations/{invitation_id}/cancel"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -53,7 +53,7 @@ service StaffService {
 
   rpc ListMyStaffInvitations(ListMyStaffInvitationsRequest) returns (ListMyStaffInvitationsResponse) {
     option (google.api.http) = {
-      post: "/v1/users/me/staff-invitations:list"
+      post: "/v1/users/me/staff-invitations/list"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -65,7 +65,7 @@ service StaffService {
 
   rpc AcceptStaffInvitation(AcceptStaffInvitationRequest) returns (AcceptStaffInvitationResponse) {
     option (google.api.http) = {
-      post: "/v1/users/me/staff-invitations/{invitation_id}:accept"
+      post: "/v1/users/me/staff-invitations/{invitation_id}/accept"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -77,7 +77,7 @@ service StaffService {
 
   rpc RejectStaffInvitation(RejectStaffInvitationRequest) returns (RejectStaffInvitationResponse) {
     option (google.api.http) = {
-      post: "/v1/users/me/staff-invitations/{invitation_id}:reject"
+      post: "/v1/users/me/staff-invitations/{invitation_id}/reject"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -89,7 +89,7 @@ service StaffService {
 
   rpc RemoveHackathonRole(RemoveHackathonRoleRequest) returns (RemoveHackathonRoleResponse) {
     option (google.api.http) = {
-      post: "/v1/hackathons/{hackathon_id}/staff:removeRole"
+      post: "/v1/hackathons/{hackathon_id}/staff/removeRole"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -101,7 +101,7 @@ service StaffService {
 
   rpc SelfRemoveHackathonRole(SelfRemoveHackathonRoleRequest) returns (SelfRemoveHackathonRoleResponse) {
     option (google.api.http) = {
-      post: "/v1/hackathons/{hackathon_id}/staff:selfRemoveRole"
+      post: "/v1/hackathons/{hackathon_id}/staff/selfRemoveRole"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {

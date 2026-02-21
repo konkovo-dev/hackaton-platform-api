@@ -55,7 +55,7 @@ func TestRegisterForHackathonIndividual(t *testing.T) {
 		"motivation_text": "I love frontend development!",
 	}
 
-	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations:register", hackathonID), participant.AccessToken, registerBody)
+	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/register", hackathonID), participant.AccessToken, registerBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to register: %s", string(body))
 
 	data := tc.ParseJSON(body)
@@ -78,7 +78,7 @@ func TestRegisterForHackathonLookingForTeam(t *testing.T) {
 		"motivation_text": "Want to find a great team",
 	}
 
-	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations:register", hackathonID), participant.AccessToken, registerBody)
+	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/register", hackathonID), participant.AccessToken, registerBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to register: %s", string(body))
 
 	data := tc.ParseJSON(body)
@@ -97,11 +97,11 @@ func TestRegisterTwiceShouldFail(t *testing.T) {
 		"desired_status":  "PART_INDIVIDUAL",
 		"motivation_text": "First registration",
 	}
-	resp, _ := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations:register", hackathonID), participant.AccessToken, registerBody)
+	resp, _ := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/register", hackathonID), participant.AccessToken, registerBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
 	registerBody["motivation_text"] = "Second registration"
-	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations:register", hackathonID), participant.AccessToken, registerBody)
+	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/register", hackathonID), participant.AccessToken, registerBody)
 	assert.Equal(t, http.StatusConflict, resp.StatusCode, "Should reject duplicate registration: %s", string(body))
 }
 
@@ -116,7 +116,7 @@ func TestGetMyParticipation(t *testing.T) {
 		"desired_status":  "PART_INDIVIDUAL",
 		"motivation_text": "Test motivation",
 	}
-	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations:register", hackathonID), participant.AccessToken, registerBody)
+	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/register", hackathonID), participant.AccessToken, registerBody)
 
 	resp, body := tc.DoAuthenticatedRequest("GET", fmt.Sprintf("/v1/hackathons/%s/participations/me", hackathonID), participant.AccessToken, nil)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to get participation: %s", string(body))
@@ -141,7 +141,7 @@ func TestUpdateMyParticipation(t *testing.T) {
 		"desired_status":  "PART_INDIVIDUAL",
 		"motivation_text": "Original motivation",
 	}
-	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations:register", hackathonID), participant.AccessToken, registerBody)
+	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/register", hackathonID), participant.AccessToken, registerBody)
 
 	resp, body := tc.DoAuthenticatedRequest("GET", "/v1/team-roles", participant.AccessToken, nil)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
@@ -190,13 +190,13 @@ func TestSwitchParticipationMode(t *testing.T) {
 		"desired_status":  "PART_INDIVIDUAL",
 		"motivation_text": "Test",
 	}
-	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations:register", hackathonID), participant.AccessToken, registerBody)
+	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/register", hackathonID), participant.AccessToken, registerBody)
 
 	switchBody := map[string]interface{}{
 		"new_status": "PART_LOOKING_FOR_TEAM",
 	}
 
-	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/me:switchMode", hackathonID), participant.AccessToken, switchBody)
+	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/me/switchMode", hackathonID), participant.AccessToken, switchBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to switch mode: %s", string(body))
 
 	resp, body = tc.DoAuthenticatedRequest("GET", fmt.Sprintf("/v1/hackathons/%s/participations/me", hackathonID), participant.AccessToken, nil)
@@ -218,13 +218,13 @@ func TestSwitchToSameStatusShouldFail(t *testing.T) {
 		"desired_status":  "PART_INDIVIDUAL",
 		"motivation_text": "Test",
 	}
-	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations:register", hackathonID), participant.AccessToken, registerBody)
+	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/register", hackathonID), participant.AccessToken, registerBody)
 
 	switchBody := map[string]interface{}{
 		"new_status": "PART_INDIVIDUAL",
 	}
 
-	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/me:switchMode", hackathonID), participant.AccessToken, switchBody)
+	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/me/switchMode", hackathonID), participant.AccessToken, switchBody)
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode, "Should reject switch to same status: %s", string(body))
 }
 
@@ -240,8 +240,8 @@ func TestGetUserParticipation(t *testing.T) {
 		"desired_status":  "PART_INDIVIDUAL",
 		"motivation_text": "Test",
 	}
-	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations:register", hackathonID), participant1.AccessToken, registerBody)
-	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations:register", hackathonID), participant2.AccessToken, registerBody)
+	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/register", hackathonID), participant1.AccessToken, registerBody)
+	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/register", hackathonID), participant2.AccessToken, registerBody)
 
 	resp, body := tc.DoAuthenticatedRequest("GET", fmt.Sprintf("/v1/hackathons/%s/participations/users/%s", hackathonID, participant2.UserID), participant1.AccessToken, nil)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to get user participation: %s", string(body))
@@ -263,13 +263,13 @@ func TestListHackathonParticipants(t *testing.T) {
 		"desired_status":  "PART_INDIVIDUAL",
 		"motivation_text": "Test",
 	}
-	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations:register", hackathonID), participant1.AccessToken, registerBody)
+	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/register", hackathonID), participant1.AccessToken, registerBody)
 
 	registerBody["desired_status"] = "PART_LOOKING_FOR_TEAM"
-	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations:register", hackathonID), participant2.AccessToken, registerBody)
+	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/register", hackathonID), participant2.AccessToken, registerBody)
 
 	listBody := map[string]interface{}{}
-	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations:list", hackathonID), participant1.AccessToken, listBody)
+	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/list", hackathonID), participant1.AccessToken, listBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to list participants: %s", string(body))
 
 	data := tc.ParseJSON(body)
@@ -290,13 +290,13 @@ func TestListHackathonParticipantsWithStatusFilter(t *testing.T) {
 		"desired_status":  "PART_INDIVIDUAL",
 		"motivation_text": "Test",
 	}
-	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations:register", hackathonID), participant1.AccessToken, registerBody1)
+	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/register", hackathonID), participant1.AccessToken, registerBody1)
 
 	registerBody2 := map[string]interface{}{
 		"desired_status":  "PART_LOOKING_FOR_TEAM",
 		"motivation_text": "Test",
 	}
-	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations:register", hackathonID), participant2.AccessToken, registerBody2)
+	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/register", hackathonID), participant2.AccessToken, registerBody2)
 
 	listBody := map[string]interface{}{
 		"status_filter": map[string]interface{}{
@@ -304,7 +304,7 @@ func TestListHackathonParticipantsWithStatusFilter(t *testing.T) {
 		},
 	}
 
-	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations:list", hackathonID), participant1.AccessToken, listBody)
+	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/list", hackathonID), participant1.AccessToken, listBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to filter participants: %s", string(body))
 
 	data := tc.ParseJSON(body)
@@ -325,7 +325,7 @@ func TestListParticipantsAsNonParticipantShouldFail(t *testing.T) {
 	hackathonID := createAndPublishHackathon(tc, owner)
 
 	listBody := map[string]interface{}{}
-	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations:list", hackathonID), nonParticipant.AccessToken, listBody)
+	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/list", hackathonID), nonParticipant.AccessToken, listBody)
 	assert.Equal(t, http.StatusForbidden, resp.StatusCode, "Non-participant should not list participants: %s", string(body))
 }
 
@@ -340,10 +340,10 @@ func TestUnregisterFromHackathon(t *testing.T) {
 		"desired_status":  "PART_INDIVIDUAL",
 		"motivation_text": "Test",
 	}
-	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations:register", hackathonID), participant.AccessToken, registerBody)
+	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/register", hackathonID), participant.AccessToken, registerBody)
 
 	unregisterBody := map[string]interface{}{}
-	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/me:unregister", hackathonID), participant.AccessToken, unregisterBody)
+	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/me/unregister", hackathonID), participant.AccessToken, unregisterBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to unregister: %s", string(body))
 
 	resp, _ = tc.DoAuthenticatedRequest("GET", fmt.Sprintf("/v1/hackathons/%s/participations/me", hackathonID), participant.AccessToken, nil)

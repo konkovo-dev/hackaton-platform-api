@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package team.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/team/v1;teamv1";
+
+import "google/protobuf/timestamp.proto";
+
+message Team {
+  string team_id = 1;
+  string hackathon_id = 2;
+
+  string name = 3;
+  string description = 4;
+
+  // When true, participants can create JoinRequests to this team.
+  bool is_joinable = 5;
+
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+}
+
+message Vacancy {
+  string vacancy_id = 1;
+  string team_id = 2;
+
+  string description = 3;
+
+  // Client may use a special value like "any" to represent "ANY".
+  repeated string desired_role_ids = 4;
+
+  // Client may use a special value like "any" to represent "ANY".
+  repeated string desired_skill_ids = 5;
+
+  int64 slots_total = 6;
+  int64 slots_open = 7;
+
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+}
+
+message TeamWithVacancies {
+  Team team = 1;
+  repeated Vacancy vacancies = 2;
+}
+
+message TeamMember {
+  string user_id = 1;
+  bool is_captain = 2;
+
+  // Empty if the member is not assigned to any vacancy (e.g. team creator/captain).
+  string assigned_vacancy_id = 3;
+
+  google.protobuf.Timestamp joined_at = 10;
+}

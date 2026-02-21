@@ -100,7 +100,7 @@ func TestListMyStaffInvitations(t *testing.T) {
 	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff-invitations", hackathonID), owner.AccessToken, inviteBody)
 
 	listBody := map[string]interface{}{}
-	resp, body := tc.DoAuthenticatedRequest("POST", "/v1/users/me/staff-invitations:list", invitee.AccessToken, listBody)
+	resp, body := tc.DoAuthenticatedRequest("POST", "/v1/users/me/staff-invitations/list", invitee.AccessToken, listBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to list invitations: %s", string(body))
 
 	data := tc.ParseJSON(body)
@@ -133,7 +133,7 @@ func TestAcceptStaffInvitation(t *testing.T) {
 	invitationID := inviteData["invitationId"].(string)
 
 	acceptBody := map[string]interface{}{}
-	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/users/me/staff-invitations/%s:accept", invitationID), invitee.AccessToken, acceptBody)
+	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/users/me/staff-invitations/%s/accept", invitationID), invitee.AccessToken, acceptBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to accept invitation: %s", string(body))
 
 	resp, body = tc.DoAuthenticatedRequest("GET", fmt.Sprintf("/v1/hackathons/%s/staff", hackathonID), owner.AccessToken, nil)
@@ -174,11 +174,11 @@ func TestRejectStaffInvitation(t *testing.T) {
 	invitationID := inviteData["invitationId"].(string)
 
 	rejectBody := map[string]interface{}{}
-	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/users/me/staff-invitations/%s:reject", invitationID), invitee.AccessToken, rejectBody)
+	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/users/me/staff-invitations/%s/reject", invitationID), invitee.AccessToken, rejectBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to reject invitation: %s", string(body))
 
 	listBody := map[string]interface{}{}
-	resp, body = tc.DoAuthenticatedRequest("POST", "/v1/users/me/staff-invitations:list", invitee.AccessToken, listBody)
+	resp, body = tc.DoAuthenticatedRequest("POST", "/v1/users/me/staff-invitations/list", invitee.AccessToken, listBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
 	listData := tc.ParseJSON(body)
@@ -215,11 +215,11 @@ func TestCancelStaffInvitation(t *testing.T) {
 	invitationID := inviteData["invitationId"].(string)
 
 	cancelBody := map[string]interface{}{}
-	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff-invitations/%s:cancel", hackathonID, invitationID), owner.AccessToken, cancelBody)
+	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff-invitations/%s/cancel", hackathonID, invitationID), owner.AccessToken, cancelBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to cancel invitation: %s", string(body))
 
 	listBody := map[string]interface{}{}
-	resp, body = tc.DoAuthenticatedRequest("POST", "/v1/users/me/staff-invitations:list", invitee.AccessToken, listBody)
+	resp, body = tc.DoAuthenticatedRequest("POST", "/v1/users/me/staff-invitations/list", invitee.AccessToken, listBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
 	listData := tc.ParseJSON(body)
@@ -255,14 +255,14 @@ func TestRemoveHackathonRole(t *testing.T) {
 	inviteData := tc.ParseJSON(body)
 	invitationID := inviteData["invitationId"].(string)
 
-	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/users/me/staff-invitations/%s:accept", invitationID), mentor.AccessToken, map[string]interface{}{})
+	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/users/me/staff-invitations/%s/accept", invitationID), mentor.AccessToken, map[string]interface{}{})
 
 	removeBody := map[string]interface{}{
 		"user_id": mentor.UserID,
 		"role":    "HACKATHON_ROLE_MENTOR",
 	}
 
-	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff:removeRole", hackathonID), owner.AccessToken, removeBody)
+	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff/removeRole", hackathonID), owner.AccessToken, removeBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to remove role: %s", string(body))
 
 	resp, body = tc.DoAuthenticatedRequest("GET", fmt.Sprintf("/v1/hackathons/%s/staff", hackathonID), owner.AccessToken, nil)
@@ -288,7 +288,7 @@ func TestRemoveOwnerRoleShouldFail(t *testing.T) {
 		"role":    "HACKATHON_ROLE_OWNER",
 	}
 
-	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff:removeRole", hackathonID), owner.AccessToken, removeBody)
+	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff/removeRole", hackathonID), owner.AccessToken, removeBody)
 	assert.Equal(t, http.StatusForbidden, resp.StatusCode, "Should not allow removing owner role: %s", string(body))
 }
 
@@ -310,13 +310,13 @@ func TestSelfRemoveHackathonRole(t *testing.T) {
 	inviteData := tc.ParseJSON(body)
 	invitationID := inviteData["invitationId"].(string)
 
-	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/users/me/staff-invitations/%s:accept", invitationID), mentor.AccessToken, map[string]interface{}{})
+	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/users/me/staff-invitations/%s/accept", invitationID), mentor.AccessToken, map[string]interface{}{})
 
 	selfRemoveBody := map[string]interface{}{
 		"role": "HACKATHON_ROLE_MENTOR",
 	}
 
-	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff:selfRemoveRole", hackathonID), mentor.AccessToken, selfRemoveBody)
+	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff/selfRemoveRole", hackathonID), mentor.AccessToken, selfRemoveBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to self-remove role: %s", string(body))
 
 	resp, body = tc.DoAuthenticatedRequest("GET", fmt.Sprintf("/v1/hackathons/%s/staff", hackathonID), owner.AccessToken, nil)
@@ -341,7 +341,7 @@ func TestSelfRemoveOwnerRoleShouldFail(t *testing.T) {
 		"role": "HACKATHON_ROLE_OWNER",
 	}
 
-	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff:selfRemoveRole", hackathonID), owner.AccessToken, selfRemoveBody)
+	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff/selfRemoveRole", hackathonID), owner.AccessToken, selfRemoveBody)
 	assert.Equal(t, http.StatusForbidden, resp.StatusCode, "Should not allow self-removing owner role: %s", string(body))
 }
 
@@ -382,6 +382,6 @@ func TestAcceptInvitationNotAddressedToYouShouldFail(t *testing.T) {
 	invitationID := inviteData["invitationId"].(string)
 
 	acceptBody := map[string]interface{}{}
-	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/users/me/staff-invitations/%s:accept", invitationID), other.AccessToken, acceptBody)
+	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/users/me/staff-invitations/%s/accept", invitationID), other.AccessToken, acceptBody)
 	assert.Equal(t, http.StatusForbidden, resp.StatusCode, "Should not allow accepting invitation not addressed to you: %s", string(body))
 }

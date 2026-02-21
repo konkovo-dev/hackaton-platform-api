@@ -1,0 +1,285 @@
+syntax = "proto3";
+
+package team.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/team/v1;teamv1";
+
+import "google/api/annotations.proto";
+
+import "common/v1/idempotency.proto";
+import "common/v1/query.proto";
+
+import "team/v1/inbox.proto";
+
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+service TeamInboxService {
+  rpc ListTeamInvitations(ListTeamInvitationsRequest) returns (ListTeamInvitationsResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/teams/{team_id}/team-invitations/list"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List team invitations for a team"
+      description: "Returns invitations created by the team (outgoing invitations). Only the team captain can access this list. Available starting from the REGISTRATION stage."
+      tags: "Team"
+    };
+  }
+
+  rpc CreateTeamInvitation(CreateTeamInvitationRequest) returns (CreateTeamInvitationResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/teams/{team_id}/team-invitations"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create a team invitation"
+      description: "Invites a user to join the team for a specific vacancy. Only the team captain can perform this action. Allowed only during the REGISTRATION stage."
+      tags: "Team"
+    };
+  }
+
+  rpc CancelTeamInvitation(CancelTeamInvitationRequest) returns (CancelTeamInvitationResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/teams/{team_id}/team-invitations/{invitation_id}/cancel"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Cancel a team invitation"
+      description: "Cancels a pending team invitation so the target user can no longer accept it. Only the team captain can perform this action. Allowed only during the REGISTRATION stage."
+      tags: "Team"
+    };
+  }
+
+  rpc ListMyTeamInvitations(ListMyTeamInvitationsRequest) returns (ListMyTeamInvitationsResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/me/team-invitations/list"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List my team invitations"
+      description: "Returns team invitations addressed to the authenticated user."
+      tags: "Team"
+    };
+  }
+
+  rpc AcceptTeamInvitation(AcceptTeamInvitationRequest) returns (AcceptTeamInvitationResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/me/team-invitations/{invitation_id}/accept"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Accept a team invitation"
+      description: "Accepts a pending team invitation. The authenticated user joins the team as a member, a vacancy slot is consumed, and competing pending invitations/requests in the same hackathon are canceled. Allowed only during the REGISTRATION stage."
+      tags: "Team"
+    };
+  }
+
+  rpc RejectTeamInvitation(RejectTeamInvitationRequest) returns (RejectTeamInvitationResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/me/team-invitations/{invitation_id}/reject"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Reject a team invitation"
+      description: "Rejects a pending team invitation. The invitation is marked as rejected and cannot be accepted later. Allowed only during the REGISTRATION stage."
+      tags: "Team"
+    };
+  }
+
+  rpc ListJoinRequests(ListJoinRequestsRequest) returns (ListJoinRequestsResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/teams/{team_id}/join-requests/list"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List join requests for a team"
+      description: "Returns join requests received by the team (incoming requests). Only the team captain can access this list. Available starting from the REGISTRATION stage."
+      tags: "Team"
+    };
+  }
+
+  rpc CreateJoinRequest(CreateJoinRequestRequest) returns (CreateJoinRequestResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/teams/{team_id}/join-requests"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create a join request"
+      description: "Requests to join a team for a specific vacancy. The authenticated user must be a registered participant. Allowed only during the REGISTRATION stage."
+      tags: "Team"
+    };
+  }
+
+  rpc ListMyJoinRequests(ListMyJoinRequestsRequest) returns (ListMyJoinRequestsResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/me/join-requests/list"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List my join requests"
+      description: "Returns join requests created by the authenticated user."
+      tags: "Team"
+    };
+  }
+
+  rpc CancelJoinRequest(CancelJoinRequestRequest) returns (CancelJoinRequestResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/me/join-requests/{request_id}/cancel"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Cancel a join request"
+      description: "Cancels a pending join request. Only the requester can cancel their own request. Allowed only during the REGISTRATION stage."
+      tags: "Team"
+    };
+  }
+
+  rpc AcceptJoinRequest(AcceptJoinRequestRequest) returns (AcceptJoinRequestResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/teams/{team_id}/join-requests/{request_id}/accept"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Accept a join request"
+      description: "Accepts a pending join request. The requester joins the team as a member, a vacancy slot is consumed, and competing pending invitations/requests in the same hackathon are canceled. Only the team captain can perform this action. Allowed only during the REGISTRATION stage."
+      tags: "Team"
+    };
+  }
+
+  rpc RejectJoinRequest(RejectJoinRequestRequest) returns (RejectJoinRequestResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/teams/{team_id}/join-requests/{request_id}/reject"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Reject a join request"
+      description: "Rejects a pending join request. The request is marked as rejected and cannot be accepted later. Only the team captain can perform this action. Allowed only during the REGISTRATION stage."
+      tags: "Team"
+    };
+  }
+}
+
+message ListTeamInvitationsRequest {
+  string hackathon_id = 1;
+  string team_id = 2;
+
+  common.v1.Query query = 10;
+}
+
+message ListTeamInvitationsResponse {
+  repeated TeamInvitation invitations = 1;
+  common.v1.PageResponse page = 2;
+}
+
+message CreateTeamInvitationRequest {
+  string hackathon_id = 1;
+  string team_id = 2;
+
+  string target_user_id = 3;
+  string vacancy_id = 4;
+
+  string message = 5;
+
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message CreateTeamInvitationResponse {
+  string invitation_id = 1;
+}
+
+message CancelTeamInvitationRequest {
+  string hackathon_id = 1;
+  string team_id = 2;
+
+  string invitation_id = 3;
+
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message CancelTeamInvitationResponse {}
+
+message ListMyTeamInvitationsRequest {
+  common.v1.Query query = 1;
+}
+
+message ListMyTeamInvitationsResponse {
+  repeated TeamInvitation invitations = 1;
+  common.v1.PageResponse page = 2;
+}
+
+message AcceptTeamInvitationRequest {
+  string invitation_id = 1;
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message AcceptTeamInvitationResponse {}
+
+message RejectTeamInvitationRequest {
+  string invitation_id = 1;
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message RejectTeamInvitationResponse {}
+
+message ListJoinRequestsRequest {
+  string hackathon_id = 1;
+  string team_id = 2;
+
+  common.v1.Query query = 10;
+}
+
+message ListJoinRequestsResponse {
+  repeated JoinRequest requests = 1;
+  common.v1.PageResponse page = 2;
+}
+
+message CreateJoinRequestRequest {
+  string hackathon_id = 1;
+  string team_id = 2;
+
+  string vacancy_id = 3;
+
+  string message = 4;
+
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message CreateJoinRequestResponse {
+  string request_id = 1;
+}
+
+message ListMyJoinRequestsRequest {
+  common.v1.Query query = 1;
+}
+
+message ListMyJoinRequestsResponse {
+  repeated JoinRequest requests = 1;
+  common.v1.PageResponse page = 2;
+}
+
+message CancelJoinRequestRequest {
+  string request_id = 1;
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message CancelJoinRequestResponse {}
+
+message AcceptJoinRequestRequest {
+  string hackathon_id = 1;
+  string team_id = 2;
+  string request_id = 3;
+
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message AcceptJoinRequestResponse {}
+
+message RejectJoinRequestRequest {
+  string hackathon_id = 1;
+  string team_id = 2;
+  string request_id = 3;
+
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message RejectJoinRequestResponse {}
