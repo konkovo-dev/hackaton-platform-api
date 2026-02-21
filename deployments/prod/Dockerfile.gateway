@@ -2,12 +2,20 @@ FROM golang:1.24.0-alpine AS builder
 
 WORKDIR /build
 
-RUN apk add --no-cache git
+RUN apk add --no-cache git curl bash
+
+RUN go install github.com/bufbuild/buf/cmd/buf@latest && \
+    go install google.golang.org/protobuf/cmd/protoc-gen-go@latest && \
+    go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest && \
+    go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@latest && \
+    go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest
 
 COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
+
+RUN buf generate
 
 RUN CGO_ENABLED=0 GOOS=linux go build \
     -ldflags="-s -w" \
@@ -18,7 +26,7 @@ FROM alpine:3.21
 
 WORKDIR /app
 
-RUN apk --no-cache add ca-certificates && \
+RUN apk --no-cache add ca-certificates wget && \
     adduser -D -u 1000 appuser && \
     chown -R appuser:appuser /app
 
