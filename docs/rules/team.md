@@ -1,4 +1,4 @@
-# Hackathon Policy Spec — Team domain (v1.1, raw)
+# Hackathon Policy Spec — Team domain (v1.2, updated)
 
 Нотация правила: `<ACTION> @ <predicate>`
 
@@ -8,8 +8,13 @@
 
 ### 0.1 Actor context (Role/Participation service)
 - `roles[]`: `{OWNER, ORGANIZER, MENTOR, JURY}`
-- `particip.kind`: `{NONE, LOOKING_FOR_TEAM, SINGLE, TEAM}`
+- `particip.status ∈ {PART_NONE, PART_INDIVIDUAL, PART_LOOKING_FOR_TEAM, PART_TEAM_MEMBER, PART_TEAM_CAPTAIN}`
 - `particip.team_id`: `uuid | null`
+
+Derived:
+- `is_in_team := particip.status in {PART_TEAM_MEMBER, PART_TEAM_CAPTAIN}`
+- `is_participant := particip.status != PART_NONE`
+- `can_seek_team := particip.status in {PART_LOOKING_FOR_TEAM, PART_INDIVIDUAL}`
 
 ### 0.2 Hackathon context (Hackathon service)
 - `published_at`: `timestamp | null`
@@ -44,7 +49,7 @@
 - `invite_id`
 - `hackathon_id`
 - `team_id`
-- `vacancy_id` (uuid | null)
+- `vacancy_id` (uuid)                 // always set
 - `target_user_id`
 - `status ∈ {PENDING, ACCEPTED, DECLINED, CANCELED, EXPIRED}`
 - `message` (string | null)
@@ -55,7 +60,7 @@
 - `request_id`
 - `hackathon_id`
 - `team_id`
-- `vacancy_id`
+- `vacancy_id` (uuid)                 // always set
 - `requester_user_id`
 - `status ∈ {PENDING, ACCEPTED, DECLINED, CANCELED, EXPIRED}`
 - `message` (string | null)
@@ -69,10 +74,11 @@
 ### 1.1 Взаимоисключение staff и participation
 В одном хакатоне запрещено одновременно:
 - иметь любую роль из `{OWNER, ORGANIZER, MENTOR, JURY}`
-- и иметь участие `particip.kind in {LOOKING_FOR_TEAM, SINGLE, TEAM}`
+- и иметь участие `particip.status != PART_NONE`
 
 ### 1.2 Один пользователь может состоять только в одной команде хакатона
 - `particip.team_id` может указывать только на одну команду в рамках одного `hackathon_id`
+- `particip.status in {PART_TEAM_MEMBER, PART_TEAM_CAPTAIN} -> particip.team_id != null`
 
 ### 1.3 Ограничение на размер команды
 Если `policy.team_size_max != null`, то всегда должно выполняться:
@@ -89,21 +95,30 @@
 - `slots_total_new >= slots_occupied_old`
 где `slots_occupied_old = slots_total_old - slots_open_old`
 
+### 1.6 Инвайты и заявки всегда привязаны к вакансии
+- `TeamInvite.vacancy_id != null`
+- `JoinRequest.vacancy_id != null`
+- `vacancy.team_id == team.team_id`
+
 ---
 
 ## 2) Предикаты
 
 ### 2.1 Роли и участие
 - `role in {…}`: actor имеет хотя бы одну роль из множества
-- `particip.kind in {…}`: тип участия входит в множество
+- `is_staff := role in {OWNER, ORGANIZER, MENTOR, JURY}`
+- `is_participant := particip.status != PART_NONE`
+- `is_in_team := particip.status in {PART_TEAM_MEMBER, PART_TEAM_CAPTAIN}`
+- `can_seek_team := particip.status in {PART_LOOKING_FOR_TEAM, PART_INDIVIDUAL}`
 
 ### 2.2 Окна стадий
 - `TeamReadWindow`: `stage in {REGISTRATION, PRESTART, RUNNING, JUDGING, FINISHED}`
 - `TeamWriteWindow`: `stage == REGISTRATION`
+- `TeamLeaveWindow`: `stage in {REGISTRATION, PRESTART, RUNNING, JUDGING, FINISHED}`
 
 ### 2.3 Права в команде
-- `is_team_member(team)`
-- `is_team_captain(team)`
+- `is_team_member(team)`: существует `Membership(team_id, actor.user_id)`
+- `is_team_captain(team)`: существует `Membership(team_id, actor.user_id, is_captain=true)`
 
 ---
 
@@ -111,37 +126,40 @@
 
 ### 3.1 CanJoinTeam(actor)
 `CanJoinTeam(actor)` выполняется, если:
-- `role in {OWNER, ORGANIZER, MENTOR, JURY}` не выполняется
-- `particip.kind != TEAM`
+- `is_staff` не выполняется
+- `particip.status NOT IN {PART_TEAM_MEMBER, PART_TEAM_CAPTAIN}`
 
 ---
 
 ## 4) Политика чтения
 
 ### 4.1 Team.ReadCatalog
-`Team.ReadCatalog @ auth && TeamReadWindow`
+`Team.ReadCatalog @ auth && TeamReadWindow && (role in {OWNER, ORGANIZER, MENTOR} || is_participant)`
 
 Описание:
 - читать список команд и вакансий можно начиная с `REGISTRATION`
+- доступно staff (`OWNER/ORGANIZER/MENTOR`) и пользователям, которые участвуют в хакатоне (`particip.status != PART_NONE`)
 
 ### 4.2 Team.ReadById
-`Team.ReadById @ auth && TeamReadWindow`
+`Team.ReadById @ auth && TeamReadWindow && (role in {OWNER, ORGANIZER, MENTOR} || is_participant)`
 
 Описание:
 - читать команду и вакансии можно начиная с `REGISTRATION`
+- доступно staff (`OWNER/ORGANIZER/MENTOR`) и пользователям, которые участвуют в хакатоне (`particip.status != PART_NONE`)
 
 ### 4.3 Team.ReadRoster
-`Team.ReadRoster @ auth && TeamReadWindow && (role in {OWNER, ORGANIZER, MENTOR} || particip.kind != NONE)`
+`Team.ReadRoster @ auth && TeamReadWindow && (role in {OWNER, ORGANIZER, MENTOR} || is_participant)`
 
 Описание:
 - состав команд виден `OWNER/ORGANIZER/MENTOR`
-- состав команд виден любому пользователю с `particip.kind != NONE`
+- состав команд виден любому пользователю с `particip.status != PART_NONE`
 
 ### 4.4 Team.ReadMyInbox
-`Team.ReadMyInbox @ auth && TeamReadWindow`
+`Team.ReadMyInbox @ auth && TeamReadWindow && is_participant`
 
 Описание:
 - пользователь читает свои командные инвайты и свои заявки
+- доступно только участникам хакатона (не staff)
 
 ### 4.5 Team.ReadTeamInbox
 `Team.ReadTeamInbox @ auth && TeamReadWindow && is_team_captain(team)`
@@ -153,7 +171,7 @@
 
 ## 5) Политика записи
 
-Общее условие для любых действий записи:
+Общее условие для любых действий записи (кроме выхода):
 - `auth && TeamWriteWindow && policy.allow_team == true`
 
 ### 5.1 Team.Create
@@ -163,7 +181,7 @@
 - пользователь создаёт команду в хакатоне
 - пользователь становится капитаном
 - если у пользователя нет участия, оно создаётся
-- если у пользователя участие `LOOKING_FOR_TEAM` или `SINGLE`, оно конвертируется в `TEAM`
+- если у пользователя участие `PART_LOOKING_FOR_TEAM` или `PART_INDIVIDUAL`, оно конвертируется в `PART_TEAM_CAPTAIN`
 
 Строгие требования:
 - `team.name` задан
@@ -191,16 +209,16 @@
 - инвариант `team_size_max` сохраняется
 
 ### 5.4 TeamInvite.Create
-`TeamInvite.Create @ auth && TeamWriteWindow && policy.allow_team == true && is_team_captain(team) && team.is_joinable == true && vacancy_id задан && slots_open(vacancy) > 0`
+`TeamInvite.Create @ auth && TeamWriteWindow && policy.allow_team == true && is_team_captain(team) && vacancy_id задан && slots_open(vacancy) > 0`
 
 Описание:
 - капитан приглашает пользователя в команду
-- приглашение всегда привязано к вакансии
+- приглашение всегда привязано к вакансии (включая "Any/Generalist" vacancy)
 
 Ограничения:
 - `slots_open(vacancy) > 0`
 - target не является staff в этом хакатоне
-- target не имеет `particip.kind == TEAM` в этом хакатоне
+- target не имеет `particip.status in {PART_TEAM_MEMBER, PART_TEAM_CAPTAIN}` в этом хакатоне
 
 ### 5.5 TeamInvite.Cancel
 `TeamInvite.Cancel @ auth && TeamWriteWindow && policy.allow_team == true && is_team_captain(team) && invite.status == PENDING`
@@ -218,7 +236,7 @@
 Ограничения:
 - `slots_open(vacancy) > 0`
 - пользователь не является staff в этом хакатоне
-- пользователь не имеет `particip.kind == TEAM` в этом хакатоне
+- пользователь не имеет `particip.status in {PART_TEAM_MEMBER, PART_TEAM_CAPTAIN}` в этом хакатоне
 
 ### 5.7 TeamInvite.Reject
 `TeamInvite.Reject @ auth && TeamWriteWindow && policy.allow_team == true && invite.status == PENDING && invite.target_user_id == actor.user_id`
@@ -227,7 +245,7 @@
 - пользователь отклоняет приглашение
 
 ### 5.8 JoinRequest.Create
-`JoinRequest.Create @ auth && TeamWriteWindow && policy.allow_team == true && team.is_joinable == true && CanJoinTeam(actor) && particip.kind in {LOOKING_FOR_TEAM, SINGLE} && slots_open(vacancy) > 0`
+`JoinRequest.Create @ auth && TeamWriteWindow && policy.allow_team == true && team.is_joinable == true && CanJoinTeam(actor) && can_seek_team && slots_open(vacancy) > 0`
 
 Описание:
 - пользователь отправляет заявку на вступление в команду на конкретную вакансию
@@ -247,7 +265,7 @@
 
 Ограничения:
 - пользователь не является staff в этом хакатоне
-- пользователь не имеет `particip.kind == TEAM` в этом хакатоне
+- пользователь не имеет `particip.status in {PART_TEAM_MEMBER, PART_TEAM_CAPTAIN}` в этом хакатоне
 
 ### 5.11 JoinRequest.Reject
 `JoinRequest.Reject @ auth && TeamWriteWindow && policy.allow_team == true && is_team_captain(team) && request.status == PENDING`
@@ -264,14 +282,15 @@
 Ограничения:
 - исключение капитана запрещено
 
-### 5.13 TeamMember.Leave
-`TeamMember.Leave @ auth && TeamWriteWindow && policy.allow_team == true && is_team_member(team)`
+### 5.13 TeamMember.Leave (non-captain)
+`TeamMember.Leave @ auth && TeamLeaveWindow && policy.allow_team == true && is_team_member(team) && actor is NOT team captain`
 
 Описание:
-- участник выходит из команды
+- участник (не капитан) выходит из команды
+- доступно и вне `REGISTRATION`
 
 Ограничения:
-- капитан не может выйти без передачи капитанства
+- капитан не может выйти без передачи капитанства (и transfer доступен только в REGISTRATION)
 
 ### 5.14 TeamCaptain.Transfer
 `TeamCaptain.Transfer @ auth && TeamWriteWindow && policy.allow_team == true && is_team_captain(team) && target is_team_member(team) && target.user_id != actor.user_id`
@@ -291,22 +310,26 @@
 
 ### 6.1 Конверсия участия в TEAM
 При успешном выполнении действий:
-- `Team.Create`
-- `TeamInvite.Accept`
-- `JoinRequest.Accept`
+- `Team.Create`               -> actor becomes captain
+- `TeamInvite.Accept`         -> target becomes member
+- `JoinRequest.Accept`        -> requester becomes member
 
 Team service инициирует обновление участия в Role/Participation service:
-- `particip.kind = TEAM`
-- `particip.team_id = team_id`
+- для create:
+  - `particip.status = PART_TEAM_CAPTAIN`
+  - `particip.team_id = team_id`
+- для accept:
+  - `particip.status = PART_TEAM_MEMBER`
+  - `particip.team_id = team_id`
 
 ### 6.2 Выход из TEAM
 При успешном выполнении действий:
-- `TeamMember.Leave`
+- `TeamMember.Leave` (non-captain)
 - `TeamMember.Kick`
-- `Team.Delete`
+- `Team.Delete` (captain alone)
 
 Team service инициирует обновление участия в Role/Participation service:
-- `particip.kind = LOOKING_FOR_TEAM`
+- `particip.status = PART_LOOKING_FOR_TEAM`
 - `particip.team_id = null`
 
 ### 6.3 Отмена конкурирующих заявок и инвайтов
@@ -324,26 +347,26 @@ Team service:
 
 | action | includes | описание | условие | описание условия |
 |---|---|---|---|---|
-| `Team.ReadCatalog` | teams + vacancies | Читать список команд | `Team.ReadCatalog @ auth && TeamReadWindow` | Доступно начиная с REGISTRATION |
-| `Team.ReadById` | team + vacancies | Читать команду | `Team.ReadById @ auth && TeamReadWindow` | Доступно начиная с REGISTRATION |
-| `Team.ReadRoster` | team members | Читать состав команды | `Team.ReadRoster @ auth && TeamReadWindow && (role in {OWNER, ORGANIZER, MENTOR} || particip.kind != NONE)` | Доступно staff и участникам |
-| `Team.ReadMyInbox` | invites + requests | Читать свои приглашения и заявки | `Team.ReadMyInbox @ auth && TeamReadWindow` | Доступно авторизованным |
-| `Team.ReadTeamInbox` | invites + requests | Читать входящие в команду | `Team.ReadTeamInbox @ auth && TeamReadWindow && is_team_captain(team)` | Доступно капитану |
-| `Team.Create` | team fields | Создать команду | `Team.Create @ auth && TeamWriteWindow && policy.allow_team == true && CanJoinTeam(actor)` | Доступно только на REGISTRATION |
-| `Team.Update` | name, description, is_joinable | Обновить команду | `Team.Update @ auth && TeamWriteWindow && policy.allow_team == true && is_team_captain(team)` | Доступно только на REGISTRATION |
-| `Vacancy.Upsert` | vacancy fields | Создать/обновить вакансию | `Vacancy.Upsert @ auth && TeamWriteWindow && policy.allow_team == true && is_team_captain(team)` | Доступно только на REGISTRATION |
-| `TeamInvite.Create` | invite fields | Пригласить в команду | `TeamInvite.Create @ auth && TeamWriteWindow && policy.allow_team == true && is_team_captain(team) && team.is_joinable == true && vacancy_id задан && slots_open(vacancy) > 0` | Доступно только на REGISTRATION |
-| `TeamInvite.Cancel` | invite id | Отменить приглашение | `TeamInvite.Cancel @ auth && TeamWriteWindow && policy.allow_team == true && is_team_captain(team) && invite.status == PENDING` | Доступно только на REGISTRATION |
-| `TeamInvite.Accept` | invite id | Принять приглашение | `TeamInvite.Accept @ auth && TeamWriteWindow && policy.allow_team == true && invite.status == PENDING && invite.target_user_id == actor.user_id && CanJoinTeam(actor)` | Доступно только на REGISTRATION |
-| `TeamInvite.Reject` | invite id | Отклонить приглашение | `TeamInvite.Reject @ auth && TeamWriteWindow && policy.allow_team == true && invite.status == PENDING && invite.target_user_id == actor.user_id` | Доступно только на REGISTRATION |
-| `JoinRequest.Create` | request fields | Отправить заявку | `JoinRequest.Create @ auth && TeamWriteWindow && policy.allow_team == true && team.is_joinable == true && CanJoinTeam(actor) && particip.kind in {LOOKING_FOR_TEAM, SINGLE} && slots_open(vacancy) > 0` | Доступно только на REGISTRATION |
-| `JoinRequest.Cancel` | request id | Отменить заявку | `JoinRequest.Cancel @ auth && TeamWriteWindow && policy.allow_team == true && request.status == PENDING && request.requester_user_id == actor.user_id` | Доступно только на REGISTRATION |
-| `JoinRequest.Accept` | request id | Принять заявку | `JoinRequest.Accept @ auth && TeamWriteWindow && policy.allow_team == true && is_team_captain(team) && request.status == PENDING && slots_open(vacancy) > 0` | Доступно только на REGISTRATION |
-| `JoinRequest.Reject` | request id | Отклонить заявку | `JoinRequest.Reject @ auth && TeamWriteWindow && policy.allow_team == true && is_team_captain(team) && request.status == PENDING` | Доступно только на REGISTRATION |
-| `TeamMember.Kick` | user_id | Исключить участника | `TeamMember.Kick @ auth && TeamWriteWindow && policy.allow_team == true && is_team_captain(team) && target is_team_member(team) && target.user_id != actor.user_id` | Доступно только на REGISTRATION |
-| `TeamMember.Leave` | — | Выйти из команды | `TeamMember.Leave @ auth && TeamWriteWindow && policy.allow_team == true && is_team_member(team)` | Доступно только на REGISTRATION |
-| `TeamCaptain.Transfer` | user_id | Передать капитанство | `TeamCaptain.Transfer @ auth && TeamWriteWindow && policy.allow_team == true && is_team_captain(team) && target is_team_member(team) && target.user_id != actor.user_id` | Доступно только на REGISTRATION |
-| `Team.Delete` | — | Удалить команду | `Team.Delete @ auth && TeamWriteWindow && policy.allow_team == true && is_team_captain(team) && members_count(team) == 1` | Доступно только на REGISTRATION |
+| `Team.ReadCatalog` | teams + vacancies | Читать список команд | `auth && TeamReadWindow && (role in {OWNER, ORGANIZER, MENTOR} || is_participant)` | Доступно начиная с REGISTRATION, только staff/участникам |
+| `Team.ReadById` | team + vacancies | Читать команду | `auth && TeamReadWindow && (role in {OWNER, ORGANIZER, MENTOR} || is_participant)` | Доступно начиная с REGISTRATION, только staff/участникам |
+| `Team.ReadRoster` | team members | Читать состав команды | `auth && TeamReadWindow && (role in {OWNER, ORGANIZER, MENTOR} || is_participant)` | Доступно staff и участникам |
+| `Team.ReadMyInbox` | invites + requests | Читать свои приглашения и заявки | `auth && TeamReadWindow && is_participant` | Доступно только участникам хакатона |
+| `Team.ReadTeamInbox` | invites + requests | Читать входящие в команду | `auth && TeamReadWindow && is_team_captain(team)` | Доступно капитану |
+| `Team.Create` | team fields | Создать команду | `auth && TeamWriteWindow && policy.allow_team && CanJoinTeam(actor)` | Только REGISTRATION |
+| `Team.Update` | name, description, is_joinable | Обновить команду | `auth && TeamWriteWindow && policy.allow_team && is_team_captain(team)` | Только REGISTRATION |
+| `Vacancy.Upsert` | vacancy fields | Создать/обновить вакансию | `auth && TeamWriteWindow && policy.allow_team && is_team_captain(team)` | Только REGISTRATION |
+| `TeamInvite.Create` | invite fields | Пригласить в команду | `auth && TeamWriteWindow && policy.allow_team && is_team_captain(team) && slots_open(vacancy)>0` | Только REGISTRATION |
+| `TeamInvite.Cancel` | invite id | Отменить приглашение | `auth && TeamWriteWindow && policy.allow_team && is_team_captain(team) && invite.status==PENDING` | Только REGISTRATION |
+| `TeamInvite.Accept` | invite id | Принять приглашение | `auth && TeamWriteWindow && policy.allow_team && invite.status==PENDING && invite.target_user_id==actor.user_id && CanJoinTeam(actor)` | Только REGISTRATION |
+| `TeamInvite.Reject` | invite id | Отклонить приглашение | `auth && TeamWriteWindow && policy.allow_team && invite.status==PENDING && invite.target_user_id==actor.user_id` | Только REGISTRATION |
+| `JoinRequest.Create` | request fields | Отправить заявку | `auth && TeamWriteWindow && policy.allow_team && team.is_joinable && CanJoinTeam(actor) && can_seek_team && slots_open(vacancy)>0` | Только REGISTRATION |
+| `JoinRequest.Cancel` | request id | Отменить заявку | `auth && TeamWriteWindow && policy.allow_team && request.status==PENDING && request.requester_user_id==actor.user_id` | Только REGISTRATION |
+| `JoinRequest.Accept` | request id | Принять заявку | `auth && TeamWriteWindow && policy.allow_team && is_team_captain(team) && request.status==PENDING && slots_open(vacancy)>0` | Только REGISTRATION |
+| `JoinRequest.Reject` | request id | Отклонить заявку | `auth && TeamWriteWindow && policy.allow_team && is_team_captain(team) && request.status==PENDING` | Только REGISTRATION |
+| `TeamMember.Kick` | user_id | Исключить участника | `auth && TeamWriteWindow && policy.allow_team && is_team_captain(team) && target is_team_member(team) && target!=actor` | Только REGISTRATION |
+| `TeamMember.Leave` | — | Выйти из команды (не капитан) | `auth && TeamLeaveWindow && policy.allow_team && is_team_member(team) && actor is NOT team captain` | Доступно и вне REGISTRATION |
+| `TeamCaptain.Transfer` | user_id | Передать капитанство | `auth && TeamWriteWindow && policy.allow_team && is_team_captain(team) && target is_team_member(team) && target!=actor` | Только REGISTRATION |
+| `Team.Delete` | — | Удалить команду | `auth && TeamWriteWindow && policy.allow_team && is_team_captain(team) && members_count(team)==1` | Только REGISTRATION |
 
 ---
 
@@ -353,3 +376,4 @@ Team service:
 - `code`: `REQUIRED | CONFLICT | FORBIDDEN | STAGE_RULE | POLICY_RULE | LIMIT_RULE`
 - `field`: имя поля или группы
 - `message`: строка
+- `meta`: map для детализации (например: max_team_size, occupied_slots, etc.)

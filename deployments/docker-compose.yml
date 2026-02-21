@@ -88,7 +88,7 @@ services:
     environment:
       ENV: dev
       HACKATON_SERVICE_GRPC_PORT: 50052
-      DB_DSN: postgres://hackathon:hackathon_dev_password@postgres:5432/hackathon?sslmode=disable
+      DB_DSN: postgres://hackathon:hackathon_dev_password@postgres:5432/hackathon?sslmode=disable&search_path=hackathon
       DB_MAX_CONNS: 25
       DB_MIN_CONNS: 5
       DB_MAX_CONN_LIFETIME: 1h

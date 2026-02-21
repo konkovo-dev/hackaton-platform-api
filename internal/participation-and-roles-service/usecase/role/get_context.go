@@ -30,10 +30,19 @@ func (s *Service) GetHackathonContext(ctx context.Context, in GetHackathonContex
 		roleStrings = append(roleStrings, role.Role)
 	}
 
+	// Get participation status
+	participationStatus := "none"
+	teamID := ""
+
+	status, err := s.participRepo.GetStatus(ctx, in.HackathonID, in.UserID)
+	if err == nil && status != "" {
+		participationStatus = status
+	}
+
 	return &GetHackathonContextOut{
 		UserID:              in.UserID,
 		Roles:               roleStrings,
-		ParticipationStatus: "none",
-		TeamID:              "",
+		ParticipationStatus: participationStatus,
+		TeamID:              teamID,
 	}, nil
 }

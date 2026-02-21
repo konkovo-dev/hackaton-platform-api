@@ -1,0 +1,4 @@
+=== RUN   TestRegisterWithUsernameAndEmail
+--- PASS: TestRegisterWithUsernameAndEmail (0.27s)
+PASS
+ok  	github.com/belikoooova/hackaton-platform-api/tests/integration	0.429s
