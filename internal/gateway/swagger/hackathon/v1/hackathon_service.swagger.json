@@ -1,0 +1,1249 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "hackathon/v1/hackathon_service.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "hackathon.v1.HackathonService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/hackathons": {
+      "post": {
+        "summary": "Create a hackathon",
+        "description": "Creates a new hackathon in DRAFT state. The caller becomes the OWNER. If `validationErrors` is non-empty the hackathon was still created but contains invalid data — fix the fields before publishing.",
+        "operationId": "HackathonService_CreateHackathon",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateHackathonResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateHackathonRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Hackathons"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}": {
+      "get": {
+        "summary": "Get hackathon by ID",
+        "description": "Fetches a single hackathon. Use the `include_*` flags to load optional sections (description, links, limits, task, result).",
+        "operationId": "HackathonService_GetHackathon",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetHackathonResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "includeDescription",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "includeLinks",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "includeLimits",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "includeTask",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "includeResult",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "Hackathons"
+        ]
+      },
+      "put": {
+        "summary": "Update a hackathon",
+        "description": "Updates hackathon fields. If `validationErrors` is non-empty the update was rejected — fix the listed fields and retry.",
+        "operationId": "HackathonService_UpdateHackathon",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UpdateHackathonResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/HackathonServiceUpdateHackathonBody"
+            }
+          }
+        ],
+        "tags": [
+          "Hackathons"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/announcements": {
+      "get": {
+        "summary": "List announcements",
+        "description": "Returns all announcements for the hackathon in reverse-chronological order.",
+        "operationId": "HackathonService_ListHackathonAnnouncements",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListHackathonAnnouncementsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Hackathons"
+        ]
+      },
+      "post": {
+        "summary": "Create announcement",
+        "description": "Creates a new announcement for the hackathon. Visible to all participants immediately. Requires OWNER or MANAGER role.",
+        "operationId": "HackathonService_CreateHackathonAnnouncement",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateHackathonAnnouncementResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/HackathonServiceCreateHackathonAnnouncementBody"
+            }
+          }
+        ],
+        "tags": [
+          "Hackathons"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/announcements/{announcementId}": {
+      "delete": {
+        "summary": "Delete announcement",
+        "description": "Permanently deletes an announcement. Requires OWNER or MANAGER role.",
+        "operationId": "HackathonService_DeleteHackathonAnnouncement",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteHackathonAnnouncementResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "announcementId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "idempotencyKey.key",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Hackathons"
+        ]
+      },
+      "put": {
+        "summary": "Update announcement",
+        "description": "Updates the title and body of an existing announcement. Requires OWNER or MANAGER role.",
+        "operationId": "HackathonService_UpdateHackathonAnnouncement",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UpdateHackathonAnnouncementResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "announcementId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/HackathonServiceUpdateHackathonAnnouncementBody"
+            }
+          }
+        ],
+        "tags": [
+          "Hackathons"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/result": {
+      "get": {
+        "summary": "Get hackathon result",
+        "description": "Returns the published result announcement (Markdown). Returns empty if the result has not been published yet.",
+        "operationId": "HackathonService_GetHackathonResult",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetHackathonResultResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Hackathons"
+        ]
+      },
+      "put": {
+        "summary": "Update result draft",
+        "description": "Saves a draft of the result announcement. Does NOT publish it. If `validationErrors` is non-empty the update was rejected.",
+        "operationId": "HackathonService_UpdateHackathonResultDraft",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UpdateHackathonResultDraftResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/HackathonServiceUpdateHackathonResultDraftBody"
+            }
+          }
+        ],
+        "tags": [
+          "Hackathons"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/result:publish": {
+      "post": {
+        "summary": "Publish hackathon result",
+        "description": "Makes the result draft visible to all participants. Requires OWNER or MANAGER role.",
+        "operationId": "HackathonService_PublishHackathonResult",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1PublishHackathonResultResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/HackathonServicePublishHackathonResultBody"
+            }
+          }
+        ],
+        "tags": [
+          "Hackathons"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/task": {
+      "get": {
+        "summary": "Get hackathon task",
+        "description": "Returns the task description (Markdown) for the hackathon. Requires the hackathon to be published or the caller to be staff.",
+        "operationId": "HackathonService_GetHackathonTask",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetHackathonTaskResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Hackathons"
+        ]
+      },
+      "put": {
+        "summary": "Update hackathon task",
+        "description": "Replaces the task description. Requires OWNER or MANAGER role. If `validationErrors` is non-empty the update was rejected.",
+        "operationId": "HackathonService_UpdateHackathonTask",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UpdateHackathonTaskResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/HackathonServiceUpdateHackathonTaskBody"
+            }
+          }
+        ],
+        "tags": [
+          "Hackathons"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}:publish": {
+      "post": {
+        "summary": "Publish a hackathon",
+        "description": "Transitions the hackathon from DRAFT to PUBLISHED, making it visible to participants. The hackathon must pass validation first.",
+        "operationId": "HackathonService_PublishHackathon",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1PublishHackathonResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/HackathonServicePublishHackathonBody"
+            }
+          }
+        ],
+        "tags": [
+          "Hackathons"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}:validate": {
+      "get": {
+        "summary": "Validate a hackathon",
+        "description": "Checks whether a hackathon is ready to be published. Returns all blocking validation errors; an empty list means it is safe to publish.",
+        "operationId": "HackathonService_ValidateHackathon",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ValidateHackathonResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Hackathons"
+        ]
+      }
+    },
+    "/v1/hackathons:list": {
+      "post": {
+        "summary": "List hackathons",
+        "description": "Returns a paginated list of hackathons. Supports filtering and ordering via the `query` field.",
+        "operationId": "HackathonService_ListHackathons",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListHackathonsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ListHackathonsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Hackathons"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "HackathonServiceCreateHackathonAnnouncementBody": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "HackathonServicePublishHackathonBody": {
+      "type": "object",
+      "properties": {
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "HackathonServicePublishHackathonResultBody": {
+      "type": "object"
+    },
+    "HackathonServiceUpdateHackathonAnnouncementBody": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "HackathonServiceUpdateHackathonBody": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "shortDescription": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/v1HackathonLocation"
+        },
+        "dates": {
+          "$ref": "#/definitions/v1HackathonDates"
+        },
+        "limits": {
+          "$ref": "#/definitions/v1HackathonLimits"
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1HackathonLink"
+          }
+        },
+        "registrationPolicy": {
+          "$ref": "#/definitions/v1HackathonRegistrationPolicy"
+        },
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "HackathonServiceUpdateHackathonResultDraftBody": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "type": "string"
+        }
+      }
+    },
+    "HackathonServiceUpdateHackathonTaskBody": {
+      "type": "object",
+      "properties": {
+        "task": {
+          "type": "string"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1CreateHackathonAnnouncementResponse": {
+      "type": "object",
+      "properties": {
+        "announcementId": {
+          "type": "string"
+        }
+      }
+    },
+    "v1CreateHackathonRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "shortDescription": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/v1HackathonLocation"
+        },
+        "dates": {
+          "$ref": "#/definitions/v1HackathonDates"
+        },
+        "limits": {
+          "$ref": "#/definitions/v1HackathonLimits"
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1HackathonLink"
+          }
+        },
+        "registrationPolicy": {
+          "$ref": "#/definitions/v1HackathonRegistrationPolicy"
+        },
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "v1CreateHackathonResponse": {
+      "type": "object",
+      "properties": {
+        "hackathonId": {
+          "type": "string"
+        },
+        "validationErrors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ValidationError"
+          }
+        }
+      }
+    },
+    "v1DeleteHackathonAnnouncementResponse": {
+      "type": "object"
+    },
+    "v1Filter": {
+      "type": "object",
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "operation": {
+          "$ref": "#/definitions/v1FilterOperation"
+        },
+        "stringValue": {
+          "type": "string"
+        },
+        "int64Value": {
+          "type": "string",
+          "format": "int64"
+        },
+        "boolValue": {
+          "type": "boolean"
+        },
+        "stringList": {
+          "$ref": "#/definitions/v1StringList"
+        }
+      }
+    },
+    "v1FilterGroup": {
+      "type": "object",
+      "properties": {
+        "filters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Filter"
+          }
+        }
+      }
+    },
+    "v1FilterOperation": {
+      "type": "string",
+      "enum": [
+        "FILTER_OPERATION_UNSPECIFIED",
+        "FILTER_OPERATION_EQUAL",
+        "FILTER_OPERATION_IN",
+        "FILTER_OPERATION_CONTAINS",
+        "FILTER_OPERATION_PREFIX"
+      ],
+      "default": "FILTER_OPERATION_UNSPECIFIED"
+    },
+    "v1GetHackathonResponse": {
+      "type": "object",
+      "properties": {
+        "hackathon": {
+          "$ref": "#/definitions/v1Hackathon"
+        }
+      }
+    },
+    "v1GetHackathonResultResponse": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "type": "string"
+        }
+      }
+    },
+    "v1GetHackathonTaskResponse": {
+      "type": "object",
+      "properties": {
+        "task": {
+          "type": "string"
+        }
+      }
+    },
+    "v1Hackathon": {
+      "type": "object",
+      "properties": {
+        "hackathonId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "shortDescription": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/v1HackathonLocation"
+        },
+        "dates": {
+          "$ref": "#/definitions/v1HackathonDates"
+        },
+        "stage": {
+          "$ref": "#/definitions/v1HackathonStage"
+        },
+        "limits": {
+          "$ref": "#/definitions/v1HackathonLimits"
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1HackathonLink"
+          }
+        },
+        "registrationPolicy": {
+          "$ref": "#/definitions/v1HackathonRegistrationPolicy"
+        },
+        "state": {
+          "$ref": "#/definitions/v1HackathonState"
+        },
+        "publishedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "resultPublishedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "task": {
+          "type": "string",
+          "title": "Optional fields, included based on request flags"
+        },
+        "result": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1HackathonAnnouncement": {
+      "type": "object",
+      "properties": {
+        "announcementId": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1HackathonDates": {
+      "type": "object",
+      "properties": {
+        "startsAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "endsAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "registrationOpensAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "registrationClosesAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "submissionsOpensAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "submissionsClosesAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "judgingEndsAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1HackathonLimits": {
+      "type": "object",
+      "properties": {
+        "teamSizeMax": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "v1HackathonLink": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      }
+    },
+    "v1HackathonLocation": {
+      "type": "object",
+      "properties": {
+        "online": {
+          "type": "boolean"
+        },
+        "city": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        },
+        "venue": {
+          "type": "string"
+        }
+      }
+    },
+    "v1HackathonRegistrationPolicy": {
+      "type": "object",
+      "properties": {
+        "allowIndividual": {
+          "type": "boolean"
+        },
+        "allowTeam": {
+          "type": "boolean"
+        }
+      }
+    },
+    "v1HackathonStage": {
+      "type": "string",
+      "enum": [
+        "HACKATHON_STAGE_UNSPECIFIED",
+        "HACKATHON_STAGE_DRAFT",
+        "HACKATHON_STAGE_UPCOMING",
+        "HACKATHON_STAGE_REGISTRATION",
+        "HACKATHON_STAGE_PRE_START",
+        "HACKATHON_STAGE_RUNNING",
+        "HACKATHON_STAGE_JUDGING",
+        "HACKATHON_STAGE_FINISHED"
+      ],
+      "default": "HACKATHON_STAGE_UNSPECIFIED"
+    },
+    "v1HackathonState": {
+      "type": "string",
+      "enum": [
+        "HACKATHON_STATE_UNSPECIFIED",
+        "HACKATHON_STATE_DRAFT",
+        "HACKATHON_STATE_PUBLISHED"
+      ],
+      "default": "HACKATHON_STATE_UNSPECIFIED"
+    },
+    "v1IdempotencyKey": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string"
+        }
+      }
+    },
+    "v1ListHackathonAnnouncementsResponse": {
+      "type": "object",
+      "properties": {
+        "announcements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1HackathonAnnouncement"
+          }
+        }
+      }
+    },
+    "v1ListHackathonsRequest": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "$ref": "#/definitions/v1Query"
+        },
+        "includeDescription": {
+          "type": "boolean"
+        },
+        "includeLinks": {
+          "type": "boolean"
+        },
+        "includeLimits": {
+          "type": "boolean"
+        }
+      }
+    },
+    "v1ListHackathonsResponse": {
+      "type": "object",
+      "properties": {
+        "hackathons": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Hackathon"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/v1PageResponse"
+        }
+      }
+    },
+    "v1PageRequest": {
+      "type": "object",
+      "properties": {
+        "pageSize": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "pageToken": {
+          "type": "string"
+        }
+      }
+    },
+    "v1PageResponse": {
+      "type": "object",
+      "properties": {
+        "nextPageToken": {
+          "type": "string"
+        }
+      }
+    },
+    "v1PublishHackathonResponse": {
+      "type": "object"
+    },
+    "v1PublishHackathonResultResponse": {
+      "type": "object"
+    },
+    "v1Query": {
+      "type": "object",
+      "properties": {
+        "q": {
+          "type": "string"
+        },
+        "filterGroups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1FilterGroup"
+          },
+          "description": "OR between groups, AND inside group."
+        },
+        "sort": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Sort"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/v1PageRequest"
+        }
+      }
+    },
+    "v1Sort": {
+      "type": "object",
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "direction": {
+          "$ref": "#/definitions/v1SortDirection"
+        }
+      }
+    },
+    "v1SortDirection": {
+      "type": "string",
+      "enum": [
+        "SORT_DIRECTION_UNSPECIFIED",
+        "SORT_DIRECTION_ASC",
+        "SORT_DIRECTION_DESC"
+      ],
+      "default": "SORT_DIRECTION_UNSPECIFIED"
+    },
+    "v1StringList": {
+      "type": "object",
+      "properties": {
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "v1UpdateHackathonAnnouncementResponse": {
+      "type": "object"
+    },
+    "v1UpdateHackathonResponse": {
+      "type": "object",
+      "properties": {
+        "validationErrors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ValidationError"
+          }
+        }
+      }
+    },
+    "v1UpdateHackathonResultDraftResponse": {
+      "type": "object",
+      "properties": {
+        "validationErrors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ValidationError"
+          }
+        }
+      }
+    },
+    "v1UpdateHackathonTaskResponse": {
+      "type": "object",
+      "properties": {
+        "validationErrors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ValidationError"
+          }
+        }
+      }
+    },
+    "v1ValidateHackathonResponse": {
+      "type": "object",
+      "properties": {
+        "validationErrors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ValidationError"
+          }
+        }
+      }
+    },
+    "v1ValidationError": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "field": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "meta": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

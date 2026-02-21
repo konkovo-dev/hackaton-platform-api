@@ -1,0 +1,715 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "participationandroles/v1/staff_service.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "participationandroles.v1.StaffService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/hackathons/{hackathonId}/staff": {
+      "get": {
+        "summary": "List hackathon staff",
+        "description": "Returns all staff members and their roles for the given hackathon. Requires OWNER or MANAGER role.",
+        "operationId": "StaffService_ListHackathonStaff",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListHackathonStaffResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "query.q",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "query.page.pageSize",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "query.page.pageToken",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Staff"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/staff-invitations": {
+      "post": {
+        "summary": "Invite a user to staff",
+        "description": "Creates a staff invitation for the target user. They can accept or reject it from their invitations list. Requires OWNER or MANAGER role.",
+        "operationId": "StaffService_CreateStaffInvitation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateStaffInvitationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/StaffServiceCreateStaffInvitationBody"
+            }
+          }
+        ],
+        "tags": [
+          "Staff"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/staff-invitations/{invitationId}:cancel": {
+      "post": {
+        "summary": "Cancel a staff invitation",
+        "description": "Cancels a pending invitation so the target user can no longer accept it. Requires OWNER or MANAGER role.",
+        "operationId": "StaffService_CancelStaffInvitation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CancelStaffInvitationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "invitationId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/StaffServiceCancelStaffInvitationBody"
+            }
+          }
+        ],
+        "tags": [
+          "Staff"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/staff:removeRole": {
+      "post": {
+        "summary": "Remove a staff member's role",
+        "description": "Removes a specific role from a staff member. Requires OWNER role.",
+        "operationId": "StaffService_RemoveHackathonRole",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1RemoveHackathonRoleResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/StaffServiceRemoveHackathonRoleBody"
+            }
+          }
+        ],
+        "tags": [
+          "Staff"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/staff:selfRemoveRole": {
+      "post": {
+        "summary": "Voluntarily give up a staff role",
+        "description": "Allows a staff member to relinquish one of their own roles. An OWNER cannot remove their own OWNER role if they are the sole owner.",
+        "operationId": "StaffService_SelfRemoveHackathonRole",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1SelfRemoveHackathonRoleResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/StaffServiceSelfRemoveHackathonRoleBody"
+            }
+          }
+        ],
+        "tags": [
+          "Staff"
+        ]
+      }
+    },
+    "/v1/users/me/staff-invitations/{invitationId}:accept": {
+      "post": {
+        "summary": "Accept a staff invitation",
+        "description": "Accepts a pending invitation. The authenticated user is added to the hackathon staff with the requested role.",
+        "operationId": "StaffService_AcceptStaffInvitation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AcceptStaffInvitationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "invitationId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/StaffServiceAcceptStaffInvitationBody"
+            }
+          }
+        ],
+        "tags": [
+          "Staff"
+        ]
+      }
+    },
+    "/v1/users/me/staff-invitations/{invitationId}:reject": {
+      "post": {
+        "summary": "Reject a staff invitation",
+        "description": "Rejects a pending invitation. The invitation is marked as rejected and cannot be accepted later.",
+        "operationId": "StaffService_RejectStaffInvitation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1RejectStaffInvitationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "invitationId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/StaffServiceRejectStaffInvitationBody"
+            }
+          }
+        ],
+        "tags": [
+          "Staff"
+        ]
+      }
+    },
+    "/v1/users/me/staff-invitations:list": {
+      "post": {
+        "summary": "List my staff invitations",
+        "description": "Returns pending staff invitations addressed to the authenticated user.",
+        "operationId": "StaffService_ListMyStaffInvitations",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListMyStaffInvitationsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ListMyStaffInvitationsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Staff"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "StaffServiceAcceptStaffInvitationBody": {
+      "type": "object",
+      "properties": {
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "StaffServiceCancelStaffInvitationBody": {
+      "type": "object",
+      "properties": {
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "StaffServiceCreateStaffInvitationBody": {
+      "type": "object",
+      "properties": {
+        "targetUserId": {
+          "type": "string"
+        },
+        "requestedRole": {
+          "$ref": "#/definitions/v1HackathonRole"
+        },
+        "message": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "StaffServiceRejectStaffInvitationBody": {
+      "type": "object",
+      "properties": {
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "StaffServiceRemoveHackathonRoleBody": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/definitions/v1HackathonRole"
+        },
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "StaffServiceSelfRemoveHackathonRoleBody": {
+      "type": "object",
+      "properties": {
+        "role": {
+          "$ref": "#/definitions/v1HackathonRole"
+        },
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1AcceptStaffInvitationResponse": {
+      "type": "object"
+    },
+    "v1CancelStaffInvitationResponse": {
+      "type": "object"
+    },
+    "v1CreateStaffInvitationResponse": {
+      "type": "object",
+      "properties": {
+        "invitationId": {
+          "type": "string"
+        }
+      }
+    },
+    "v1Filter": {
+      "type": "object",
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "operation": {
+          "$ref": "#/definitions/v1FilterOperation"
+        },
+        "stringValue": {
+          "type": "string"
+        },
+        "int64Value": {
+          "type": "string",
+          "format": "int64"
+        },
+        "boolValue": {
+          "type": "boolean"
+        },
+        "stringList": {
+          "$ref": "#/definitions/v1StringList"
+        }
+      }
+    },
+    "v1FilterGroup": {
+      "type": "object",
+      "properties": {
+        "filters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Filter"
+          }
+        }
+      }
+    },
+    "v1FilterOperation": {
+      "type": "string",
+      "enum": [
+        "FILTER_OPERATION_UNSPECIFIED",
+        "FILTER_OPERATION_EQUAL",
+        "FILTER_OPERATION_IN",
+        "FILTER_OPERATION_CONTAINS",
+        "FILTER_OPERATION_PREFIX"
+      ],
+      "default": "FILTER_OPERATION_UNSPECIFIED"
+    },
+    "v1HackathonRole": {
+      "type": "string",
+      "enum": [
+        "HACKATHON_ROLE_UNSPECIFIED",
+        "HX_ROLE_OWNER",
+        "HX_ROLE_ORGANIZER",
+        "HX_ROLE_MENTOR",
+        "HX_ROLE_JUDGE"
+      ],
+      "default": "HACKATHON_ROLE_UNSPECIFIED"
+    },
+    "v1HackathonStaffMember": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1HackathonRole"
+          }
+        }
+      }
+    },
+    "v1IdempotencyKey": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string"
+        }
+      }
+    },
+    "v1ListHackathonStaffResponse": {
+      "type": "object",
+      "properties": {
+        "staff": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1HackathonStaffMember"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/v1PageResponse"
+        }
+      }
+    },
+    "v1ListMyStaffInvitationsRequest": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "$ref": "#/definitions/v1Query"
+        }
+      }
+    },
+    "v1ListMyStaffInvitationsResponse": {
+      "type": "object",
+      "properties": {
+        "invitations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1StaffInvitation"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/v1PageResponse"
+        }
+      }
+    },
+    "v1PageRequest": {
+      "type": "object",
+      "properties": {
+        "pageSize": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "pageToken": {
+          "type": "string"
+        }
+      }
+    },
+    "v1PageResponse": {
+      "type": "object",
+      "properties": {
+        "nextPageToken": {
+          "type": "string"
+        }
+      }
+    },
+    "v1Query": {
+      "type": "object",
+      "properties": {
+        "q": {
+          "type": "string"
+        },
+        "filterGroups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1FilterGroup"
+          },
+          "description": "OR between groups, AND inside group."
+        },
+        "sort": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Sort"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/v1PageRequest"
+        }
+      }
+    },
+    "v1RejectStaffInvitationResponse": {
+      "type": "object"
+    },
+    "v1RemoveHackathonRoleResponse": {
+      "type": "object"
+    },
+    "v1SelfRemoveHackathonRoleResponse": {
+      "type": "object"
+    },
+    "v1Sort": {
+      "type": "object",
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "direction": {
+          "$ref": "#/definitions/v1SortDirection"
+        }
+      }
+    },
+    "v1SortDirection": {
+      "type": "string",
+      "enum": [
+        "SORT_DIRECTION_UNSPECIFIED",
+        "SORT_DIRECTION_ASC",
+        "SORT_DIRECTION_DESC"
+      ],
+      "default": "SORT_DIRECTION_UNSPECIFIED"
+    },
+    "v1StaffInvitation": {
+      "type": "object",
+      "properties": {
+        "invitationId": {
+          "type": "string"
+        },
+        "hackathonId": {
+          "type": "string"
+        },
+        "targetUserId": {
+          "type": "string"
+        },
+        "requestedRole": {
+          "$ref": "#/definitions/v1HackathonRole"
+        },
+        "createdByUserId": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/v1StaffInvitationStatus"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1StaffInvitationStatus": {
+      "type": "string",
+      "enum": [
+        "STAFF_INVITATION_STATUS_UNSPECIFIED",
+        "STAFF_INVITATION_PENDING",
+        "STAFF_INVITATION_ACCEPTED",
+        "STAFF_INVITATION_DECLINED",
+        "STAFF_INVITATION_CANCELED",
+        "STAFF_INVITATION_EXPIRED"
+      ],
+      "default": "STAFF_INVITATION_STATUS_UNSPECIFIED"
+    },
+    "v1StringList": {
+      "type": "object",
+      "properties": {
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

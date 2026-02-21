@@ -11,6 +11,7 @@ import "common/v1/query.proto";
 
 import "participationandroles/v1/common.proto";
 import "participationandroles/v1/participation.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 
 service ParticipationService {
   rpc RegisterForHackathon(RegisterForHackathonRequest) returns (RegisterForHackathonResponse) {
@@ -18,16 +19,31 @@ service ParticipationService {
       post: "/v1/hackathons/{hackathon_id}/participations:register"
       body: "*"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Register for a hackathon"
+      description: "Registers the authenticated user for a hackathon. Depending on `desiredStatus`, the user joins as an individual (`PART_INDIVIDUAL`) or applies to join a team (`PART_LOOKING_FOR_TEAM`)."
+      tags: "Participation"
+    };
   }
 
   rpc GetMyParticipation(GetMyParticipationRequest) returns (GetMyParticipationResponse) {
     option (google.api.http) = { get: "/v1/hackathons/{hackathon_id}/participations/me" };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get my participation"
+      description: "Returns the authenticated user's participation record for the given hackathon."
+      tags: "Participation"
+    };
   }
 
   rpc UpdateMyParticipation(UpdateMyParticipationRequest) returns (UpdateMyParticipationResponse) {
     option (google.api.http) = {
       put: "/v1/hackathons/{hackathon_id}/participations/me"
       body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update my participation"
+      description: "Updates wished team roles and motivation text for the authenticated user's participation."
+      tags: "Participation"
     };
   }
 
@@ -36,6 +52,11 @@ service ParticipationService {
       post: "/v1/hackathons/{hackathon_id}/participations/me:switchMode"
       body: "*"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Switch participation mode"
+      description: "Switches the authenticated user between individual and looking-for-team participation modes."
+      tags: "Participation"
+    };
   }
 
   rpc UnregisterFromHackathon(UnregisterFromHackathonRequest) returns (UnregisterFromHackathonResponse) {
@@ -43,16 +64,31 @@ service ParticipationService {
       post: "/v1/hackathons/{hackathon_id}/participations/me:unregister"
       body: "*"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Unregister from hackathon"
+      description: "Withdraws the authenticated user from the hackathon. The participation record is soft-deleted."
+      tags: "Participation"
+    };
   }
 
   rpc GetUserParticipation(GetUserParticipationRequest) returns (GetUserParticipationResponse) {
     option (google.api.http) = { get: "/v1/hackathons/{hackathon_id}/participations/users/{user_id}" };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get a user's participation"
+      description: "Returns another user's participation record. Requires the caller to be staff or themselves a registered participant of the hackathon."
+      tags: "Participation"
+    };
   }
 
   rpc ListHackathonParticipants(ListHackathonParticipantsRequest) returns (ListHackathonParticipantsResponse) {
     option (google.api.http) = {
       post: "/v1/hackathons/{hackathon_id}/participations:list"
       body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List hackathon participants"
+      description: "Returns a paginated list of participants. Filterable by status and wished roles. Requires the caller to be staff or a registered participant."
+      tags: "Participation"
     };
   }
 
@@ -62,6 +98,11 @@ service ParticipationService {
 
   rpc ListTeamRoles(ListTeamRolesRequest) returns (ListTeamRolesResponse) {
     option (google.api.http) = { get: "/v1/team-roles" };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List team roles"
+      description: "Returns all available team roles that a participant can indicate they are looking for (e.g. Frontend, Backend, Designer)."
+      tags: "Participation"
+    };
   };
 }
 

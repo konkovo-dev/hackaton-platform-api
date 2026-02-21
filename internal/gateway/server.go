@@ -57,9 +57,15 @@ func NewMux() *runtime.ServeMux {
 }
 
 func NewHTTPServer(mux *runtime.ServeMux, cfg *Config) *http.Server {
+	swaggerHandler := newSwaggerHandler()
+
+	mainMux := http.NewServeMux()
+	mainMux.Handle("/swagger/", swaggerHandler)
+	mainMux.Handle("/", mux)
+
 	httpSrv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", cfg.GatewayHTTPPort),
-		Handler: mux,
+		Handler: mainMux,
 	}
 
 	return httpSrv

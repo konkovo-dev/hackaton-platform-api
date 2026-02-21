@@ -10,11 +10,17 @@ import "common/v1/idempotency.proto";
 import "hackathon/v1/hackathon.proto";
 import "hackathon/v1/common.proto";
 import "hackathon/v1/message.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 
 service HackathonService {
   rpc GetHackathon(GetHackathonRequest) returns (GetHackathonResponse) {
     option (google.api.http) = {
       get: "/v1/hackathons/{hackathon_id}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get hackathon by ID"
+      description: "Fetches a single hackathon. Use the `include_*` flags to load optional sections (description, links, limits, task, result)."
+      tags: "Hackathons"
     };
   }
 
@@ -23,12 +29,22 @@ service HackathonService {
       post: "/v1/hackathons:list"
       body: "*"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List hackathons"
+      description: "Returns a paginated list of hackathons. Supports filtering and ordering via the `query` field."
+      tags: "Hackathons"
+    };
   }
 
   rpc CreateHackathon(CreateHackathonRequest) returns (CreateHackathonResponse) {
     option (google.api.http) = {
       post: "/v1/hackathons"
       body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create a hackathon"
+      description: "Creates a new hackathon in DRAFT state. The caller becomes the OWNER. If `validationErrors` is non-empty the hackathon was still created but contains invalid data — fix the fields before publishing."
+      tags: "Hackathons"
     };
   }
 
@@ -37,11 +53,21 @@ service HackathonService {
       put: "/v1/hackathons/{hackathon_id}"
       body: "*"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update a hackathon"
+      description: "Updates hackathon fields. If `validationErrors` is non-empty the update was rejected — fix the listed fields and retry."
+      tags: "Hackathons"
+    };
   }
 
   rpc ValidateHackathon(ValidateHackathonRequest) returns (ValidateHackathonResponse) {
     option (google.api.http) = {
       get: "/v1/hackathons/{hackathon_id}:validate"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Validate a hackathon"
+      description: "Checks whether a hackathon is ready to be published. Returns all blocking validation errors; an empty list means it is safe to publish."
+      tags: "Hackathons"
     };
   }
 
@@ -50,11 +76,21 @@ service HackathonService {
       post: "/v1/hackathons/{hackathon_id}:publish"
       body: "*"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Publish a hackathon"
+      description: "Transitions the hackathon from DRAFT to PUBLISHED, making it visible to participants. The hackathon must pass validation first."
+      tags: "Hackathons"
+    };
   }
 
   rpc GetHackathonTask(GetHackathonTaskRequest) returns (GetHackathonTaskResponse) {
     option (google.api.http) = {
       get: "/v1/hackathons/{hackathon_id}/task"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get hackathon task"
+      description: "Returns the task description (Markdown) for the hackathon. Requires the hackathon to be published or the caller to be staff."
+      tags: "Hackathons"
     };
   }
 
@@ -63,11 +99,21 @@ service HackathonService {
       put: "/v1/hackathons/{hackathon_id}/task"
       body: "*"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update hackathon task"
+      description: "Replaces the task description. Requires OWNER or MANAGER role. If `validationErrors` is non-empty the update was rejected."
+      tags: "Hackathons"
+    };
   }
 
   rpc GetHackathonResult(GetHackathonResultRequest) returns (GetHackathonResultResponse) {
     option (google.api.http) = {
       get: "/v1/hackathons/{hackathon_id}/result"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get hackathon result"
+      description: "Returns the published result announcement (Markdown). Returns empty if the result has not been published yet."
+      tags: "Hackathons"
     };
   }
 
@@ -76,6 +122,11 @@ service HackathonService {
       put: "/v1/hackathons/{hackathon_id}/result"
       body: "*"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update result draft"
+      description: "Saves a draft of the result announcement. Does NOT publish it. If `validationErrors` is non-empty the update was rejected."
+      tags: "Hackathons"
+    };
   }
 
   rpc PublishHackathonResult(PublishHackathonResultRequest) returns (PublishHackathonResultResponse) {
@@ -83,11 +134,21 @@ service HackathonService {
       post: "/v1/hackathons/{hackathon_id}/result:publish"
       body: "*"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Publish hackathon result"
+      description: "Makes the result draft visible to all participants. Requires OWNER or MANAGER role."
+      tags: "Hackathons"
+    };
   }
 
   rpc ListHackathonAnnouncements(ListHackathonAnnouncementsRequest) returns (ListHackathonAnnouncementsResponse) {
     option (google.api.http) = {
       get: "/v1/hackathons/{hackathon_id}/announcements"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List announcements"
+      description: "Returns all announcements for the hackathon in reverse-chronological order."
+      tags: "Hackathons"
     };
   }
 
@@ -96,6 +157,11 @@ service HackathonService {
       post: "/v1/hackathons/{hackathon_id}/announcements"
       body: "*"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create announcement"
+      description: "Creates a new announcement for the hackathon. Visible to all participants immediately. Requires OWNER or MANAGER role."
+      tags: "Hackathons"
+    };
   }
 
   rpc UpdateHackathonAnnouncement(UpdateHackathonAnnouncementRequest) returns (UpdateHackathonAnnouncementResponse) {
@@ -103,11 +169,21 @@ service HackathonService {
       put: "/v1/hackathons/{hackathon_id}/announcements/{announcement_id}"
       body: "*"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update announcement"
+      description: "Updates the title and body of an existing announcement. Requires OWNER or MANAGER role."
+      tags: "Hackathons"
+    };
   }
 
   rpc DeleteHackathonAnnouncement(DeleteHackathonAnnouncementRequest) returns (DeleteHackathonAnnouncementResponse) {
     option (google.api.http) = {
       delete: "/v1/hackathons/{hackathon_id}/announcements/{announcement_id}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Delete announcement"
+      description: "Permanently deletes an announcement. Requires OWNER or MANAGER role."
+      tags: "Hackathons"
     };
   }
 }

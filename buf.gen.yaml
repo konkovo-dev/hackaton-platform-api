@@ -14,3 +14,8 @@ plugins:
     out: api
     opt:
       - paths=source_relative
+  - local: protoc-gen-openapiv2
+    out: internal/gateway/swagger
+    opt:
+      - json_names_for_fields=true
+      - include_package_in_tags=true
