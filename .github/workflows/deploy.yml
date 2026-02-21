@@ -35,17 +35,14 @@ jobs:
             # Обновляем IMAGE_TAG в .env
             sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=${{ steps.meta.outputs.sha_short }}/" .env
             
-            # Логинимся в GHCR (используем токен с VM)
-            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
-            # Скачиваем новые образы
-            docker compose -f deployments/prod/docker-compose.yml pull
+            # Скачиваем новые образы (публичные, логин не нужен)
+            docker compose --env-file .env -f deployments/prod/docker-compose.yml pull
             
             # Перезапускаем изменённые контейнеры
-            docker compose -f deployments/prod/docker-compose.yml up -d
+            docker compose --env-file .env -f deployments/prod/docker-compose.yml up -d
             
             # Показываем статус
-            docker compose -f deployments/prod/docker-compose.yml ps
+            docker compose --env-file .env -f deployments/prod/docker-compose.yml ps
             
             echo "✓ Deployment completed with image tag: ${{ steps.meta.outputs.sha_short }}"
 
@@ -61,7 +58,7 @@ jobs:
             # Проверяем что gateway отвечает
             timeout 30 bash -c 'until curl -f http://localhost:8080/swagger/ > /dev/null 2>&1; do sleep 2; done' || {
               echo "Gateway health check failed"
-              docker compose -f deployments/prod/docker-compose.yml logs gateway
+              docker compose --env-file .env -f deployments/prod/docker-compose.yml logs gateway
               exit 1
             }
             
