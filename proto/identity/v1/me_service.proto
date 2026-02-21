@@ -11,10 +11,16 @@ import "identity/v1/skill.proto";
 import "identity/v1/contact.proto";
 import "identity/v1/visibility.proto";
 import "common/v1/idempotency.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 
 service MeService {
   rpc GetMe(GetMeRequest) returns (GetMeResponse) {
     option (google.api.http) = { get: "/v1/users/me" };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get my profile"
+      description: "Returns the authenticated user's full profile including skills, contacts, and visibility settings."
+      tags: "Users"
+    };
   }
 
   rpc CreateMe(CreateMeRequest) returns (CreateMeResponse) {}
@@ -24,6 +30,11 @@ service MeService {
       put: "/v1/users/me"
       body: "*"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update my profile"
+      description: "Updates basic profile fields (first name, last name, avatar URL, timezone) for the authenticated user."
+      tags: "Users"
+    };
   }
 
   rpc UpdateMySkills(UpdateMySkillsRequest) returns (UpdateMySkillsResponse) {
@@ -31,12 +42,22 @@ service MeService {
       put: "/v1/users/me/skills"
       body: "*"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Replace my skills"
+      description: "Replaces the authenticated user's skill set entirely (replace-all semantics). Also updates skills visibility."
+      tags: "Users"
+    };
   }
 
   rpc UpdateMyContacts(UpdateMyContactsRequest) returns (UpdateMyContactsResponse) {
     option (google.api.http) = {
       put: "/v1/users/me/contacts"
       body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Replace my contacts"
+      description: "Replaces the authenticated user's contact list entirely (replace-all semantics). Also updates contacts visibility."
+      tags: "Users"
     };
   }
 }

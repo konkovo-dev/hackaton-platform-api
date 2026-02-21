@@ -7,7 +7,7 @@ option go_package = "github.com/belikoooova/hackaton-platform-api/api/participat
 enum ParticipationStatus {
   PARTICIPATION_STATUS_UNSPECIFIED = 0;
   PART_NONE = 1;
-  PART_INDIVIDUAL_ACTIVE = 2;
+  PART_INDIVIDUAL = 2;
   PART_LOOKING_FOR_TEAM = 3;
   PART_TEAM_MEMBER = 4;
   PART_TEAM_CAPTAIN = 5;

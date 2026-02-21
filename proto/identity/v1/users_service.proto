@@ -9,10 +9,16 @@ import "common/v1/query.proto";
 import "identity/v1/user.proto";
 import "identity/v1/skill.proto";
 import "identity/v1/contact.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 
 service UsersService {
   rpc GetUser(GetUserRequest) returns (GetUserResponse) {
     option (google.api.http) = { get: "/v1/users/{user_id}" };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get user by ID"
+      description: "Returns a user's public profile. Skills and contacts are included only when the respective `include_*` flag is set AND the user has not hidden them."
+      tags: "Users"
+    };
   }
 
   rpc BatchGetUsers(BatchGetUsersRequest) returns (BatchGetUsersResponse) {
@@ -20,12 +26,22 @@ service UsersService {
       post: "/v1/users:batchGet"
       body: "*"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Batch get users"
+      description: "Fetches multiple users' public profiles in a single request. Useful for enriching participant lists."
+      tags: "Users"
+    };
   }
 
   rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {
     option (google.api.http) = {
       post: "/v1/users:list"
       body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List users"
+      description: "Returns a paginated list of users. Supports text search and ordering via the `query` field."
+      tags: "Users"
     };
   }
 }

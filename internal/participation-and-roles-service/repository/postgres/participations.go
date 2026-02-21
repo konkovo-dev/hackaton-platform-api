@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/belikoooova/hackaton-platform-api/internal/participation-and-roles-service/domain/entity"
 	"github.com/belikoooova/hackaton-platform-api/internal/participation-and-roles-service/repository/postgres/queries"
@@ -41,12 +42,15 @@ func (r *ParticipationRepository) Get(ctx context.Context, hackathonID, userID u
 	}
 
 	return &entity.Participation{
-		HackathonID: row.HackathonID,
-		UserID:      row.UserID,
-		Status:      row.Status,
-		TeamID:      teamID,
-		CreatedAt:   row.CreatedAt,
-		UpdatedAt:   row.UpdatedAt,
+		HackathonID:    row.HackathonID,
+		UserID:         row.UserID,
+		Status:         row.Status,
+		TeamID:         teamID,
+		WishedRoles:    nil,
+		MotivationText: row.MotivationText,
+		RegisteredAt:   row.RegisteredAt,
+		CreatedAt:      row.CreatedAt,
+		UpdatedAt:      row.UpdatedAt,
 	}, nil
 }
 
@@ -60,12 +64,14 @@ func (r *ParticipationRepository) Create(ctx context.Context, participation *ent
 	}
 
 	err := r.Queries().CreateParticipation(ctx, queries.CreateParticipationParams{
-		HackathonID: participation.HackathonID,
-		UserID:      participation.UserID,
-		Status:      participation.Status,
-		TeamID:      teamID,
-		CreatedAt:   participation.CreatedAt,
-		UpdatedAt:   participation.UpdatedAt,
+		HackathonID:    participation.HackathonID,
+		UserID:         participation.UserID,
+		Status:         participation.Status,
+		TeamID:         teamID,
+		MotivationText: participation.MotivationText,
+		RegisteredAt:   participation.RegisteredAt,
+		CreatedAt:      participation.CreatedAt,
+		UpdatedAt:      participation.UpdatedAt,
 	})
 	if err != nil {
 		err = pgxutil.MapDBError(err)
@@ -83,4 +89,67 @@ func (r *ParticipationRepository) GetStatus(ctx context.Context, hackathonID, us
 		return "", nil
 	}
 	return participation.Status, nil
+}
+
+func (r *ParticipationRepository) UpdateProfile(ctx context.Context, hackathonID, userID uuid.UUID, motivationText string, updatedAt time.Time) error {
+	err := r.Queries().UpdateParticipationProfile(ctx, queries.UpdateParticipationProfileParams{
+		HackathonID:    hackathonID,
+		UserID:         userID,
+		MotivationText: motivationText,
+		UpdatedAt:      updatedAt,
+	})
+	if err != nil {
+		err = pgxutil.MapDBError(err)
+		return fmt.Errorf("failed to update participation profile: %w", err)
+	}
+	return nil
+}
+
+func (r *ParticipationRepository) UpdateStatus(ctx context.Context, hackathonID, userID uuid.UUID, status string, updatedAt time.Time) error {
+	err := r.Queries().UpdateParticipationStatus(ctx, queries.UpdateParticipationStatusParams{
+		HackathonID: hackathonID,
+		UserID:      userID,
+		Status:      status,
+		UpdatedAt:   updatedAt,
+	})
+	if err != nil {
+		err = pgxutil.MapDBError(err)
+		return fmt.Errorf("failed to update participation status: %w", err)
+	}
+	return nil
+}
+
+func (r *ParticipationRepository) Update(ctx context.Context, hackathonID, userID uuid.UUID, status string, teamID *uuid.UUID, updatedAt time.Time) error {
+	var pgTeamID pgtype.UUID
+	if teamID != nil {
+		pgTeamID = pgtype.UUID{
+			Bytes: *teamID,
+			Valid: true,
+		}
+	}
+
+	err := r.Queries().UpdateParticipation(ctx, queries.UpdateParticipationParams{
+		HackathonID: hackathonID,
+		Status:      status,
+		TeamID:      pgTeamID,
+		UpdatedAt:   updatedAt,
+		UserID:      userID,
+	})
+	if err != nil {
+		err = pgxutil.MapDBError(err)
+		return fmt.Errorf("failed to update participation: %w", err)
+	}
+	return nil
+}
+
+func (r *ParticipationRepository) Delete(ctx context.Context, hackathonID, userID uuid.UUID) error {
+	err := r.Queries().DeleteParticipation(ctx, queries.DeleteParticipationParams{
+		HackathonID: hackathonID,
+		UserID:      userID,
+	})
+	if err != nil {
+		err = pgxutil.MapDBError(err)
+		return fmt.Errorf("failed to delete participation: %w", err)
+	}
+	return nil
 }

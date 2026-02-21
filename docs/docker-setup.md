@@ -49,32 +49,15 @@ make ps
 
 ### 6. Миграции
 
-#### Auth Service
-
 ```bash
 export DB_DSN="postgres://hackathon:hackathon_dev_password@localhost:5432/hackathon?sslmode=disable"
 make goose-install
 make auth-service-migrate-up
 make auth-service-migrate-status
-```
-
-#### Identity Service
-
-```bash
 make identity-service-migrate-up
 make identity-service-migrate-status
-```
-
-#### Hackathon Service
-
-```bash
 make hackaton-service-migrate-up
 make hackaton-service-migrate-status
-```
-
-#### Participation and Roles Service
-
-```bash
 make participation-and-roles-service-migrate-up
 make participation-and-roles-service-migrate-status
 ```

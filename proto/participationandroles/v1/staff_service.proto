@@ -1,0 +1,239 @@
+syntax = "proto3";
+
+package participationandroles.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/participationandroles/v1;participationandrolesv1";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+import "common/v1/idempotency.proto";
+import "common/v1/query.proto";
+
+import "participationandroles/v1/common.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+service StaffService {
+  rpc GetHackathonContext(GetHackathonContextRequest) returns (GetHackathonContextResponse);
+
+  rpc AssignHackathonRole(AssignHackathonRoleRequest) returns (AssignHackathonRoleResponse);
+
+  rpc ListHackathonStaff(ListHackathonStaffRequest) returns (ListHackathonStaffResponse) {
+    option (google.api.http) = { get: "/v1/hackathons/{hackathon_id}/staff" };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List hackathon staff"
+      description: "Returns all staff members and their roles for the given hackathon. Requires OWNER or MANAGER role."
+      tags: "Staff"
+    };
+  }
+
+  rpc CreateStaffInvitation(CreateStaffInvitationRequest) returns (CreateStaffInvitationResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/staff-invitations"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Invite a user to staff"
+      description: "Creates a staff invitation for the target user. They can accept or reject it from their invitations list. Requires OWNER or MANAGER role."
+      tags: "Staff"
+    };
+  }
+
+  rpc CancelStaffInvitation(CancelStaffInvitationRequest) returns (CancelStaffInvitationResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/staff-invitations/{invitation_id}:cancel"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Cancel a staff invitation"
+      description: "Cancels a pending invitation so the target user can no longer accept it. Requires OWNER or MANAGER role."
+      tags: "Staff"
+    };
+  }
+
+  rpc ListMyStaffInvitations(ListMyStaffInvitationsRequest) returns (ListMyStaffInvitationsResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/me/staff-invitations:list"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List my staff invitations"
+      description: "Returns pending staff invitations addressed to the authenticated user."
+      tags: "Staff"
+    };
+  }
+
+  rpc AcceptStaffInvitation(AcceptStaffInvitationRequest) returns (AcceptStaffInvitationResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/me/staff-invitations/{invitation_id}:accept"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Accept a staff invitation"
+      description: "Accepts a pending invitation. The authenticated user is added to the hackathon staff with the requested role."
+      tags: "Staff"
+    };
+  }
+
+  rpc RejectStaffInvitation(RejectStaffInvitationRequest) returns (RejectStaffInvitationResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/me/staff-invitations/{invitation_id}:reject"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Reject a staff invitation"
+      description: "Rejects a pending invitation. The invitation is marked as rejected and cannot be accepted later."
+      tags: "Staff"
+    };
+  }
+
+  rpc RemoveHackathonRole(RemoveHackathonRoleRequest) returns (RemoveHackathonRoleResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/staff:removeRole"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Remove a staff member's role"
+      description: "Removes a specific role from a staff member. Requires OWNER role."
+      tags: "Staff"
+    };
+  }
+
+  rpc SelfRemoveHackathonRole(SelfRemoveHackathonRoleRequest) returns (SelfRemoveHackathonRoleResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/staff:selfRemoveRole"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Voluntarily give up a staff role"
+      description: "Allows a staff member to relinquish one of their own roles. An OWNER cannot remove their own OWNER role if they are the sole owner."
+      tags: "Staff"
+    };
+  }
+}
+
+message GetHackathonContextRequest {
+  string hackathon_id = 1;
+}
+
+message GetHackathonContextResponse {
+  string user_id = 1;
+
+  ParticipationStatus participation_status = 2;
+
+  repeated HackathonRole roles = 3;
+}
+
+message AssignHackathonRoleRequest {
+  string hackathon_id = 1;
+  string user_id = 2;
+
+  HackathonRole role = 3;
+
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message AssignHackathonRoleResponse {}
+
+message ListHackathonStaffRequest {
+  string hackathon_id = 1;
+  common.v1.Query query = 10;
+}
+
+message ListHackathonStaffResponse {
+  repeated HackathonStaffMember staff = 1;
+  common.v1.PageResponse page = 2;
+}
+
+message HackathonStaffMember {
+  string user_id = 1;
+  repeated HackathonRole roles = 2;
+}
+
+message CreateStaffInvitationRequest {
+  string hackathon_id = 1;
+
+  string target_user_id = 2;
+
+  HackathonRole requested_role = 3;
+
+  string message = 4;
+
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message CreateStaffInvitationResponse {
+  string invitation_id = 1;
+}
+
+message CancelStaffInvitationRequest {
+  string hackathon_id = 1;
+  string invitation_id = 2;
+
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message CancelStaffInvitationResponse {}
+
+message ListMyStaffInvitationsRequest {
+  common.v1.Query query = 1;
+}
+
+message ListMyStaffInvitationsResponse {
+  repeated StaffInvitation invitations = 1;
+  common.v1.PageResponse page = 2;
+}
+
+message AcceptStaffInvitationRequest {
+  string invitation_id = 1;
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message AcceptStaffInvitationResponse {}
+
+message RejectStaffInvitationRequest {
+  string invitation_id = 1;
+
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message RejectStaffInvitationResponse {}
+
+message RemoveHackathonRoleRequest {
+  string hackathon_id = 1;
+  string user_id = 2;
+
+  HackathonRole role = 3;
+
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message RemoveHackathonRoleResponse {}
+
+message SelfRemoveHackathonRoleRequest {
+  string hackathon_id = 1;
+
+  HackathonRole role = 2;
+
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message SelfRemoveHackathonRoleResponse {}
+
+message StaffInvitation {
+  string invitation_id = 1;
+  string hackathon_id = 2;
+
+  string target_user_id = 3;
+  HackathonRole requested_role = 4;
+
+  string created_by_user_id = 5;
+
+  string message = 6;
+
+  StaffInvitationStatus status = 7;
+
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+  google.protobuf.Timestamp expires_at = 12;
+}

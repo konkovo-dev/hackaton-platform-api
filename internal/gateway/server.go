@@ -57,9 +57,15 @@ func NewMux() *runtime.ServeMux {
 }
 
 func NewHTTPServer(mux *runtime.ServeMux, cfg *Config) *http.Server {
+	swaggerHandler := newSwaggerHandler()
+
+	mainMux := http.NewServeMux()
+	mainMux.Handle("/swagger/", swaggerHandler)
+	mainMux.Handle("/", mux)
+
 	httpSrv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", cfg.GatewayHTTPPort),
-		Handler: mux,
+		Handler: mainMux,
 	}
 
 	return httpSrv
@@ -100,8 +106,12 @@ func Run(lc fx.Lifecycle, s *http.Server, lis net.Listener, mux *runtime.ServeMu
 				return fmt.Errorf("failed to register hackathon service gateway handlers: %v", err)
 			}
 
-			if err := participationandrolesv1.RegisterParticipationAndRolesServiceHandlerFromEndpoint(bgCtx, mux, cfg.ParticipationAndRolesGRPCEndpoint, opts); err != nil {
-				return fmt.Errorf("failed to register participation and roles service gateway handlers: %v", err)
+			if err := participationandrolesv1.RegisterStaffServiceHandlerFromEndpoint(bgCtx, mux, cfg.ParticipationAndRolesGRPCEndpoint, opts); err != nil {
+				return fmt.Errorf("failed to register staff service gateway handlers: %v", err)
+			}
+
+			if err := participationandrolesv1.RegisterParticipationServiceHandlerFromEndpoint(bgCtx, mux, cfg.ParticipationAndRolesGRPCEndpoint, opts); err != nil {
+				return fmt.Errorf("failed to register participation service gateway handlers: %v", err)
 			}
 
 			logger.Info("starting http gateway",

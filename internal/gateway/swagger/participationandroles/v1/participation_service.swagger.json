@@ -1,0 +1,694 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "participationandroles/v1/participation_service.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "participationandroles.v1.ParticipationService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/hackathons/{hackathonId}/participations/me": {
+      "get": {
+        "summary": "Get my participation",
+        "description": "Returns the authenticated user's participation record for the given hackathon.",
+        "operationId": "ParticipationService_GetMyParticipation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetMyParticipationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Participation"
+        ]
+      },
+      "put": {
+        "summary": "Update my participation",
+        "description": "Updates wished team roles and motivation text for the authenticated user's participation.",
+        "operationId": "ParticipationService_UpdateMyParticipation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UpdateMyParticipationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ParticipationServiceUpdateMyParticipationBody"
+            }
+          }
+        ],
+        "tags": [
+          "Participation"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/participations/me:switchMode": {
+      "post": {
+        "summary": "Switch participation mode",
+        "description": "Switches the authenticated user between individual and looking-for-team participation modes.",
+        "operationId": "ParticipationService_SwitchParticipationMode",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1SwitchParticipationModeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ParticipationServiceSwitchParticipationModeBody"
+            }
+          }
+        ],
+        "tags": [
+          "Participation"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/participations/me:unregister": {
+      "post": {
+        "summary": "Unregister from hackathon",
+        "description": "Withdraws the authenticated user from the hackathon. The participation record is soft-deleted.",
+        "operationId": "ParticipationService_UnregisterFromHackathon",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UnregisterFromHackathonResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ParticipationServiceUnregisterFromHackathonBody"
+            }
+          }
+        ],
+        "tags": [
+          "Participation"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/participations/users/{userId}": {
+      "get": {
+        "summary": "Get a user's participation",
+        "description": "Returns another user's participation record. Requires the caller to be staff or themselves a registered participant of the hackathon.",
+        "operationId": "ParticipationService_GetUserParticipation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetUserParticipationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Participation"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/participations:list": {
+      "post": {
+        "summary": "List hackathon participants",
+        "description": "Returns a paginated list of participants. Filterable by status and wished roles. Requires the caller to be staff or a registered participant.",
+        "operationId": "ParticipationService_ListHackathonParticipants",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListHackathonParticipantsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ParticipationServiceListHackathonParticipantsBody"
+            }
+          }
+        ],
+        "tags": [
+          "Participation"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/participations:register": {
+      "post": {
+        "summary": "Register for a hackathon",
+        "description": "Registers the authenticated user for a hackathon. Depending on `desiredStatus`, the user joins as an individual (`PART_INDIVIDUAL`) or applies to join a team (`PART_LOOKING_FOR_TEAM`).",
+        "operationId": "ParticipationService_RegisterForHackathon",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1RegisterForHackathonResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ParticipationServiceRegisterForHackathonBody"
+            }
+          }
+        ],
+        "tags": [
+          "Participation"
+        ]
+      }
+    },
+    "/v1/team-roles": {
+      "get": {
+        "summary": "List team roles",
+        "description": "Returns all available team roles that a participant can indicate they are looking for (e.g. Frontend, Backend, Designer).",
+        "operationId": "ParticipationService_ListTeamRoles",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListTeamRolesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "Participation"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "ParticipationServiceListHackathonParticipantsBody": {
+      "type": "object",
+      "properties": {
+        "statusFilter": {
+          "$ref": "#/definitions/v1ParticipationStatusFilter"
+        },
+        "wishedRoleIdsFilter": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "query": {
+          "$ref": "#/definitions/v1Query"
+        }
+      }
+    },
+    "ParticipationServiceRegisterForHackathonBody": {
+      "type": "object",
+      "properties": {
+        "desiredStatus": {
+          "$ref": "#/definitions/v1ParticipationStatus"
+        },
+        "wishedRoleIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "motivationText": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "ParticipationServiceSwitchParticipationModeBody": {
+      "type": "object",
+      "properties": {
+        "newStatus": {
+          "$ref": "#/definitions/v1ParticipationStatus"
+        },
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "ParticipationServiceUnregisterFromHackathonBody": {
+      "type": "object",
+      "properties": {
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "ParticipationServiceUpdateMyParticipationBody": {
+      "type": "object",
+      "properties": {
+        "wishedRoleIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "motivationText": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1Filter": {
+      "type": "object",
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "operation": {
+          "$ref": "#/definitions/v1FilterOperation"
+        },
+        "stringValue": {
+          "type": "string"
+        },
+        "int64Value": {
+          "type": "string",
+          "format": "int64"
+        },
+        "boolValue": {
+          "type": "boolean"
+        },
+        "stringList": {
+          "$ref": "#/definitions/v1StringList"
+        }
+      }
+    },
+    "v1FilterGroup": {
+      "type": "object",
+      "properties": {
+        "filters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Filter"
+          }
+        }
+      }
+    },
+    "v1FilterOperation": {
+      "type": "string",
+      "enum": [
+        "FILTER_OPERATION_UNSPECIFIED",
+        "FILTER_OPERATION_EQUAL",
+        "FILTER_OPERATION_IN",
+        "FILTER_OPERATION_CONTAINS",
+        "FILTER_OPERATION_PREFIX"
+      ],
+      "default": "FILTER_OPERATION_UNSPECIFIED"
+    },
+    "v1GetMyParticipationResponse": {
+      "type": "object",
+      "properties": {
+        "participation": {
+          "$ref": "#/definitions/v1HackathonParticipation"
+        }
+      }
+    },
+    "v1GetUserParticipationResponse": {
+      "type": "object",
+      "properties": {
+        "participation": {
+          "$ref": "#/definitions/v1HackathonParticipation"
+        }
+      }
+    },
+    "v1HackathonParticipation": {
+      "type": "object",
+      "properties": {
+        "hackathonId": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/v1ParticipationStatus"
+        },
+        "teamId": {
+          "type": "string"
+        },
+        "profile": {
+          "$ref": "#/definitions/v1ParticipationProfile"
+        },
+        "registeredAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1IdempotencyKey": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string"
+        }
+      }
+    },
+    "v1ListHackathonParticipantsResponse": {
+      "type": "object",
+      "properties": {
+        "participants": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1HackathonParticipation"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/v1PageResponse"
+        }
+      }
+    },
+    "v1ListTeamRolesResponse": {
+      "type": "object",
+      "properties": {
+        "teamRoles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1TeamRole"
+          }
+        }
+      }
+    },
+    "v1PageRequest": {
+      "type": "object",
+      "properties": {
+        "pageSize": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "pageToken": {
+          "type": "string"
+        }
+      }
+    },
+    "v1PageResponse": {
+      "type": "object",
+      "properties": {
+        "nextPageToken": {
+          "type": "string"
+        }
+      }
+    },
+    "v1ParticipationProfile": {
+      "type": "object",
+      "properties": {
+        "wishedRoles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1TeamRole"
+          }
+        },
+        "motivationText": {
+          "type": "string"
+        }
+      }
+    },
+    "v1ParticipationStatus": {
+      "type": "string",
+      "enum": [
+        "PARTICIPATION_STATUS_UNSPECIFIED",
+        "PART_NONE",
+        "PART_INDIVIDUAL",
+        "PART_LOOKING_FOR_TEAM",
+        "PART_TEAM_MEMBER",
+        "PART_TEAM_CAPTAIN"
+      ],
+      "default": "PARTICIPATION_STATUS_UNSPECIFIED"
+    },
+    "v1ParticipationStatusFilter": {
+      "type": "object",
+      "properties": {
+        "statuses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1ParticipationStatus"
+          }
+        }
+      }
+    },
+    "v1Query": {
+      "type": "object",
+      "properties": {
+        "q": {
+          "type": "string"
+        },
+        "filterGroups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1FilterGroup"
+          },
+          "description": "OR between groups, AND inside group."
+        },
+        "sort": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Sort"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/v1PageRequest"
+        }
+      }
+    },
+    "v1RegisterForHackathonResponse": {
+      "type": "object",
+      "properties": {
+        "participation": {
+          "$ref": "#/definitions/v1HackathonParticipation"
+        }
+      }
+    },
+    "v1Sort": {
+      "type": "object",
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "direction": {
+          "$ref": "#/definitions/v1SortDirection"
+        }
+      }
+    },
+    "v1SortDirection": {
+      "type": "string",
+      "enum": [
+        "SORT_DIRECTION_UNSPECIFIED",
+        "SORT_DIRECTION_ASC",
+        "SORT_DIRECTION_DESC"
+      ],
+      "default": "SORT_DIRECTION_UNSPECIFIED"
+    },
+    "v1StringList": {
+      "type": "object",
+      "properties": {
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "v1SwitchParticipationModeResponse": {
+      "type": "object",
+      "properties": {
+        "participation": {
+          "$ref": "#/definitions/v1HackathonParticipation"
+        }
+      }
+    },
+    "v1TeamRole": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "v1UnregisterFromHackathonResponse": {
+      "type": "object"
+    },
+    "v1UpdateMyParticipationResponse": {
+      "type": "object",
+      "properties": {
+        "participation": {
+          "$ref": "#/definitions/v1HackathonParticipation"
+        }
+      }
+    }
+  }
+}

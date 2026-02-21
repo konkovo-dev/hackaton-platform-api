@@ -22,6 +22,7 @@ var Module = fx.Module("postgres",
 		NewStaffRoleRepository,
 		NewStaffInvitationRepository,
 		NewParticipationRepository,
+		NewTeamRoleRepository,
 	),
 	fx.Provide(
 		func(lc fx.Lifecycle, cfg *pgxutil.Config, logger *slog.Logger) (*pgxpool.Pool, error) {

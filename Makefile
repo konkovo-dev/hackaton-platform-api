@@ -59,6 +59,10 @@ buf-generate:
 	@echo "generating protobuf code"
 	@buf generate
 
+openapiv2-install:
+	@echo "installing protoc-gen-openapiv2"
+	@go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest
+
 sqlc-install:
 	@echo "installing sqlc"
 	@go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest

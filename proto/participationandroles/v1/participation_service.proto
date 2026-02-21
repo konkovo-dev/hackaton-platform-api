@@ -1,0 +1,222 @@
+syntax = "proto3";
+
+package participationandroles.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/participationandroles/v1;participationandrolesv1";
+
+import "google/api/annotations.proto";
+
+import "common/v1/idempotency.proto";
+import "common/v1/query.proto";
+
+import "participationandroles/v1/common.proto";
+import "participationandroles/v1/participation.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+service ParticipationService {
+  rpc RegisterForHackathon(RegisterForHackathonRequest) returns (RegisterForHackathonResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/participations:register"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Register for a hackathon"
+      description: "Registers the authenticated user for a hackathon. Depending on `desiredStatus`, the user joins as an individual (`PART_INDIVIDUAL`) or applies to join a team (`PART_LOOKING_FOR_TEAM`)."
+      tags: "Participation"
+    };
+  }
+
+  rpc GetMyParticipation(GetMyParticipationRequest) returns (GetMyParticipationResponse) {
+    option (google.api.http) = { get: "/v1/hackathons/{hackathon_id}/participations/me" };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get my participation"
+      description: "Returns the authenticated user's participation record for the given hackathon."
+      tags: "Participation"
+    };
+  }
+
+  rpc UpdateMyParticipation(UpdateMyParticipationRequest) returns (UpdateMyParticipationResponse) {
+    option (google.api.http) = {
+      put: "/v1/hackathons/{hackathon_id}/participations/me"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update my participation"
+      description: "Updates wished team roles and motivation text for the authenticated user's participation."
+      tags: "Participation"
+    };
+  }
+
+  rpc SwitchParticipationMode(SwitchParticipationModeRequest) returns (SwitchParticipationModeResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/participations/me:switchMode"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Switch participation mode"
+      description: "Switches the authenticated user between individual and looking-for-team participation modes."
+      tags: "Participation"
+    };
+  }
+
+  rpc UnregisterFromHackathon(UnregisterFromHackathonRequest) returns (UnregisterFromHackathonResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/participations/me:unregister"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Unregister from hackathon"
+      description: "Withdraws the authenticated user from the hackathon. The participation record is soft-deleted."
+      tags: "Participation"
+    };
+  }
+
+  rpc GetUserParticipation(GetUserParticipationRequest) returns (GetUserParticipationResponse) {
+    option (google.api.http) = { get: "/v1/hackathons/{hackathon_id}/participations/users/{user_id}" };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get a user's participation"
+      description: "Returns another user's participation record. Requires the caller to be staff or themselves a registered participant of the hackathon."
+      tags: "Participation"
+    };
+  }
+
+  rpc ListHackathonParticipants(ListHackathonParticipantsRequest) returns (ListHackathonParticipantsResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/participations:list"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List hackathon participants"
+      description: "Returns a paginated list of participants. Filterable by status and wished roles. Requires the caller to be staff or a registered participant."
+      tags: "Participation"
+    };
+  }
+
+  rpc ConvertToTeamParticipation(ConvertToTeamParticipationRequest) returns (ConvertToTeamParticipationResponse);
+
+  rpc ConvertFromTeamParticipation(ConvertFromTeamParticipationRequest) returns (ConvertFromTeamParticipationResponse);
+
+  rpc ListTeamRoles(ListTeamRolesRequest) returns (ListTeamRolesResponse) {
+    option (google.api.http) = { get: "/v1/team-roles" };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List team roles"
+      description: "Returns all available team roles that a participant can indicate they are looking for (e.g. Frontend, Backend, Designer)."
+      tags: "Participation"
+    };
+  };
+}
+
+message ListTeamRolesRequest {}
+
+message ListTeamRolesResponse {
+  repeated TeamRole team_roles = 1;
+}
+
+message RegisterForHackathonRequest {
+  string hackathon_id = 1;
+
+  ParticipationStatus desired_status = 2;
+
+  repeated string wished_role_ids = 3;
+
+  string motivation_text = 4;
+
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message RegisterForHackathonResponse {
+  HackathonParticipation participation = 1;
+}
+
+message GetMyParticipationRequest {
+  string hackathon_id = 1;
+}
+
+message GetMyParticipationResponse {
+  HackathonParticipation participation = 1;
+}
+
+message UpdateMyParticipationRequest {
+  string hackathon_id = 1;
+
+  repeated string wished_role_ids = 2;
+
+  string motivation_text = 3;
+
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message UpdateMyParticipationResponse {
+  HackathonParticipation participation = 1;
+}
+
+message SwitchParticipationModeRequest {
+  string hackathon_id = 1;
+
+  ParticipationStatus new_status = 2;
+
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message SwitchParticipationModeResponse {
+  HackathonParticipation participation = 1;
+}
+
+message UnregisterFromHackathonRequest {
+  string hackathon_id = 1;
+
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message UnregisterFromHackathonResponse {}
+
+message GetUserParticipationRequest {
+  string hackathon_id = 1;
+  string user_id = 2;
+}
+
+message GetUserParticipationResponse {
+  HackathonParticipation participation = 1;
+}
+
+message ParticipationStatusFilter {
+  repeated ParticipationStatus statuses = 1;
+}
+
+message ListHackathonParticipantsRequest {
+  string hackathon_id = 1;
+
+  ParticipationStatusFilter status_filter = 2;
+  repeated string wished_role_ids_filter = 3;
+
+  common.v1.Query query = 10;
+}
+
+message ListHackathonParticipantsResponse {
+  repeated HackathonParticipation participants = 1;
+  common.v1.PageResponse page = 2;
+}
+
+message ConvertToTeamParticipationRequest {
+  string hackathon_id = 1;
+  string user_id = 2;
+  string team_id = 3;
+  bool is_captain = 4;
+
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message ConvertToTeamParticipationResponse {
+  HackathonParticipation participation = 1;
+}
+
+message ConvertFromTeamParticipationRequest {
+  string hackathon_id = 1;
+  string user_id = 2;
+
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message ConvertFromTeamParticipationResponse {
+  HackathonParticipation participation = 1;
+}

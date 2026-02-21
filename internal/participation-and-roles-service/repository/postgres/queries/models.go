@@ -21,12 +21,20 @@ type ParticipationAndRolesIdempotencyKey struct {
 }
 
 type ParticipationAndRolesParticipation struct {
-	HackathonID uuid.UUID   `json:"hackathon_id"`
-	UserID      uuid.UUID   `json:"user_id"`
-	Status      string      `json:"status"`
-	TeamID      pgtype.UUID `json:"team_id"`
-	CreatedAt   time.Time   `json:"created_at"`
-	UpdatedAt   time.Time   `json:"updated_at"`
+	HackathonID    uuid.UUID   `json:"hackathon_id"`
+	UserID         uuid.UUID   `json:"user_id"`
+	Status         string      `json:"status"`
+	TeamID         pgtype.UUID `json:"team_id"`
+	CreatedAt      time.Time   `json:"created_at"`
+	UpdatedAt      time.Time   `json:"updated_at"`
+	MotivationText string      `json:"motivation_text"`
+	RegisteredAt   time.Time   `json:"registered_at"`
+}
+
+type ParticipationAndRolesParticipationWishedRole struct {
+	HackathonID uuid.UUID `json:"hackathon_id"`
+	UserID      uuid.UUID `json:"user_id"`
+	TeamRoleID  uuid.UUID `json:"team_role_id"`
 }
 
 type ParticipationAndRolesStaffInvitation struct {
@@ -47,4 +55,9 @@ type ParticipationAndRolesStaffRole struct {
 	UserID      uuid.UUID `json:"user_id"`
 	Role        string    `json:"role"`
 	CreatedAt   time.Time `json:"created_at"`
+}
+
+type ParticipationAndRolesTeamRoleCatalog struct {
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
 }
