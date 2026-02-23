@@ -1874,12 +1874,12 @@ func TestUpsertVacancy_ExceedTeamSizeMax_ShouldFail(t *testing.T) {
 	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/publish", hackathonID), owner.AccessToken, map[string]interface{}{})
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to publish hackathon: %s", string(body))
 
-	_, err := tc.DB.Exec(context.Background(), `
-		UPDATE hackathon.hackathons 
+	_, err := tc.DB.Exec(context.Background(), fmt.Sprintf(`
+		UPDATE %s 
 		SET registration_opens_at = $1,
 		    stage = 'registration'
 		WHERE id = $2
-	`, now.Add(-24*time.Hour), hackathonID)
+	`, tc.HackathonDBName), now.Add(-24*time.Hour), hackathonID)
 	require.NoError(t, err, "Failed to update hackathon dates in DB")
 
 	time.Sleep(500 * time.Millisecond)
@@ -2081,8 +2081,6 @@ func TestKickMember_AsNonCaptain_ShouldFail(t *testing.T) {
 	assert.Equal(t, 3, len(members), "Should still have 3 members")
 }
 
-// createHackathonInRegistration creates a hackathon that is currently in REGISTRATION stage
-// This means: registration_opens_at is in the past, registration_closes_at is in the future
 func createHackathonInRegistration(tc *TestContext, owner *UserCredentials) string {
 	now := time.Now()
 	hackathonBody := map[string]interface{}{
@@ -2126,12 +2124,12 @@ func createHackathonInRegistration(tc *TestContext, owner *UserCredentials) stri
 	require.Equal(tc.T, http.StatusOK, resp.StatusCode, "Failed to publish hackathon: %s", string(body))
 
 	// Update dates and stage directly in DB to move to REGISTRATION stage (bypassing validation)
-	_, err := tc.DB.Exec(context.Background(), `
-		UPDATE hackathon.hackathons 
+	_, err := tc.DB.Exec(context.Background(), fmt.Sprintf(`
+		UPDATE %s 
 		SET registration_opens_at = $1,
 		    stage = 'registration'
 		WHERE id = $2
-	`, now.Add(-24*time.Hour), hackathonID)
+	`, tc.HackathonDBName), now.Add(-24*time.Hour), hackathonID)
 	require.NoError(tc.T, err, "Failed to update hackathon dates in DB")
 
 	// Wait a bit for updates to propagate
