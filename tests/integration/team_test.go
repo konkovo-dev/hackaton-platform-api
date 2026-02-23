@@ -11,10 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// ============================================================================
-// 1) Teams CRUD
-// ============================================================================
-
 func TestListTeams_AsParticipant_ShouldReturnTeams(t *testing.T) {
 	tc := NewTestContext(t)
 	owner := tc.RegisterUser()
