@@ -21,6 +21,9 @@ var serviceSwaggerFiles = []string{
 	"swagger/identity/v1/skills_service.swagger.json",
 	"swagger/participationandroles/v1/staff_service.swagger.json",
 	"swagger/participationandroles/v1/participation_service.swagger.json",
+	"swagger/team/v1/teams_service.swagger.json",
+	"swagger/team/v1/team_members_service.swagger.json",
+	"swagger/team/v1/team_inbox_service.swagger.json",
 }
 
 var (

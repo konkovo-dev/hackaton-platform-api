@@ -1,0 +1,214 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: hackathon-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_MULTIPLE_DATABASES: hackathon_auth,hackathon_identity,hackathon_hackaton,hackathon_participation,hackathon_team
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-postgres.sh:/docker-entrypoint-initdb.d/init-postgres.sh:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - hackathon-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  migrations:
+    image: ${DOCKER_REGISTRY}/hackathon-migrations:${IMAGE_TAG}
+    container_name: hackathon-migrations
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - hackathon-network
+    restart: "no"
+
+  auth-service:
+    image: ${DOCKER_REGISTRY}/hackathon-auth-service:${IMAGE_TAG}
+    container_name: hackathon-auth-service
+    environment:
+      ENV: production
+      AUTH_SERVICE_GRPC_PORT: 50057
+      DB_DSN: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/hackathon_auth?sslmode=disable
+      DB_MAX_CONNS: 25
+      DB_MIN_CONNS: 5
+      DB_MAX_CONN_LIFETIME: 1h
+      DB_MAX_CONN_IDLE_TIME: 30m
+      DB_HEALTH_CHECK_PERIOD: 1m
+      RS256_PRIVATE_KEY_PATH: /app/keys/private_key.pem
+      JWT_KEY_ID: ${JWT_KEY_ID}
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_AUDIENCE: ${JWT_AUDIENCE}
+      ACCESS_TOKEN_TTL: ${ACCESS_TOKEN_TTL}
+      REFRESH_TOKEN_TTL: ${REFRESH_TOKEN_TTL}
+      IDEMPOTENCY_TTL: 24h
+      IDENTITY_SERVICE_URL: identity-service:50051
+      OUTBOX_POLLING_INTERVAL: 1s
+      OUTBOX_MAX_ATTEMPTS: 3
+      SERVICE_AUTH_TOKEN: ${SERVICE_AUTH_TOKEN}
+    volumes:
+      - ${JWT_KEYS_PATH}:/app/keys:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    networks:
+      - hackathon-network
+    restart: unless-stopped
+
+  identity-service:
+    image: ${DOCKER_REGISTRY}/hackathon-identity-service:${IMAGE_TAG}
+    container_name: hackathon-identity-service
+    environment:
+      ENV: production
+      IDENTITY_SERVICE_GRPC_PORT: 50051
+      DB_DSN: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/hackathon_identity?sslmode=disable
+      DB_MAX_CONNS: 25
+      DB_MIN_CONNS: 5
+      DB_MAX_CONN_LIFETIME: 1h
+      DB_MAX_CONN_IDLE_TIME: 30m
+      DB_HEALTH_CHECK_PERIOD: 1m
+      AUTH_CLIENT_SERVICE_URL: auth-service:50057
+      AUTH_CLIENT_MAX_CACHE_TTL: 60s
+      AUTH_CLIENT_CACHE_CLEANUP_INTERVAL: 1m
+      IDEMPOTENCY_TTL: 24h
+      SERVICE_AUTH_TOKEN: ${SERVICE_AUTH_TOKEN}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    networks:
+      - hackathon-network
+    restart: unless-stopped
+
+  hackaton-service:
+    image: ${DOCKER_REGISTRY}/hackathon-hackaton-service:${IMAGE_TAG}
+    container_name: hackathon-hackaton-service
+    environment:
+      ENV: production
+      HACKATON_SERVICE_GRPC_PORT: 50052
+      DB_DSN: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/hackathon_hackaton?sslmode=disable
+      DB_MAX_CONNS: 25
+      DB_MIN_CONNS: 5
+      DB_MAX_CONN_LIFETIME: 1h
+      DB_MAX_CONN_IDLE_TIME: 30m
+      DB_HEALTH_CHECK_PERIOD: 1m
+      AUTH_CLIENT_SERVICE_URL: auth-service:50057
+      AUTH_CLIENT_MAX_CACHE_TTL: 60s
+      AUTH_CLIENT_CACHE_CLEANUP_INTERVAL: 1m
+      PARTICIPATION_ROLES_SERVICE_URL: participation-and-roles-service:50055
+      IDEMPOTENCY_TTL: 24h
+      SERVICE_AUTH_TOKEN: ${SERVICE_AUTH_TOKEN}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    networks:
+      - hackathon-network
+    restart: unless-stopped
+
+  participation-and-roles-service:
+    image: ${DOCKER_REGISTRY}/hackathon-participation-and-roles-service:${IMAGE_TAG}
+    container_name: hackathon-participation-and-roles-service
+    environment:
+      ENV: production
+      PARTICIPATION_AND_ROLES_SERVICE_GRPC_PORT: 50055
+      DB_DSN: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/hackathon_participation?sslmode=disable
+      DB_MAX_CONNS: 25
+      DB_MIN_CONNS: 5
+      DB_MAX_CONN_LIFETIME: 1h
+      DB_MAX_CONN_IDLE_TIME: 30m
+      DB_HEALTH_CHECK_PERIOD: 1m
+      AUTH_CLIENT_SERVICE_URL: auth-service:50057
+      AUTH_CLIENT_MAX_CACHE_TTL: 60s
+      AUTH_CLIENT_CACHE_CLEANUP_INTERVAL: 1m
+      HACKATHON_SERVICE_URL: hackaton-service:50052
+      IDENTITY_SERVICE_URL: identity-service:50051
+      IDENTITY_CLIENT_SERVICE_URL: identity-service:50051
+      IDEMPOTENCY_TTL: 24h
+      SERVICE_AUTH_TOKEN: ${SERVICE_AUTH_TOKEN}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    networks:
+      - hackathon-network
+    restart: unless-stopped
+
+  team-service:
+    image: ${DOCKER_REGISTRY}/hackathon-team-service:${IMAGE_TAG}
+    container_name: hackathon-team-service
+    environment:
+      ENV: production
+      TEAM_SERVICE_GRPC_PORT: 50053
+      DB_DSN: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/hackathon_team?sslmode=disable
+      DB_MAX_CONNS: 25
+      DB_MIN_CONNS: 5
+      DB_MAX_CONN_LIFETIME: 1h
+      DB_MAX_CONN_IDLE_TIME: 30m
+      DB_HEALTH_CHECK_PERIOD: 1m
+      AUTH_CLIENT_SERVICE_URL: auth-service:50057
+      AUTH_CLIENT_MAX_CACHE_TTL: 60s
+      AUTH_CLIENT_CACHE_CLEANUP_INTERVAL: 1m
+      HACKATHON_SERVICE_URL: hackaton-service:50052
+      PARTICIPATION_ROLES_SERVICE_URL: participation-and-roles-service:50055
+      IDEMPOTENCY_TTL: 24h
+      SERVICE_AUTH_TOKEN: ${SERVICE_AUTH_TOKEN}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    networks:
+      - hackathon-network
+    restart: unless-stopped
+
+  gateway:
+    image: ${DOCKER_REGISTRY}/hackathon-gateway:${IMAGE_TAG}
+    container_name: hackathon-gateway
+    environment:
+      ENV: production
+      GATEWAY_HTTP_PORT: 8080
+      IDENTITY_GRPC_ENDPOINT: identity-service:50051
+      AUTH_GRPC_ENDPOINT: auth-service:50057
+      HACKATON_GRPC_ENDPOINT: hackaton-service:50052
+      PARTICIPATION_ROLES_GRPC_ENDPOINT: participation-and-roles-service:50055
+      TEAM_GRPC_ENDPOINT: team-service:50053
+    ports:
+      - "8080:8080"
+    depends_on:
+      - identity-service
+      - hackaton-service
+      - participation-and-roles-service
+      - auth-service
+      - team-service
+    networks:
+      - hackathon-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/swagger/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+networks:
+  hackathon-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
