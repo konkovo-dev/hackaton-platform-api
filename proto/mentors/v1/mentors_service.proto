@@ -1,0 +1,251 @@
+syntax = "proto3";
+
+package mentors.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/mentors/v1;mentorsv1";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "common/v1/idempotency.proto";
+import "common/v1/query.proto";
+import "mentors/v1/common.proto";
+import "mentors/v1/ticket.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+service MentorsService {
+  rpc SendMessage(SendMessageRequest) returns (SendMessageResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/support/messages"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Send a message to support"
+      description: "Participant sends a message to support. Creates a ticket if needed. Available only during RUNNING stage."
+      tags: "Mentors"
+    };
+  }
+
+  rpc GetMyTickets(GetMyTicketsRequest) returns (GetMyTicketsResponse) {
+    option (google.api.http) = {
+      get: "/v1/hackathons/{hackathon_id}/support/tickets/my"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get my support tickets"
+      description: "Returns tickets for the authenticated participant. Available only during RUNNING stage."
+      tags: "Mentors"
+    };
+  }
+
+  rpc GetTicketMessages(GetTicketMessagesRequest) returns (GetTicketMessagesResponse) {
+    option (google.api.http) = {
+      get: "/v1/hackathons/{hackathon_id}/support/tickets/{ticket_id}/messages"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get ticket messages"
+      description: "Returns messages for a ticket. Participant can only access their own tickets. Mentor can access assigned tickets. Available only during RUNNING stage."
+      tags: "Mentors"
+    };
+  }
+
+  rpc ReplyInTicket(ReplyInTicketRequest) returns (ReplyInTicketResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/support/tickets/{ticket_id}/reply"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Reply in a ticket (mentor)"
+      description: "Mentor replies in an assigned ticket. Available only during RUNNING stage."
+      tags: "Mentors"
+    };
+  }
+
+  rpc CloseTicket(CloseTicketRequest) returns (CloseTicketResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/support/tickets/{ticket_id}/close"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Close a ticket"
+      description: "Mentor or organizer closes a ticket. Available only during RUNNING stage."
+      tags: "Mentors"
+    };
+  }
+
+  rpc ListAssignedTickets(ListAssignedTicketsRequest) returns (ListAssignedTicketsResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/support/tickets/assigned/list"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List assigned tickets (mentor)"
+      description: "Returns tickets assigned to the authenticated mentor. Available only during RUNNING stage."
+      tags: "Mentors"
+    };
+  }
+
+  rpc ListAllTickets(ListAllTicketsRequest) returns (ListAllTicketsResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/support/tickets/all/list"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List all tickets (organizer)"
+      description: "Returns all tickets in the hackathon. Requires OWNER or ORGANIZER role. Available only during RUNNING stage."
+      tags: "Mentors"
+    };
+  }
+
+  rpc ClaimTicket(ClaimTicketRequest) returns (ClaimTicketResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/support/tickets/{ticket_id}/claim"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Claim ticket (mentor)"
+      description: "Allows a mentor to claim an unassigned ticket. Ticket must be OPEN and unassigned. Available only during RUNNING stage."
+      tags: "Mentors"
+    };
+  }
+
+  rpc AssignTicket(AssignTicketRequest) returns (AssignTicketResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/support/tickets/{ticket_id}/assign"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Assign ticket to mentor (organizer)"
+      description: "Allows an organizer to assign an unassigned ticket to a specific mentor. Available only during RUNNING stage."
+      tags: "Mentors"
+    };
+  }
+
+  rpc GetRealtimeToken(GetRealtimeTokenRequest) returns (GetRealtimeTokenResponse) {
+    option (google.api.http) = {
+      get: "/v1/hackathons/{hackathon_id}/support/realtime-token"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Centrifugo connection token"
+      description: "Returns a JWT token for connecting to Centrifugo WebSocket for real-time updates."
+      tags: "Mentors"
+    };
+  }
+}
+
+message SendMessageRequest {
+  string hackathon_id = 1;
+  string text = 2;
+  string client_message_id = 3;
+  
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message SendMessageResponse {
+  string message_id = 1;
+  string ticket_id = 2;
+}
+
+message GetMyTicketsRequest {
+  string hackathon_id = 1;
+  common.v1.Query query = 10;
+}
+
+message GetMyTicketsResponse {
+  repeated Ticket tickets = 1;
+  bool has_more = 2;
+}
+
+message GetTicketMessagesRequest {
+  string hackathon_id = 1;
+  string ticket_id = 2;
+  common.v1.Query query = 10;
+}
+
+message GetTicketMessagesResponse {
+  repeated Message messages = 1;
+  bool has_more = 2;
+}
+
+message ReplyInTicketRequest {
+  string hackathon_id = 1;
+  string ticket_id = 2;
+  string text = 3;
+  
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message ReplyInTicketResponse {
+  string message_id = 1;
+}
+
+message CloseTicketRequest {
+  string hackathon_id = 1;
+  string ticket_id = 2;
+  
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message CloseTicketResponse {}
+
+message TicketStatusFilter {
+  repeated TicketStatus statuses = 1;
+}
+
+message ListAssignedTicketsRequest {
+  string hackathon_id = 1;
+  TicketStatusFilter status_filter = 2;
+  common.v1.Query query = 10;
+}
+
+message ListAssignedTicketsResponse {
+  repeated Ticket tickets = 1;
+  bool has_more = 2;
+}
+
+message ListAllTicketsRequest {
+  string hackathon_id = 1;
+  TicketStatusFilter status_filter = 2;
+  OwnerKind owner_kind_filter = 3;
+  string assigned_mentor_filter = 4;
+  common.v1.Query query = 10;
+}
+
+message ListAllTicketsResponse {
+  repeated Ticket tickets = 1;
+  bool has_more = 2;
+}
+
+message ClaimTicketRequest {
+  string hackathon_id = 1;
+  string ticket_id = 2;
+  
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message ClaimTicketResponse {
+  string ticket_id = 1;
+  string assigned_mentor_user_id = 2;
+  google.protobuf.Timestamp assigned_at = 3;
+}
+
+message AssignTicketRequest {
+  string hackathon_id = 1;
+  string ticket_id = 2;
+  string mentor_user_id = 3;
+  
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message AssignTicketResponse {
+  string ticket_id = 1;
+  string assigned_mentor_user_id = 2;
+  google.protobuf.Timestamp assigned_at = 3;
+}
+
+message GetRealtimeTokenRequest {
+  string hackathon_id = 1;
+}
+
+message GetRealtimeTokenResponse {
+  string token = 1;
+  int64 expires_at = 2;
+}

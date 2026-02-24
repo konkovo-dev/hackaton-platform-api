@@ -18,6 +18,41 @@ services:
       timeout: 5s
       retries: 5
 
+  nats:
+    image: nats:2.10-alpine
+    container_name: hackathon-nats
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    networks:
+      - hackathon-network
+    command: ["--http_port", "8222"]
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8222/healthz"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  centrifugo:
+    image: centrifugo/centrifugo:v5
+    container_name: hackathon-centrifugo
+    ports:
+      - "8000:8000"
+    environment:
+      CENTRIFUGO_TOKEN_HMAC_SECRET_KEY: "dev-secret-change-in-production"
+      CENTRIFUGO_API_KEY: "dev-api-key-change-in-production"
+      CENTRIFUGO_ADMIN_PASSWORD: "admin"
+      CENTRIFUGO_ADMIN_SECRET: "admin-secret"
+      CENTRIFUGO_ALLOWED_ORIGINS: "*"
+    networks:
+      - hackathon-network
+    command: centrifugo --config=/dev/null --port=8000 --health
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8000/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   auth-service:
     build:
       context: ..
@@ -187,18 +222,43 @@ services:
       - hackathon-network
     restart: unless-stopped
 
-  support-and-judging-service:
+  mentors-service:
     build:
       context: ..
-      dockerfile: deployments/Dockerfile.support-and-judging-service
-    container_name: hackathon-support-and-judging-service
+      dockerfile: deployments/Dockerfile.mentors-service
+    container_name: hackathon-mentors-service
     environment:
       ENV: dev
-      SUPPORT_AND_JUDGING_SERVICE_GRPC_PORT: 50056
+      MENTORS_SERVICE_GRPC_PORT: 50056
+      DB_DSN: postgres://hackathon:hackathon_dev_password@postgres:5432/hackathon?sslmode=disable&search_path=mentors
+      DB_MAX_CONNS: 25
+      DB_MIN_CONNS: 5
+      DB_MAX_CONN_LIFETIME: 1h
+      DB_MAX_CONN_IDLE_TIME: 30m
+      DB_HEALTH_CHECK_PERIOD: 1m
+      NATS_URL: nats://nats:4222
+      CENTRIFUGO_URL: http://centrifugo:8000
+      CENTRIFUGO_API_KEY: dev-api-key-change-in-production
+      CENTRIFUGO_JWT_SECRET: dev-jwt-secret-change-in-production
+      CENTRIFUGO_JWT_TTL: 24h
+      AUTH_CLIENT_SERVICE_URL: auth-service:50057
+      AUTH_CLIENT_MAX_CACHE_TTL: 60s
+      AUTH_CLIENT_CACHE_CLEANUP_INTERVAL: 1m
+      HACKATHON_SERVICE_URL: hackaton-service:50052
+      PARTICIPATION_ROLES_SERVICE_URL: participation-and-roles-service:50055
+      TEAM_SERVICE_URL: team-service:50053
+      IDEMPOTENCY_TTL: 24h
+      OUTBOX_POLL_INTERVAL: 1s
+      OUTBOX_MAX_ATTEMPTS: 3
+      SERVICE_AUTH_TOKEN: dev-service-token-change-in-production
     ports:
       - "50056:50056"
     depends_on:
       postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+      centrifugo:
         condition: service_healthy
     networks:
       - hackathon-network
@@ -218,7 +278,7 @@ services:
       TEAM_GRPC_ENDPOINT: team-service:50053
       SUBMISSION_GRPC_ENDPOINT: submission-service:50054
       PARTICIPATION_ROLES_GRPC_ENDPOINT: participation-and-roles-service:50055
-      SUPPORT_JUDGING_GRPC_ENDPOINT: support-and-judging-service:50056
+      MENTORS_GRPC_ENDPOINT: mentors-service:50056
     ports:
       - "8080:8080"
     depends_on:
@@ -227,7 +287,7 @@ services:
       - team-service
       - submission-service
       - participation-and-roles-service
-      - support-and-judging-service
+      - mentors-service
       - auth-service
     networks:
       - hackathon-network
