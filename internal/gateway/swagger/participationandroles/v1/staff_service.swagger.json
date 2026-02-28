@@ -60,6 +60,20 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "query.limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "query.offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "tags": [
@@ -592,6 +606,9 @@
       "properties": {
         "nextPageToken": {
           "type": "string"
+        },
+        "hasMore": {
+          "type": "boolean"
         }
       }
     },
@@ -618,6 +635,14 @@
         },
         "page": {
           "$ref": "#/definitions/v1PageRequest"
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "offset": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },

@@ -1,0 +1,957 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "mentors/v1/mentors_service.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "mentors.v1.MentorsService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/hackathons/{hackathonId}/support/messages": {
+      "post": {
+        "summary": "Send a message to support",
+        "description": "Participant sends a message to support. Creates a ticket if needed. Available only during RUNNING stage.",
+        "operationId": "MentorsService_SendMessage",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1SendMessageResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MentorsServiceSendMessageBody"
+            }
+          }
+        ],
+        "tags": [
+          "Mentors"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/support/my-messages": {
+      "get": {
+        "summary": "Get all my chat messages",
+        "description": "Returns all messages from all tickets (open and closed) for the authenticated participant. Available only during RUNNING stage.",
+        "operationId": "MentorsService_GetMyChatMessages",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetMyChatMessagesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "query.q",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "query.page.pageSize",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "query.page.pageToken",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "query.limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "query.offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "Mentors"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/support/realtime-token": {
+      "get": {
+        "summary": "Get Centrifugo connection token",
+        "description": "Returns a JWT token for connecting to Centrifugo WebSocket for real-time updates.",
+        "operationId": "MentorsService_GetRealtimeToken",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetRealtimeTokenResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Mentors"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/support/tickets/all/list": {
+      "post": {
+        "summary": "List all tickets (organizer)",
+        "description": "Returns all tickets in the hackathon. Requires OWNER or ORGANIZER role. Available only during RUNNING stage.",
+        "operationId": "MentorsService_ListAllTickets",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListAllTicketsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MentorsServiceListAllTicketsBody"
+            }
+          }
+        ],
+        "tags": [
+          "Mentors"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/support/tickets/assigned/list": {
+      "post": {
+        "summary": "List assigned tickets (mentor)",
+        "description": "Returns tickets assigned to the authenticated mentor. Available only during RUNNING stage.",
+        "operationId": "MentorsService_ListAssignedTickets",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListAssignedTicketsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MentorsServiceListAssignedTicketsBody"
+            }
+          }
+        ],
+        "tags": [
+          "Mentors"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/support/tickets/{ticketId}/assign": {
+      "post": {
+        "summary": "Assign ticket to mentor (organizer)",
+        "description": "Allows an organizer to assign an unassigned ticket to a specific mentor. Available only during RUNNING stage.",
+        "operationId": "MentorsService_AssignTicket",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AssignTicketResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "ticketId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MentorsServiceAssignTicketBody"
+            }
+          }
+        ],
+        "tags": [
+          "Mentors"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/support/tickets/{ticketId}/claim": {
+      "post": {
+        "summary": "Claim ticket (mentor)",
+        "description": "Allows a mentor to claim an unassigned ticket. Ticket must be OPEN and unassigned. Available only during RUNNING stage.",
+        "operationId": "MentorsService_ClaimTicket",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ClaimTicketResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "ticketId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MentorsServiceClaimTicketBody"
+            }
+          }
+        ],
+        "tags": [
+          "Mentors"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/support/tickets/{ticketId}/close": {
+      "post": {
+        "summary": "Close a ticket",
+        "description": "Mentor or organizer closes a ticket. Available only during RUNNING stage.",
+        "operationId": "MentorsService_CloseTicket",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CloseTicketResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "ticketId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MentorsServiceCloseTicketBody"
+            }
+          }
+        ],
+        "tags": [
+          "Mentors"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/support/tickets/{ticketId}/messages": {
+      "get": {
+        "summary": "Get ticket messages",
+        "description": "Returns messages for a specific ticket. Only mentors and organizers can access. Participants should use GetMyChatMessages instead. Available only during RUNNING stage.",
+        "operationId": "MentorsService_GetTicketMessages",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetTicketMessagesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "ticketId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "query.q",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "query.page.pageSize",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "query.page.pageToken",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "query.limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "query.offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "Mentors"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/support/tickets/{ticketId}/reply": {
+      "post": {
+        "summary": "Reply in a ticket (mentor)",
+        "description": "Mentor replies in an assigned ticket. Available only during RUNNING stage.",
+        "operationId": "MentorsService_ReplyInTicket",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ReplyInTicketResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "ticketId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MentorsServiceReplyInTicketBody"
+            }
+          }
+        ],
+        "tags": [
+          "Mentors"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "MentorsServiceAssignTicketBody": {
+      "type": "object",
+      "properties": {
+        "mentorUserId": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "MentorsServiceClaimTicketBody": {
+      "type": "object",
+      "properties": {
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "MentorsServiceCloseTicketBody": {
+      "type": "object",
+      "properties": {
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "MentorsServiceListAllTicketsBody": {
+      "type": "object",
+      "properties": {
+        "statusFilter": {
+          "$ref": "#/definitions/v1TicketStatusFilter"
+        },
+        "ownerKindFilter": {
+          "$ref": "#/definitions/v1OwnerKind"
+        },
+        "assignedMentorFilter": {
+          "type": "string"
+        },
+        "query": {
+          "$ref": "#/definitions/v1Query"
+        }
+      }
+    },
+    "MentorsServiceListAssignedTicketsBody": {
+      "type": "object",
+      "properties": {
+        "statusFilter": {
+          "$ref": "#/definitions/v1TicketStatusFilter"
+        },
+        "query": {
+          "$ref": "#/definitions/v1Query"
+        }
+      }
+    },
+    "MentorsServiceReplyInTicketBody": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "MentorsServiceSendMessageBody": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "clientMessageId": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1AssignTicketResponse": {
+      "type": "object",
+      "properties": {
+        "ticketId": {
+          "type": "string"
+        },
+        "assignedMentorUserId": {
+          "type": "string"
+        },
+        "assignedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1AuthorRole": {
+      "type": "string",
+      "enum": [
+        "AUTHOR_ROLE_UNSPECIFIED",
+        "AUTHOR_ROLE_PARTICIPANT",
+        "AUTHOR_ROLE_MENTOR",
+        "AUTHOR_ROLE_ORGANIZER",
+        "AUTHOR_ROLE_SYSTEM"
+      ],
+      "default": "AUTHOR_ROLE_UNSPECIFIED"
+    },
+    "v1ClaimTicketResponse": {
+      "type": "object",
+      "properties": {
+        "ticketId": {
+          "type": "string"
+        },
+        "assignedMentorUserId": {
+          "type": "string"
+        },
+        "assignedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1CloseTicketResponse": {
+      "type": "object"
+    },
+    "v1Filter": {
+      "type": "object",
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "operation": {
+          "$ref": "#/definitions/v1FilterOperation"
+        },
+        "stringValue": {
+          "type": "string"
+        },
+        "int64Value": {
+          "type": "string",
+          "format": "int64"
+        },
+        "boolValue": {
+          "type": "boolean"
+        },
+        "stringList": {
+          "$ref": "#/definitions/v1StringList"
+        }
+      }
+    },
+    "v1FilterGroup": {
+      "type": "object",
+      "properties": {
+        "filters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Filter"
+          }
+        }
+      }
+    },
+    "v1FilterOperation": {
+      "type": "string",
+      "enum": [
+        "FILTER_OPERATION_UNSPECIFIED",
+        "FILTER_OPERATION_EQUAL",
+        "FILTER_OPERATION_IN",
+        "FILTER_OPERATION_CONTAINS",
+        "FILTER_OPERATION_PREFIX"
+      ],
+      "default": "FILTER_OPERATION_UNSPECIFIED"
+    },
+    "v1GetMyChatMessagesResponse": {
+      "type": "object",
+      "properties": {
+        "messages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Message"
+          }
+        },
+        "hasMore": {
+          "type": "boolean"
+        }
+      }
+    },
+    "v1GetRealtimeTokenResponse": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "v1GetTicketMessagesResponse": {
+      "type": "object",
+      "properties": {
+        "messages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Message"
+          }
+        },
+        "hasMore": {
+          "type": "boolean"
+        }
+      }
+    },
+    "v1IdempotencyKey": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string"
+        }
+      }
+    },
+    "v1ListAllTicketsResponse": {
+      "type": "object",
+      "properties": {
+        "tickets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Ticket"
+          }
+        },
+        "hasMore": {
+          "type": "boolean"
+        }
+      }
+    },
+    "v1ListAssignedTicketsResponse": {
+      "type": "object",
+      "properties": {
+        "tickets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Ticket"
+          }
+        },
+        "hasMore": {
+          "type": "boolean"
+        }
+      }
+    },
+    "v1Message": {
+      "type": "object",
+      "properties": {
+        "messageId": {
+          "type": "string"
+        },
+        "ticketId": {
+          "type": "string"
+        },
+        "authorUserId": {
+          "type": "string"
+        },
+        "authorRole": {
+          "$ref": "#/definitions/v1AuthorRole"
+        },
+        "text": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1OwnerKind": {
+      "type": "string",
+      "enum": [
+        "OWNER_KIND_UNSPECIFIED",
+        "OWNER_KIND_USER",
+        "OWNER_KIND_TEAM"
+      ],
+      "default": "OWNER_KIND_UNSPECIFIED"
+    },
+    "v1PageRequest": {
+      "type": "object",
+      "properties": {
+        "pageSize": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "pageToken": {
+          "type": "string"
+        }
+      }
+    },
+    "v1Query": {
+      "type": "object",
+      "properties": {
+        "q": {
+          "type": "string"
+        },
+        "filterGroups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1FilterGroup"
+          },
+          "description": "OR between groups, AND inside group."
+        },
+        "sort": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Sort"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/v1PageRequest"
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "offset": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1ReplyInTicketResponse": {
+      "type": "object",
+      "properties": {
+        "messageId": {
+          "type": "string"
+        }
+      }
+    },
+    "v1SendMessageResponse": {
+      "type": "object",
+      "properties": {
+        "messageId": {
+          "type": "string"
+        },
+        "ticketId": {
+          "type": "string"
+        }
+      }
+    },
+    "v1Sort": {
+      "type": "object",
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "direction": {
+          "$ref": "#/definitions/v1SortDirection"
+        }
+      }
+    },
+    "v1SortDirection": {
+      "type": "string",
+      "enum": [
+        "SORT_DIRECTION_UNSPECIFIED",
+        "SORT_DIRECTION_ASC",
+        "SORT_DIRECTION_DESC"
+      ],
+      "default": "SORT_DIRECTION_UNSPECIFIED"
+    },
+    "v1StringList": {
+      "type": "object",
+      "properties": {
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "v1Ticket": {
+      "type": "object",
+      "properties": {
+        "ticketId": {
+          "type": "string"
+        },
+        "hackathonId": {
+          "type": "string"
+        },
+        "ownerKind": {
+          "$ref": "#/definitions/v1OwnerKind"
+        },
+        "ownerId": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/v1TicketStatus"
+        },
+        "assignedMentorUserId": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "closedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1TicketStatus": {
+      "type": "string",
+      "enum": [
+        "TICKET_STATUS_UNSPECIFIED",
+        "TICKET_STATUS_OPEN",
+        "TICKET_STATUS_CLOSED"
+      ],
+      "default": "TICKET_STATUS_UNSPECIFIED"
+    },
+    "v1TicketStatusFilter": {
+      "type": "object",
+      "properties": {
+        "statuses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1TicketStatus"
+          }
+        }
+      }
+    }
+  }
+}

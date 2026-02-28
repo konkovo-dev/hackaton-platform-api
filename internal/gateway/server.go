@@ -11,6 +11,7 @@ import (
 	authv1 "github.com/belikoooova/hackaton-platform-api/api/auth/v1"
 	hackathonv1 "github.com/belikoooova/hackaton-platform-api/api/hackathon/v1"
 	identityv1 "github.com/belikoooova/hackaton-platform-api/api/identity/v1"
+	mentorsv1 "github.com/belikoooova/hackaton-platform-api/api/mentors/v1"
 	participationandrolesv1 "github.com/belikoooova/hackaton-platform-api/api/participationandroles/v1"
 	teamv1 "github.com/belikoooova/hackaton-platform-api/api/team/v1"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -123,18 +124,23 @@ func Run(lc fx.Lifecycle, s *http.Server, lis net.Listener, mux *runtime.ServeMu
 				return fmt.Errorf("failed to register team members service gateway handlers: %v", err)
 			}
 
-			if err := teamv1.RegisterTeamInboxServiceHandlerFromEndpoint(bgCtx, mux, cfg.TeamGRPCEndpoint, opts); err != nil {
-				return fmt.Errorf("failed to register team inbox service gateway handlers: %v", err)
-			}
+		if err := teamv1.RegisterTeamInboxServiceHandlerFromEndpoint(bgCtx, mux, cfg.TeamGRPCEndpoint, opts); err != nil {
+			return fmt.Errorf("failed to register team inbox service gateway handlers: %v", err)
+		}
 
-			logger.Info("starting http gateway",
-				slog.String("addr", lis.Addr().String()),
-				slog.String("identity_grpc_endpoint", cfg.IdentityGRPCEndpoint),
-				slog.String("auth_grpc_endpoint", cfg.AuthGRPCEndpoint),
-				slog.String("hackaton_grpc_endpoint", cfg.HackatonGRPCEndpoint),
-				slog.String("participation_roles_grpc_endpoint", cfg.ParticipationAndRolesGRPCEndpoint),
-				slog.String("team_grpc_endpoint", cfg.TeamGRPCEndpoint),
-			)
+		if err := mentorsv1.RegisterMentorsServiceHandlerFromEndpoint(bgCtx, mux, cfg.MentorsGRPCEndpoint, opts); err != nil {
+			return fmt.Errorf("failed to register mentors service gateway handlers: %v", err)
+		}
+
+		logger.Info("starting http gateway",
+			slog.String("addr", lis.Addr().String()),
+			slog.String("identity_grpc_endpoint", cfg.IdentityGRPCEndpoint),
+			slog.String("auth_grpc_endpoint", cfg.AuthGRPCEndpoint),
+			slog.String("hackaton_grpc_endpoint", cfg.HackatonGRPCEndpoint),
+			slog.String("participation_roles_grpc_endpoint", cfg.ParticipationAndRolesGRPCEndpoint),
+			slog.String("team_grpc_endpoint", cfg.TeamGRPCEndpoint),
+			slog.String("mentors_grpc_endpoint", cfg.MentorsGRPCEndpoint),
+		)
 
 			go func() {
 				if err := s.Serve(lis); err != nil {

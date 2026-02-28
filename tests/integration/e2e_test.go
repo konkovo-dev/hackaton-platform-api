@@ -92,7 +92,7 @@ func TestFullHackathonFlow(t *testing.T) {
 	// Invite mentor
 	inviteMentorBody := map[string]interface{}{
 		"target_user_id": mentor.UserID,
-		"requested_role": "HACKATHON_ROLE_MENTOR",
+		"requested_role": "HX_ROLE_MENTOR",
 		"message":        "We would love to have you as a mentor for this hackathon!",
 	}
 	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff-invitations", hackathonID), owner.AccessToken, inviteMentorBody)
@@ -104,7 +104,7 @@ func TestFullHackathonFlow(t *testing.T) {
 	// Invite judge
 	inviteJudgeBody := map[string]interface{}{
 		"target_user_id": judge.UserID,
-		"requested_role": "HACKATHON_ROLE_JUDGE",
+		"requested_role": "HX_ROLE_JUDGE",
 		"message":        "We need your expertise as a judge!",
 	}
 	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff-invitations", hackathonID), owner.AccessToken, inviteJudgeBody)
@@ -273,7 +273,7 @@ func TestFullHackathonFlow(t *testing.T) {
 	// Step 19: Mentor self-removes
 	t.Log("Step 19: Mentor self-removing...")
 	selfRemoveBody := map[string]interface{}{
-		"role": "HACKATHON_ROLE_MENTOR",
+		"role": "HX_ROLE_MENTOR",
 	}
 	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff/selfRemoveRole", hackathonID), mentor.AccessToken, selfRemoveBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to self-remove: %s", string(body))

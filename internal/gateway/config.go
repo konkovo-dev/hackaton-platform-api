@@ -12,6 +12,7 @@ type Config struct {
 	HackatonGRPCEndpoint              string
 	TeamGRPCEndpoint                  string
 	ParticipationAndRolesGRPCEndpoint string
+	MentorsGRPCEndpoint               string
 	GatewayHTTPPort                   int
 }
 
@@ -21,6 +22,7 @@ func NewConfig() *Config {
 	hackatonGRPCEndpoint := env.GetEnv("HACKATON_GRPC_ENDPOINT", "localhost:50052")
 	teamGRPCEndpoint := env.GetEnv("TEAM_GRPC_ENDPOINT", "localhost:50053")
 	participationAndRolesGRPCEndpoint := env.GetEnv("PARTICIPATION_ROLES_GRPC_ENDPOINT", "localhost:50055")
+	mentorsGRPCEndpoint := env.GetEnv("MENTORS_GRPC_ENDPOINT", "localhost:50056")
 
 	gatewayHTTPPort, err := env.GetEnvInt("GATEWAY_HTTP_PORT", 8080)
 	if err != nil {
@@ -33,6 +35,7 @@ func NewConfig() *Config {
 		HackatonGRPCEndpoint:              hackatonGRPCEndpoint,
 		TeamGRPCEndpoint:                  teamGRPCEndpoint,
 		ParticipationAndRolesGRPCEndpoint: participationAndRolesGRPCEndpoint,
+		MentorsGRPCEndpoint:               mentorsGRPCEndpoint,
 		GatewayHTTPPort:                   gatewayHTTPPort,
 	}
 }

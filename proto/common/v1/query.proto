@@ -50,6 +50,7 @@ message PageRequest {
 
 message PageResponse {
   string next_page_token = 1;
+  bool has_more = 2;
 }
 
 message Query {
@@ -60,4 +61,7 @@ message Query {
   repeated Sort sort = 3;
 
   PageRequest page = 10;
+  
+  int32 limit = 11;
+  int32 offset = 12;
 }

@@ -348,6 +348,9 @@
       "properties": {
         "nextPageToken": {
           "type": "string"
+        },
+        "hasMore": {
+          "type": "boolean"
         }
       }
     },
@@ -374,6 +377,14 @@
         },
         "page": {
           "$ref": "#/definitions/v1PageRequest"
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "offset": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },

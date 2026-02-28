@@ -107,9 +107,12 @@ func (s *Service) mapPolicyError(decision *policy.Decision) error {
 	}
 
 	v := decision.Violations[0]
-	if v.Code == "FORBIDDEN" {
+	switch v.Code {
+	case policy.ViolationCodeForbidden:
 		return fmt.Errorf("access denied: %s", v.Message)
+	case policy.ViolationCodeRequired, policy.ViolationCodeFormat:
+		return fmt.Errorf("%w: %s", ErrInvalidInput, v.Message)
+	default:
+		return fmt.Errorf("%s", v.Message)
 	}
-
-	return fmt.Errorf("%s", v.Message)
 }

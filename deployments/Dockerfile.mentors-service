@@ -1,0 +1,26 @@
+FROM golang:1.24-alpine AS builder
+
+WORKDIR /build
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/mentors-service ./cmd/mentors-service
+
+FROM alpine:latest
+
+WORKDIR /app
+
+RUN apk --no-cache add ca-certificates
+
+COPY --from=builder /app/mentors-service .
+
+RUN adduser -D -u 1000 appuser
+USER appuser
+
+EXPOSE 50056
+
+CMD ["./mentors-service"]
+

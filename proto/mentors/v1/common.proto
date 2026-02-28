@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package mentors.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/mentors/v1;mentorsv1";
+
+enum TicketStatus {
+  TICKET_STATUS_UNSPECIFIED = 0;
+  TICKET_STATUS_OPEN = 1;
+  TICKET_STATUS_CLOSED = 2;
+}
+
+enum OwnerKind {
+  OWNER_KIND_UNSPECIFIED = 0;
+  OWNER_KIND_USER = 1;
+  OWNER_KIND_TEAM = 2;
+}
+
+enum AuthorRole {
+  AUTHOR_ROLE_UNSPECIFIED = 0;
+  AUTHOR_ROLE_PARTICIPANT = 1;
+  AUTHOR_ROLE_MENTOR = 2;
+  AUTHOR_ROLE_ORGANIZER = 3;
+  AUTHOR_ROLE_SYSTEM = 4;
+}
