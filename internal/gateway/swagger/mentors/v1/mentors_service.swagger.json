@@ -56,6 +56,71 @@
         ]
       }
     },
+    "/v1/hackathons/{hackathonId}/support/my-messages": {
+      "get": {
+        "summary": "Get all my chat messages",
+        "description": "Returns all messages from all tickets (open and closed) for the authenticated participant. Available only during RUNNING stage.",
+        "operationId": "MentorsService_GetMyChatMessages",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetMyChatMessagesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "query.q",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "query.page.pageSize",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "query.page.pageToken",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "query.limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "query.offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "Mentors"
+        ]
+      }
+    },
     "/v1/hackathons/{hackathonId}/support/realtime-token": {
       "get": {
         "summary": "Get Centrifugo connection token",
@@ -161,71 +226,6 @@
             "schema": {
               "$ref": "#/definitions/MentorsServiceListAssignedTicketsBody"
             }
-          }
-        ],
-        "tags": [
-          "Mentors"
-        ]
-      }
-    },
-    "/v1/hackathons/{hackathonId}/support/tickets/my": {
-      "get": {
-        "summary": "Get my support tickets",
-        "description": "Returns tickets for the authenticated participant. Available only during RUNNING stage.",
-        "operationId": "MentorsService_GetMyTickets",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1GetMyTicketsResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "hackathonId",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "query.q",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "query.page.pageSize",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "query.page.pageToken",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "query.limit",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "query.offset",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
           }
         ],
         "tags": [
@@ -374,7 +374,7 @@
     "/v1/hackathons/{hackathonId}/support/tickets/{ticketId}/messages": {
       "get": {
         "summary": "Get ticket messages",
-        "description": "Returns messages for a ticket. Participant can only access their own tickets. Mentor can access assigned tickets. Available only during RUNNING stage.",
+        "description": "Returns messages for a specific ticket. Only mentors and organizers can access. Participants should use GetMyChatMessages instead. Available only during RUNNING stage.",
         "operationId": "MentorsService_GetTicketMessages",
         "responses": {
           "200": {
@@ -689,14 +689,14 @@
       ],
       "default": "FILTER_OPERATION_UNSPECIFIED"
     },
-    "v1GetMyTicketsResponse": {
+    "v1GetMyChatMessagesResponse": {
       "type": "object",
       "properties": {
-        "tickets": {
+        "messages": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/v1Ticket"
+            "$ref": "#/definitions/v1Message"
           }
         },
         "hasMore": {

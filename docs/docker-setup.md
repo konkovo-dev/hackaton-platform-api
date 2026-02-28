@@ -1,6 +1,6 @@
 # Hackathon Platform - Docker Setup
 
-Полная инструкция по запуску всей платформы (Gateway + Auth + Identity + Hackathon + Participation & Roles + Team)
+Полная инструкция по запуску всей платформы (Gateway + Auth + Identity + Hackathon + Participation & Roles + Team + Mentors + NATS + Centrifugo)
 
 ## Предусловия
 
@@ -31,6 +31,7 @@ make identity-service-sqlc-generate
 make hackaton-service-sqlc-generate
 make participation-and-roles-service-sqlc-generate
 make team-service-sqlc-generate
+make mentors-service-sqlc-generate
 ```
 
 ### 4. Генерация RSA ключей для auth-service
@@ -39,14 +40,19 @@ make team-service-sqlc-generate
 make auth-service-generate-keys
 ```
 
-### 5. Запуск Postgres
+### 5. Запуск инфраструктуры (Postgres, NATS, Centrifugo)
 
 ```bash
-docker-compose -f deployments/docker-compose.yml up -d postgres
+docker-compose -f deployments/docker-compose.yml up -d postgres nats centrifugo
 make ps
 ```
 
-Дождитесь, пока postgres станет healthy (около 5-10 секунд).
+Дождитесь, пока все сервисы станут healthy (около 5-10 секунд).
+
+**Что запускается:**
+- **Postgres** (порт 5432) — основная БД
+- **NATS** (порты 4222, 8222) — message broker для event streaming
+- **Centrifugo** (порт 8000) — WebSocket сервер для real-time уведомлений
 
 ### 6. Миграции
 
@@ -63,6 +69,8 @@ make participation-and-roles-service-migrate-up
 make participation-and-roles-service-migrate-status
 make team-service-migrate-up
 make team-service-migrate-status
+make mentors-service-migrate-up
+make mentors-service-migrate-status
 ```
 
 ### 7. Запуск сервисов
@@ -74,6 +82,9 @@ docker-compose -f deployments/docker-compose.yml build identity-service
 docker-compose -f deployments/docker-compose.yml up -d identity-service
 docker-compose -f deployments/docker-compose.yml logs --tail=20 identity-service
 ```
+docker-compose -f deployments/docker-compose.yml stop identity-service 
+docker-compose -f deployments/docker-compose.yml rm -f identity-service                   
+docker rmi $(docker images -q deployments-identity-service)
 
 #### Auth Service
 
@@ -107,6 +118,20 @@ docker-compose -f deployments/docker-compose.yml up -d team-service
 docker-compose -f deployments/docker-compose.yml logs --tail=20 team-service
 ```
 
+#### Mentors Service
+
+```bash
+docker-compose -f deployments/docker-compose.yml build mentors-service
+docker-compose -f deployments/docker-compose.yml up -d mentors-service
+docker-compose -f deployments/docker-compose.yml logs --tail=20 mentors-service
+```
+
+docker-compose -f deployments/docker-compose.yml stop mentors-service 
+docker-compose -f deployments/docker-compose.yml rm -f mentors-service                   
+docker rmi $(docker images -q deployments-mentors-service)
+
+**Важно**: Mentors Service требует NATS и Centrifugo для работы outbox и real-time уведомлений.
+
 #### Gateway
 
 ```bash
@@ -114,6 +139,10 @@ docker-compose -f deployments/docker-compose.yml build gateway
 docker-compose -f deployments/docker-compose.yml up -d --no-deps gateway
 docker-compose -f deployments/docker-compose.yml logs --tail=20 gateway
 ```
+
+docker-compose -f deployments/docker-compose.yml stop gateway
+docker-compose -f deployments/docker-compose.yml rm -f gateway                   
+docker rmi $(docker images -q deployments-gateway)
 
 ### 8. Проверка
 
@@ -123,22 +152,34 @@ make ps
 
 Должны быть запущены и healthy:
 - `hackathon-postgres`
+- `hackathon-nats`
+- `hackathon-centrifugo`
 - `hackathon-identity-service`
 - `hackathon-auth-service`
 - `hackathon-hackaton-service`
 - `hackathon-participation-and-roles-service`
 - `hackathon-team-service`
+- `hackathon-mentors-service`
 - `hackathon-gateway`
 
 ## Endpoints
 
+### HTTP/REST
 - **Gateway HTTP**: `http://localhost:8080` (REST API для всех сервисов)
-- **Identity gRPC**: `localhost:50051` (прямой gRPC)
-- **Hackathon gRPC**: `localhost:50052` (прямой gRPC)
-- **Team gRPC**: `localhost:50053` (прямой gRPC)
-- **Participation & Roles gRPC**: `localhost:50055` (прямой gRPC)
-- **Auth gRPC**: `localhost:50057` (прямой gRPC)
+- **Swagger UI**: `http://localhost:8080/swagger/` (документация API)
+
+### gRPC Services
+- **Identity gRPC**: `localhost:50051`
+- **Hackathon gRPC**: `localhost:50052`
+- **Team gRPC**: `localhost:50053`
+- **Participation & Roles gRPC**: `localhost:50055`
+- **Mentors gRPC**: `localhost:50056`
+- **Auth gRPC**: `localhost:50057`
+
+### Infrastructure
 - **Postgres**: `localhost:5432`
+- **NATS**: `localhost:4222` (client), `localhost:8222` (monitoring)
+- **Centrifugo**: `localhost:8000` (WebSocket + HTTP API)
 
 ## Быстрая проверка работоспособности
 
@@ -189,6 +230,19 @@ curl -X POST http://localhost:8080/v1/hackathons \
 
 # Список опубликованных хакатонов
 curl http://localhost:8080/v1/hackathons?page_size=10 | jq .
+
+# Отправить сообщение в support (mentors-service)
+curl -X POST http://localhost:8080/v1/hackathons/<HACKATHON_ID>/support/messages \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Нужна помощь с проектом",
+    "client_message_id": "msg-001"
+  }' | jq .
+
+# Получить токен для WebSocket (Centrifugo)
+curl http://localhost:8080/v1/hackathons/<HACKATHON_ID>/support/realtime-token \
+  -H "Authorization: Bearer $ACCESS_TOKEN" | jq .
 ```
 
 ### Через gRPC напрямую
@@ -205,6 +259,12 @@ grpcurl -plaintext localhost:50052 grpc.health.v1.Health/Check
 
 # List hackathon methods
 grpcurl -plaintext localhost:50052 list hackathon.v1.HackathonService
+
+# Ping mentors
+grpcurl -plaintext localhost:50056 grpc.health.v1.Health/Check
+
+# List mentors methods
+grpcurl -plaintext localhost:50056 list mentors.v1.MentorsService
 ```
 
 ## Управление сервисами
@@ -227,8 +287,15 @@ docker-compose -f deployments/docker-compose.yml restart participation-and-roles
 # Team
 docker-compose -f deployments/docker-compose.yml restart team-service
 
+# Mentors
+docker-compose -f deployments/docker-compose.yml restart mentors-service
+
 # Gateway
 docker-compose -f deployments/docker-compose.yml restart gateway
+
+# Infrastructure
+docker-compose -f deployments/docker-compose.yml restart nats
+docker-compose -f deployments/docker-compose.yml restart centrifugo
 ```
 
 ### Пересборка и перезапуск
@@ -264,6 +331,12 @@ docker-compose -f deployments/docker-compose.yml rm -f team-service
 docker-compose -f deployments/docker-compose.yml build team-service
 docker-compose -f deployments/docker-compose.yml up -d team-service
 
+# Mentors
+docker-compose -f deployments/docker-compose.yml stop mentors-service
+docker-compose -f deployments/docker-compose.yml rm -f mentors-service
+docker-compose -f deployments/docker-compose.yml build mentors-service
+docker-compose -f deployments/docker-compose.yml up -d mentors-service
+
 # Gateway
 docker-compose -f deployments/docker-compose.yml stop gateway
 docker-compose -f deployments/docker-compose.yml rm -f gateway
@@ -283,7 +356,12 @@ docker-compose -f deployments/docker-compose.yml logs -f auth-service
 docker-compose -f deployments/docker-compose.yml logs -f hackaton-service
 docker-compose -f deployments/docker-compose.yml logs -f participation-and-roles-service
 docker-compose -f deployments/docker-compose.yml logs -f team-service
+docker-compose -f deployments/docker-compose.yml logs -f mentors-service
 docker-compose -f deployments/docker-compose.yml logs -f gateway
+
+# Infrastructure
+docker-compose -f deployments/docker-compose.yml logs -f nats
+docker-compose -f deployments/docker-compose.yml logs -f centrifugo
 ```
 
 ### Остановка всех сервисов
@@ -323,6 +401,7 @@ make identity-service-migrate-status
 make hackaton-service-migrate-status
 make participation-and-roles-service-migrate-status
 make team-service-migrate-status
+make mentors-service-migrate-status
 
 # Примените заново
 make auth-service-migrate-up
@@ -330,6 +409,7 @@ make identity-service-migrate-up
 make hackaton-service-migrate-up
 make participation-and-roles-service-migrate-up
 make team-service-migrate-up
+make mentors-service-migrate-up
 ```
 
 ### Postgres не стартует
@@ -371,6 +451,46 @@ docker-compose -f deployments/docker-compose.yml logs hackaton-service | grep -i
 docker-compose -f deployments/docker-compose.yml exec hackaton-service env | grep PARTICIPATION
 ```
 
+### Mentors service не может отправить события
+
+**Симптомы**: "failed to publish" в логах mentors-service
+
+**Решение**:
+```bash
+# Проверьте что NATS и Centrifugo запущены
+docker-compose -f deployments/docker-compose.yml ps nats centrifugo
+
+# Проверьте логи mentors-service
+docker-compose -f deployments/docker-compose.yml logs mentors-service | grep -i "outbox\|nats\|centrifugo"
+
+# Проверьте connectivity
+docker-compose -f deployments/docker-compose.yml exec mentors-service wget -O- http://centrifugo:8000/health
+docker-compose -f deployments/docker-compose.yml exec mentors-service wget -O- http://nats:8222/healthz
+
+# Перезапустите mentors-service
+docker-compose -f deployments/docker-compose.yml restart mentors-service
+```
+
+### WebSocket не подключается (Centrifugo)
+
+**Симптомы**: Клиент не может подключиться к `ws://localhost:8000/connection/websocket`
+
+**Решение**:
+```bash
+# Проверьте что Centrifugo запущен
+docker-compose -f deployments/docker-compose.yml ps centrifugo
+
+# Проверьте health
+curl http://localhost:8000/health
+
+# Проверьте логи
+docker-compose -f deployments/docker-compose.yml logs centrifugo
+
+# Получите токен через API
+curl http://localhost:8080/v1/hackathons/<HACKATHON_ID>/support/realtime-token \
+  -H "Authorization: Bearer $ACCESS_TOKEN" | jq -r .token
+```
+
 ## Automated Testing
 
 ### Запуск полных тестов
@@ -408,6 +528,7 @@ sudo apt-get install jq
 - **Hackathon Service**: [README](./hackathon/README.md) | [REST](./hackathon/rest-guide.md) | [gRPC](./hackathon/grpc-guide.md)
 - **Participation & Roles Service**: [README](./participation-and-roles/README.md) | [REST](./participation-and-roles/rest-guide.md) | [gRPC](./participation-and-roles/grpc-guide.md)
 - **Team Service**: [README](./team/README.md)
+- **Mentors Service**: Support/Helpdesk с real-time уведомлениями через WebSocket
 
 ### Automated Scripts
 
@@ -420,4 +541,28 @@ sudo apt-get install jq
 - [Hackathon Rules](./rules/hackathon.md)
 - [Identity Rules](./rules/identity.md)
 - [Team Rules](./rules/team.md)
+
+### Architecture Components
+
+#### NATS (Message Broker)
+- **Назначение**: Event streaming для audit log и межсервисной коммуникации
+- **Используется**: mentors-service для публикации событий (message.created, ticket.claimed, ticket.closed)
+- **Monitoring**: `http://localhost:8222` (NATS monitoring endpoint)
+
+#### Centrifugo (WebSocket Server)
+- **Назначение**: Real-time уведомления для клиентов
+- **Используется**: mentors-service для push-уведомлений о новых сообщениях в support чате
+- **Channels**: `support:feed#<user_id>` (user-limited channels)
+- **API**: `http://localhost:8000/api` (HTTP API для publish)
+- **WebSocket**: `ws://localhost:8000/connection/websocket`
+
+#### Mentors Service (Support/Helpdesk)
+- **Назначение**: Тикет-система для поддержки участников менторами
+- **Особенности**:
+  - Claim-модель назначения тикетов
+  - Idempotency для всех мутирующих операций
+  - Outbox pattern для гарантированной доставки событий
+  - Real-time через Centrifugo WebSocket
+  - Audit log через NATS
+- **Доступность**: Только на стадии RUNNING хакатона
 

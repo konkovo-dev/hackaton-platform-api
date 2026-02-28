@@ -11,18 +11,18 @@ import (
 	"github.com/google/uuid"
 )
 
-type GetMyTicketsIn struct {
+type GetMyChatMessagesIn struct {
 	HackathonID string
 	Limit       int32
 	Offset      int32
 }
 
-type GetMyTicketsOut struct {
-	Tickets []*entity.Ticket
-	HasMore bool
+type GetMyChatMessagesOut struct {
+	Messages []*entity.Message
+	HasMore  bool
 }
 
-func (s *Service) GetMyTickets(ctx context.Context, in GetMyTicketsIn) (*GetMyTicketsOut, error) {
+func (s *Service) GetMyChatMessages(ctx context.Context, in GetMyChatMessagesIn) (*GetMyChatMessagesOut, error) {
 	userID, ok := auth.GetUserID(ctx)
 	if !ok {
 		return nil, ErrUnauthorized
@@ -38,8 +38,8 @@ func (s *Service) GetMyTickets(ctx context.Context, in GetMyTicketsIn) (*GetMyTi
 		return nil, fmt.Errorf("invalid hackathon_id: %w", err)
 	}
 
-	getMyTicketsPolicy := mentorspolicy.NewGetMyTicketsPolicy()
-	pctx, err := getMyTicketsPolicy.LoadContext(ctx, mentorspolicy.GetMyTicketsParams{
+	getMyChatMessagesPolicy := mentorspolicy.NewGetMyChatMessagesPolicy()
+	pctx, err := getMyChatMessagesPolicy.LoadContext(ctx, mentorspolicy.GetMyChatMessagesParams{
 		HackathonID: hackathonID,
 	})
 	if err != nil {
@@ -55,7 +55,7 @@ func (s *Service) GetMyTickets(ctx context.Context, in GetMyTicketsIn) (*GetMyTi
 	}
 	pctx.SetHackathonStage(stage)
 
-	decision := getMyTicketsPolicy.Check(ctx, pctx)
+	decision := getMyChatMessagesPolicy.Check(ctx, pctx)
 	if !decision.Allowed {
 		return nil, mapPolicyError(decision)
 	}
@@ -68,7 +68,7 @@ func (s *Service) GetMyTickets(ctx context.Context, in GetMyTicketsIn) (*GetMyTi
 	var ownerKind string
 	var ownerID uuid.UUID
 
-	if teamIDPtr != nil {
+	if teamIDPtr != nil && *teamIDPtr != "" {
 		teamID, err := uuid.Parse(*teamIDPtr)
 		if err == nil {
 			ownerKind = domain.OwnerKindTeam
@@ -84,22 +84,22 @@ func (s *Service) GetMyTickets(ctx context.Context, in GetMyTicketsIn) (*GetMyTi
 
 	limit := in.Limit
 	if limit <= 0 || limit > 100 {
-		limit = 20
+		limit = 50
 	}
 
-	tickets, err := s.ticketRepo.ListByOwner(ctx, hackathonID, ownerKind, ownerID, limit+1, in.Offset)
+	messages, err := s.messageRepo.ListByOwner(ctx, hackathonID, ownerKind, ownerID, limit+1, in.Offset)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list tickets: %w", err)
+		return nil, fmt.Errorf("failed to list messages: %w", err)
 	}
 
 	hasMore := false
-	if len(tickets) > int(limit) {
+	if len(messages) > int(limit) {
 		hasMore = true
-		tickets = tickets[:limit]
+		messages = messages[:limit]
 	}
 
-	return &GetMyTicketsOut{
-		Tickets: tickets,
-		HasMore: hasMore,
+	return &GetMyChatMessagesOut{
+		Messages: messages,
+		HasMore:  hasMore,
 	}, nil
 }

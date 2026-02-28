@@ -97,6 +97,18 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Build and push mentors-service
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./deployments/prod/Dockerfile.mentors-service
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/hackathon-mentors-service:${{ steps.meta.outputs.sha_short }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/hackathon-mentors-service:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
       - name: Build and push gateway
         uses: docker/build-push-action@v5
         with:
@@ -123,5 +135,5 @@ jobs:
 
       - name: Output image tags
         run: |
-          echo "✓ Built and pushed 7 images with tag: ${{ steps.meta.outputs.sha_short }}"
+          echo "✓ Built and pushed 8 images with tag: ${{ steps.meta.outputs.sha_short }}"
           echo "Images are available at: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/hackathon-*"

@@ -134,18 +134,12 @@ func (p *ReplyInTicketPolicy) Check(ctx context.Context, pctx *ReplyInTicketCont
 		return decision
 	}
 
-	if pctx.Ticket().AssignedMentorUserID == nil {
-		decision.Deny(policy.Violation{
-			Code:    policy.ViolationCodeConflict,
-			Message: "ticket is not assigned to any mentor yet",
-		})
-		return decision
-	}
-
-	if !pctx.IsAssignedMentor() && !pctx.IsOrganizer() {
+	// Only assigned mentor can reply in ticket
+	// Participants use SendMessage, organizers have read-only access
+	if !pctx.IsAssignedMentor() {
 		decision.Deny(policy.Violation{
 			Code:    policy.ViolationCodeForbidden,
-			Message: "only assigned mentor or organizer can reply to ticket",
+			Message: "only assigned mentor can reply in ticket",
 		})
 		return decision
 	}

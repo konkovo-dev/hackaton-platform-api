@@ -74,7 +74,10 @@ func (r *TicketRepository) FindOpenTicketByOwner(ctx context.Context, hackathonI
 	})
 	if err != nil {
 		err = pgxutil.MapDBError(err)
-		return nil, fmt.Errorf("failed to find open ticket: %w", err)
+		if pgxutil.IsNotFound(err) {
+			return nil, nil
+		}
+		return nil, err
 	}
 
 	return mapTicketToEntity(row), nil
@@ -117,6 +120,21 @@ func (r *TicketRepository) ListAll(ctx context.Context, hackathonID uuid.UUID, l
 	}
 
 	return tickets, nil
+}
+
+func (r *TicketRepository) CreateOrGetOpenTicket(ctx context.Context, hackathonID uuid.UUID, ownerKind string, ownerID uuid.UUID) (*entity.Ticket, error) {
+	row, err := r.Queries().CreateOrGetOpenTicket(ctx, queries.CreateOrGetOpenTicketParams{
+		ID:          uuid.New(),
+		HackathonID: hackathonID,
+		OwnerKind:   ownerKind,
+		OwnerID:     ownerID,
+	})
+	if err != nil {
+		err = pgxutil.MapDBError(err)
+		return nil, fmt.Errorf("failed to create or get open ticket: %w", err)
+	}
+
+	return mapTicketToEntity(row), nil
 }
 
 func (r *TicketRepository) Create(ctx context.Context, ticket *entity.Ticket) error {

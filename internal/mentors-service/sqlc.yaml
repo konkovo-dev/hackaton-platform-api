@@ -2,6 +2,8 @@ version: "2"
 sql:
   - schema:
       - "migrations/00001_init.sql"
+      - "migrations/00002_fix_indexes.sql"
+      - "migrations/00003_allow_null_author.sql"
     queries: "repository/postgres/queries"
     engine: "postgresql"
     gen:

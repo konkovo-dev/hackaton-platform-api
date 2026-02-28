@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/belikoooova/hackaton-platform-api/internal/mentors-service/domain"
+	"github.com/belikoooova/hackaton-platform-api/internal/mentors-service/domain/entity"
 	mentorspolicy "github.com/belikoooova/hackaton-platform-api/internal/mentors-service/policy"
 	"github.com/belikoooova/hackaton-platform-api/internal/mentors-service/txrepo"
 	outboxusecase "github.com/belikoooova/hackaton-platform-api/internal/mentors-service/usecase/outbox"
@@ -15,6 +16,7 @@ import (
 	"github.com/belikoooova/hackaton-platform-api/pkg/outbox"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type ClaimTicketIn struct {
@@ -108,7 +110,7 @@ func (s *Service) ClaimTicket(ctx context.Context, in ClaimTicketIn) (*ClaimTick
 	baseRecipients := make([]string, 0)
 	switch ticket.OwnerKind {
 	case domain.OwnerKindTeam:
-		teamMembers, err := s.teamClient.ListTeamMembers(ctx, ticket.OwnerID.String())
+		teamMembers, err := s.teamClient.ListTeamMembers(ctx, ticket.HackathonID.String(), ticket.OwnerID.String())
 		if err != nil {
 			return nil, fmt.Errorf("failed to list team members: %w", err)
 		}
@@ -134,6 +136,21 @@ func (s *Service) ClaimTicket(ctx context.Context, in ClaimTicketIn) (*ClaimTick
 		copy(recipients, baseRecipients)
 		recipients = append(recipients, userUUID.String())
 
+		// Create system message about ticket assignment
+		messageRepoTx := txrepo.NewMessageRepository(tx)
+		systemMessage := &entity.Message{
+			ID:              uuid.New(),
+			TicketID:        ticketID,
+			AuthorUserID:    pgtype.UUID{Valid: false},
+			AuthorRole:      domain.AuthorRoleSystem,
+			Text:            "Mentor joined the chat",
+			ClientMessageID: "",
+		}
+
+		if err := messageRepoTx.Create(ctx, systemMessage); err != nil {
+			return fmt.Errorf("failed to create system message: %w", err)
+		}
+
 		eventPayload := outboxusecase.TicketAssignedPayload{
 			TicketID:             ticketID.String(),
 			HackathonID:          hackathonID.String(),
@@ -148,7 +165,7 @@ func (s *Service) ClaimTicket(ctx context.Context, in ClaimTicketIn) (*ClaimTick
 		}
 
 		outboxRepoTx := txrepo.NewOutboxRepository(tx)
-		outboxEvent := &outbox.Event{
+		ticketAssignedEvent := &outbox.Event{
 			ID:            uuid.New(),
 			AggregateID:   ticketID.String(),
 			AggregateType: "ticket",
@@ -157,12 +174,45 @@ func (s *Service) ClaimTicket(ctx context.Context, in ClaimTicketIn) (*ClaimTick
 			Status:        outbox.EventStatusPending,
 			AttemptCount:  0,
 			LastError:     "",
-			CreatedAt:     time.Now().UTC(),
-			UpdatedAt:     time.Now().UTC(),
+			CreatedAt:     assignedAt,
+			UpdatedAt:     assignedAt,
 		}
 
-		if err := outboxRepoTx.Create(ctx, outboxEvent); err != nil {
-			return fmt.Errorf("failed to create outbox event: %w", err)
+		if err := outboxRepoTx.Create(ctx, ticketAssignedEvent); err != nil {
+			return fmt.Errorf("failed to create ticket.assigned event: %w", err)
+		}
+
+		// Publish message.created event for system message
+		messageCreatedPayload := outboxusecase.MessageCreatedPayload{
+			MessageID:      systemMessage.ID.String(),
+			TicketID:       ticketID.String(),
+			HackathonID:    hackathonID.String(),
+			AuthorUserID:   "",
+			AuthorRole:     domain.AuthorRoleSystem,
+			Text:           systemMessage.Text,
+			RecipientUsers: recipients,
+		}
+
+		messageCreatedBytes, err := json.Marshal(messageCreatedPayload)
+		if err != nil {
+			return fmt.Errorf("failed to marshal message.created payload: %w", err)
+		}
+
+		messageCreatedEvent := &outbox.Event{
+			ID:            uuid.New(),
+			AggregateID:   systemMessage.ID.String(),
+			AggregateType: "message",
+			EventType:     outboxusecase.EventTypeMessageCreated,
+			Payload:       messageCreatedBytes,
+			Status:        outbox.EventStatusPending,
+			AttemptCount:  0,
+			LastError:     "",
+			CreatedAt:     assignedAt,
+			UpdatedAt:     assignedAt,
+		}
+
+		if err := outboxRepoTx.Create(ctx, messageCreatedEvent); err != nil {
+			return fmt.Errorf("failed to create message.created event: %w", err)
 		}
 
 		return nil

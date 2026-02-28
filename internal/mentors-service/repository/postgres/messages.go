@@ -50,6 +50,27 @@ func (r *MessageRepository) ListByTicket(ctx context.Context, ticketID uuid.UUID
 	return messages, nil
 }
 
+func (r *MessageRepository) ListByOwner(ctx context.Context, hackathonID uuid.UUID, ownerKind string, ownerID uuid.UUID, limit, offset int32) ([]*entity.Message, error) {
+	rows, err := r.Queries().ListMessagesByOwner(ctx, queries.ListMessagesByOwnerParams{
+		HackathonID: hackathonID,
+		OwnerKind:   ownerKind,
+		OwnerID:     ownerID,
+		Limit:       limit,
+		Offset:      offset,
+	})
+	if err != nil {
+		err = pgxutil.MapDBError(err)
+		return nil, fmt.Errorf("failed to list messages by owner: %w", err)
+	}
+
+	messages := make([]*entity.Message, 0, len(rows))
+	for _, row := range rows {
+		messages = append(messages, mapMessageToEntity(row))
+	}
+
+	return messages, nil
+}
+
 func (r *MessageRepository) Create(ctx context.Context, message *entity.Message) error {
 	var clientMessageID pgtype.Text
 	if message.ClientMessageID != "" {

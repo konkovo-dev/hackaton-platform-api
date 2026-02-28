@@ -106,8 +106,11 @@ func (c *Client) GetParticipationAndRoles(ctx context.Context, userID, hackathon
 		ctx = metadata.AppendToOutgoingContext(ctx, "x-service-token", c.serviceToken)
 
 		partResp, err := c.participationService.GetUserParticipation(ctx, partReq)
-		if err == nil && partResp.Participation != nil && partResp.Participation.TeamId != "" {
-			teamIDPtr = &partResp.Participation.TeamId
+		if err == nil && partResp.Participation != nil {
+			teamID := partResp.Participation.TeamId
+			if teamID != "" {
+				teamIDPtr = &teamID
+			}
 		}
 	}
 

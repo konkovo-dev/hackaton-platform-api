@@ -10,6 +10,7 @@ import (
 	"github.com/belikoooova/hackaton-platform-api/internal/mentors-service/domain/entity"
 	"github.com/belikoooova/hackaton-platform-api/internal/mentors-service/usecase/mentors"
 	"github.com/belikoooova/hackaton-platform-api/pkg/policy"
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -30,36 +31,36 @@ func NewAPI(service *mentors.Service, logger *slog.Logger) *API {
 	}
 }
 
-func (a *API) GetMyTickets(ctx context.Context, req *mentorsv1.GetMyTicketsRequest) (*mentorsv1.GetMyTicketsResponse, error) {
-	limit := int32(20)
+func (a *API) GetMyChatMessages(ctx context.Context, req *mentorsv1.GetMyChatMessagesRequest) (*mentorsv1.GetMyChatMessagesResponse, error) {
+	limit := int32(50)
 	offset := int32(0)
 
 	if req.Query != nil {
-		if req.Query.Limit > 0 {
-			limit = req.Query.Limit
+		if req.Query.GetLimit() > 0 {
+			limit = req.Query.GetLimit()
 		}
-		if req.Query.Offset > 0 {
-			offset = req.Query.Offset
+		if req.Query.GetOffset() > 0 {
+			offset = req.Query.GetOffset()
 		}
 	}
 
-	output, err := a.service.GetMyTickets(ctx, mentors.GetMyTicketsIn{
+	output, err := a.service.GetMyChatMessages(ctx, mentors.GetMyChatMessagesIn{
 		HackathonID: req.HackathonId,
 		Limit:       limit,
 		Offset:      offset,
 	})
 	if err != nil {
-		return nil, a.handleError(ctx, err, "GetMyTickets")
+		return nil, a.handleError(ctx, err, "GetMyChatMessages")
 	}
 
-	tickets := make([]*mentorsv1.Ticket, 0, len(output.Tickets))
-	for _, ticket := range output.Tickets {
-		tickets = append(tickets, mapTicketToProto(ticket))
+	messages := make([]*mentorsv1.Message, 0, len(output.Messages))
+	for _, message := range output.Messages {
+		messages = append(messages, mapMessageToProto(message))
 	}
 
-	return &mentorsv1.GetMyTicketsResponse{
-		Tickets: tickets,
-		HasMore: output.HasMore,
+	return &mentorsv1.GetMyChatMessagesResponse{
+		Messages: messages,
+		HasMore:  output.HasMore,
 	}, nil
 }
 
@@ -280,10 +281,15 @@ func mapTicketToProto(ticket *entity.Ticket) *mentorsv1.Ticket {
 }
 
 func mapMessageToProto(message *entity.Message) *mentorsv1.Message {
+	authorUserID := ""
+	if message.AuthorUserID.Valid {
+		authorUserID = uuid.UUID(message.AuthorUserID.Bytes).String()
+	}
+
 	return &mentorsv1.Message{
 		MessageId:    message.ID.String(),
 		TicketId:     message.TicketID.String(),
-		AuthorUserId: message.AuthorUserID.String(),
+		AuthorUserId: authorUserID,
 		AuthorRole:   mapAuthorRoleToProto(message.AuthorRole),
 		Text:         message.Text,
 		CreatedAt:    timestamppb.New(message.CreatedAt),

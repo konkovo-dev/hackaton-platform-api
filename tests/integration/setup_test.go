@@ -17,11 +17,12 @@ import (
 )
 
 type TestContext struct {
-	BaseURL         string
-	HTTPClient      *http.Client
-	T               *testing.T
-	DB              *pgxpool.Pool
-	HackathonDBName string
+	BaseURL              string
+	HTTPClient           *http.Client
+	T                    *testing.T
+	DB                   *pgxpool.Pool
+	HackathonDBName      string
+	ParticipationDBName  string
 }
 
 type UserCredentials struct {
@@ -49,11 +50,14 @@ func NewTestContext(t *testing.T) *TestContext {
 	}
 
 	hackathonTable := "hackathon.hackathons"
+	participationTable := "participation_and_roles.staff_roles"
 	if dbDSN != "" && (dbDSN == "postgres://hackathon:hackathon_dev_password@localhost:5432/hackathon?sslmode=disable" ||
 		!contains(dbDSN, "hackathon_hackaton")) {
 		hackathonTable = "hackathon.hackathons"
+		participationTable = "participation_and_roles.staff_roles"
 	} else {
 		hackathonTable = "hackathons"
+		participationTable = "staff_roles"
 	}
 
 	return &TestContext{
@@ -61,9 +65,10 @@ func NewTestContext(t *testing.T) *TestContext {
 		HTTPClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
-		T:               t,
-		DB:              db,
-		HackathonDBName: hackathonTable,
+		T:                   t,
+		DB:                  db,
+		HackathonDBName:     hackathonTable,
+		ParticipationDBName: participationTable,
 	}
 }
 

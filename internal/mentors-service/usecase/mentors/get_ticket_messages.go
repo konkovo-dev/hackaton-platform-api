@@ -72,18 +72,11 @@ func (s *Service) GetTicketMessages(ctx context.Context, in GetTicketMessagesIn)
 	}
 	pctx.SetHackathonStage(stage)
 
-	roles, teamIDPtr, err := s.prClient.GetParticipationAndRoles(ctx, userID, in.HackathonID)
+	roles, _, err := s.prClient.GetParticipationAndRoles(ctx, userID, in.HackathonID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get participation and roles: %w", err)
 	}
 	pctx.SetActorRoles(roles)
-	
-	if teamIDPtr != nil {
-		teamID, err := uuid.Parse(*teamIDPtr)
-		if err == nil {
-			pctx.SetActorTeamID(&teamID)
-		}
-	}
 
 	decision := getTicketMessagesPolicy.Check(ctx, pctx)
 	if !decision.Allowed {

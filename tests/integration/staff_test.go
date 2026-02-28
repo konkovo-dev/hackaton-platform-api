@@ -28,7 +28,7 @@ func TestListHackathonStaff(t *testing.T) {
 		member := s.(map[string]interface{})
 		if member["userId"] == owner.UserID {
 			roles := member["roles"].([]interface{})
-			assert.Contains(t, roles, "HACKATHON_ROLE_OWNER")
+			assert.Contains(t, roles, "HX_ROLE_OWNER")
 			found = true
 			break
 		}
@@ -56,7 +56,7 @@ func TestCreateStaffInvitation(t *testing.T) {
 
 	inviteBody := map[string]interface{}{
 		"target_user_id": invitee.UserID,
-		"requested_role": "HACKATHON_ROLE_MENTOR",
+		"requested_role": "HX_ROLE_MENTOR",
 		"message":        "We would love to have you as a mentor!",
 	}
 
@@ -77,7 +77,7 @@ func TestCreateStaffInvitationAsNonOwnerShouldFail(t *testing.T) {
 
 	inviteBody := map[string]interface{}{
 		"target_user_id": invitee.UserID,
-		"requested_role": "HACKATHON_ROLE_MENTOR",
+		"requested_role": "HX_ROLE_MENTOR",
 		"message":        "Test",
 	}
 
@@ -94,7 +94,7 @@ func TestListMyStaffInvitations(t *testing.T) {
 
 	inviteBody := map[string]interface{}{
 		"target_user_id": invitee.UserID,
-		"requested_role": "HACKATHON_ROLE_MENTOR",
+		"requested_role": "HX_ROLE_MENTOR",
 		"message":        "Join us!",
 	}
 	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff-invitations", hackathonID), owner.AccessToken, inviteBody)
@@ -110,7 +110,7 @@ func TestListMyStaffInvitations(t *testing.T) {
 
 	invitation := invitations[0].(map[string]interface{})
 	assert.Equal(t, invitee.UserID, invitation["targetUserId"])
-	assert.Equal(t, "HACKATHON_ROLE_MENTOR", invitation["requestedRole"])
+	assert.Equal(t, "HX_ROLE_MENTOR", invitation["requestedRole"])
 	assert.Equal(t, "STAFF_INVITATION_STATUS_PENDING", invitation["status"])
 }
 
@@ -123,7 +123,7 @@ func TestAcceptStaffInvitation(t *testing.T) {
 
 	inviteBody := map[string]interface{}{
 		"target_user_id": invitee.UserID,
-		"requested_role": "HACKATHON_ROLE_MENTOR",
+		"requested_role": "HX_ROLE_MENTOR",
 		"message":        "Join us!",
 	}
 	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff-invitations", hackathonID), owner.AccessToken, inviteBody)
@@ -147,7 +147,7 @@ func TestAcceptStaffInvitation(t *testing.T) {
 		member := s.(map[string]interface{})
 		if member["userId"] == invitee.UserID {
 			roles := member["roles"].([]interface{})
-			assert.Contains(t, roles, "HACKATHON_ROLE_MENTOR")
+			assert.Contains(t, roles, "HX_ROLE_MENTOR")
 			found = true
 			break
 		}
@@ -164,7 +164,7 @@ func TestRejectStaffInvitation(t *testing.T) {
 
 	inviteBody := map[string]interface{}{
 		"target_user_id": invitee.UserID,
-		"requested_role": "HACKATHON_ROLE_JUDGE",
+		"requested_role": "HX_ROLE_JUDGE",
 		"message":        "Join us!",
 	}
 	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff-invitations", hackathonID), owner.AccessToken, inviteBody)
@@ -205,7 +205,7 @@ func TestCancelStaffInvitation(t *testing.T) {
 
 	inviteBody := map[string]interface{}{
 		"target_user_id": invitee.UserID,
-		"requested_role": "HACKATHON_ROLE_MENTOR",
+		"requested_role": "HX_ROLE_MENTOR",
 		"message":        "Join us!",
 	}
 	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff-invitations", hackathonID), owner.AccessToken, inviteBody)
@@ -246,7 +246,7 @@ func TestRemoveHackathonRole(t *testing.T) {
 
 	inviteBody := map[string]interface{}{
 		"target_user_id": mentor.UserID,
-		"requested_role": "HACKATHON_ROLE_MENTOR",
+		"requested_role": "HX_ROLE_MENTOR",
 		"message":        "Join us!",
 	}
 	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff-invitations", hackathonID), owner.AccessToken, inviteBody)
@@ -259,7 +259,7 @@ func TestRemoveHackathonRole(t *testing.T) {
 
 	removeBody := map[string]interface{}{
 		"user_id": mentor.UserID,
-		"role":    "HACKATHON_ROLE_MENTOR",
+		"role":    "HX_ROLE_MENTOR",
 	}
 
 	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff/removeRole", hackathonID), owner.AccessToken, removeBody)
@@ -285,7 +285,7 @@ func TestRemoveOwnerRoleShouldFail(t *testing.T) {
 
 	removeBody := map[string]interface{}{
 		"user_id": owner.UserID,
-		"role":    "HACKATHON_ROLE_OWNER",
+		"role":    "HX_ROLE_OWNER",
 	}
 
 	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff/removeRole", hackathonID), owner.AccessToken, removeBody)
@@ -301,7 +301,7 @@ func TestSelfRemoveHackathonRole(t *testing.T) {
 
 	inviteBody := map[string]interface{}{
 		"target_user_id": mentor.UserID,
-		"requested_role": "HACKATHON_ROLE_MENTOR",
+		"requested_role": "HX_ROLE_MENTOR",
 		"message":        "Join us!",
 	}
 	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff-invitations", hackathonID), owner.AccessToken, inviteBody)
@@ -313,7 +313,7 @@ func TestSelfRemoveHackathonRole(t *testing.T) {
 	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/users/me/staff-invitations/%s/accept", invitationID), mentor.AccessToken, map[string]interface{}{})
 
 	selfRemoveBody := map[string]interface{}{
-		"role": "HACKATHON_ROLE_MENTOR",
+		"role": "HX_ROLE_MENTOR",
 	}
 
 	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff/selfRemoveRole", hackathonID), mentor.AccessToken, selfRemoveBody)
@@ -354,7 +354,7 @@ func TestInviteToOwnerRoleShouldFail(t *testing.T) {
 
 	inviteBody := map[string]interface{}{
 		"target_user_id": invitee.UserID,
-		"requested_role": "HACKATHON_ROLE_OWNER",
+		"requested_role": "HX_ROLE_OWNER",
 		"message":        "Become owner!",
 	}
 
@@ -372,7 +372,7 @@ func TestAcceptInvitationNotAddressedToYouShouldFail(t *testing.T) {
 
 	inviteBody := map[string]interface{}{
 		"target_user_id": invitee.UserID,
-		"requested_role": "HACKATHON_ROLE_MENTOR",
+		"requested_role": "HX_ROLE_MENTOR",
 		"message":        "Join us!",
 	}
 	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff-invitations", hackathonID), owner.AccessToken, inviteBody)

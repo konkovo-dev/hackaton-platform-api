@@ -16,6 +16,7 @@ import (
 	"github.com/belikoooova/hackaton-platform-api/pkg/outbox"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type ReplyInTicketIn struct {
@@ -109,10 +110,11 @@ func (s *Service) ReplyInTicket(ctx context.Context, in ReplyInTicketIn) (*Reply
 		return nil, mapPolicyError(decision)
 	}
 
+	// Determine author role (only mentor or organizer can reach here)
 	authorRole := domain.AuthorRoleMentor
 	for _, role := range roles {
-		if role == "organizer" || role == "owner" {
-			authorRole = "organizer"
+		if role == domain.RoleOrganizer || role == domain.RoleOwner {
+			authorRole = domain.AuthorRoleOrganizer
 			break
 		}
 	}
@@ -120,7 +122,7 @@ func (s *Service) ReplyInTicket(ctx context.Context, in ReplyInTicketIn) (*Reply
 	message := &entity.Message{
 		ID:           uuid.New(),
 		TicketID:     ticketID,
-		AuthorUserID: userUUID,
+		AuthorUserID: pgtype.UUID{Bytes: userUUID, Valid: true},
 		AuthorRole:   authorRole,
 		Text:         in.Text,
 	}

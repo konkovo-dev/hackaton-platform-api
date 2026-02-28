@@ -134,10 +134,10 @@ func (p *CloseTicketPolicy) Check(ctx context.Context, pctx *CloseTicketContext)
 		return decision
 	}
 
-	if !pctx.IsAssignedMentor() && !pctx.IsOrganizer() {
+	if !pctx.IsAssignedMentor() {
 		decision.Deny(policy.Violation{
 			Code:    policy.ViolationCodeForbidden,
-			Message: "only assigned mentor or organizer can close ticket",
+			Message: "only assigned mentor can close ticket",
 		})
 		return decision
 	}

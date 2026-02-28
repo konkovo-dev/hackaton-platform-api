@@ -55,7 +55,8 @@ SELECT
     closed_at
 FROM mentors.tickets
 WHERE hackathon_id = $1 AND owner_kind = $2 AND owner_id = $3 AND status = 'open'
-LIMIT 1;
+LIMIT 1
+FOR UPDATE;
 
 -- name: ListTicketsByMentor :many
 SELECT
@@ -102,6 +103,32 @@ INSERT INTO mentors.tickets (
 ) VALUES (
     $1, $2, $3, $4, $5, $6, NOW(), NOW()
 )
+RETURNING
+    id,
+    hackathon_id,
+    owner_kind,
+    owner_id,
+    status,
+    assigned_mentor_user_id,
+    created_at,
+    updated_at,
+    closed_at;
+
+-- name: CreateOrGetOpenTicket :one
+INSERT INTO mentors.tickets (
+    id,
+    hackathon_id,
+    owner_kind,
+    owner_id,
+    status,
+    assigned_mentor_user_id,
+    created_at,
+    updated_at
+) VALUES (
+    $1, $2, $3, $4, 'open', NULL, NOW(), NOW()
+)
+ON CONFLICT (hackathon_id, owner_kind, owner_id) WHERE status = 'open'
+DO UPDATE SET updated_at = mentors.tickets.updated_at
 RETURNING
     id,
     hackathon_id,

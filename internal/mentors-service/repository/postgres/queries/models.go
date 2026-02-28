@@ -23,7 +23,7 @@ type MentorsIdempotencyKey struct {
 type MentorsMessage struct {
 	ID              uuid.UUID   `json:"id"`
 	TicketID        uuid.UUID   `json:"ticket_id"`
-	AuthorUserID    uuid.UUID   `json:"author_user_id"`
+	AuthorUserID    pgtype.UUID `json:"author_user_id"`
 	AuthorRole      string      `json:"author_role"`
 	Text            string      `json:"text"`
 	ClientMessageID pgtype.Text `json:"client_message_id"`

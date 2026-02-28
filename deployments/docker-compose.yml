@@ -38,15 +38,11 @@ services:
     container_name: hackathon-centrifugo
     ports:
       - "8000:8000"
-    environment:
-      CENTRIFUGO_TOKEN_HMAC_SECRET_KEY: "dev-secret-change-in-production"
-      CENTRIFUGO_API_KEY: "dev-api-key-change-in-production"
-      CENTRIFUGO_ADMIN_PASSWORD: "admin"
-      CENTRIFUGO_ADMIN_SECRET: "admin-secret"
-      CENTRIFUGO_ALLOWED_ORIGINS: "*"
+    volumes:
+      - ./centrifugo-config.json:/centrifugo/config.json:ro
     networks:
       - hackathon-network
-    command: centrifugo --config=/dev/null --port=8000 --health
+    command: centrifugo --config=/centrifugo/config.json --port=8000 --health --client_insecure
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8000/health"]
       interval: 5s

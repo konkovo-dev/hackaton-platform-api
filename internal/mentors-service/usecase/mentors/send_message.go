@@ -3,9 +3,7 @@ package mentors
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/belikoooova/hackaton-platform-api/internal/mentors-service/domain"
@@ -17,6 +15,7 @@ import (
 	"github.com/belikoooova/hackaton-platform-api/pkg/outbox"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type SendMessageIn struct {
@@ -104,15 +103,13 @@ func (s *Service) SendMessage(ctx context.Context, in SendMessageIn) (*SendMessa
 	var ownerKind string
 	var ownerID uuid.UUID
 
-	if teamIDPtr != nil {
+	if teamIDPtr != nil && *teamIDPtr != "" {
 		teamID, err := uuid.Parse(*teamIDPtr)
-		if err == nil {
-			ownerKind = domain.OwnerKindTeam
-			ownerID = teamID
-		} else {
-			ownerKind = domain.OwnerKindUser
-			ownerID = userUUID
+		if err != nil {
+			return nil, fmt.Errorf("invalid team_id from participation service: %w", err)
 		}
+		ownerKind = domain.OwnerKindTeam
+		ownerID = teamID
 	} else {
 		ownerKind = domain.OwnerKindUser
 		ownerID = userUUID
@@ -121,9 +118,12 @@ func (s *Service) SendMessage(ctx context.Context, in SendMessageIn) (*SendMessa
 	baseRecipients := make([]string, 0)
 	switch ownerKind {
 	case domain.OwnerKindTeam:
-		teamMembers, err := s.teamClient.ListTeamMembers(ctx, ownerID.String())
+		if ownerID == uuid.Nil {
+			return nil, fmt.Errorf("owner_id is nil for TEAM owner (teamIDPtr=%v)", teamIDPtr)
+		}
+		teamMembers, err := s.teamClient.ListTeamMembers(ctx, hackathonID.String(), ownerID.String())
 		if err != nil {
-			return nil, fmt.Errorf("failed to list team members: %w", err)
+			return nil, fmt.Errorf("failed to list team members (ownerID=%s): %w", ownerID.String(), err)
 		}
 		baseRecipients = append(baseRecipients, teamMembers...)
 	case domain.OwnerKindUser:
@@ -146,36 +146,12 @@ func (s *Service) SendMessage(ctx context.Context, in SendMessageIn) (*SendMessa
 	err = s.txManager.WithTx(ctx, func(tx pgx.Tx) error {
 		ticketRepoTx := txrepo.NewTicketRepository(tx)
 
-		existingTicket, err := ticketRepoTx.FindOpenTicketByOwner(ctx, hackathonID, ownerKind, ownerID)
-		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-			return fmt.Errorf("failed to find open ticket: %w", err)
+		ticket, err := ticketRepoTx.CreateOrGetOpenTicket(ctx, hackathonID, ownerKind, ownerID)
+		if err != nil {
+			return fmt.Errorf("failed to create or get ticket: %w", err)
 		}
 
-		if existingTicket == nil {
-			newTicket := &entity.Ticket{
-				ID:          uuid.New(),
-				HackathonID: hackathonID,
-				OwnerKind:   ownerKind,
-				OwnerID:     ownerID,
-				Status:      domain.TicketStatusOpen,
-			}
-
-			if err := ticketRepoTx.Create(ctx, newTicket); err != nil {
-				if strings.Contains(err.Error(), "duplicate key") || strings.Contains(err.Error(), "unique constraint") {
-					existingTicket, err = ticketRepoTx.FindOpenTicketByOwner(ctx, hackathonID, ownerKind, ownerID)
-					if err != nil {
-						return fmt.Errorf("failed to find ticket after conflict: %w", err)
-					}
-					ticketID = existingTicket.ID
-				} else {
-					return fmt.Errorf("failed to create ticket: %w", err)
-				}
-			} else {
-				ticketID = newTicket.ID
-			}
-		} else {
-			ticketID = existingTicket.ID
-		}
+		ticketID = ticket.ID
 
 		authorRole := domain.AuthorRoleParticipant
 		for _, role := range roles {
@@ -188,7 +164,7 @@ func (s *Service) SendMessage(ctx context.Context, in SendMessageIn) (*SendMessa
 		message := &entity.Message{
 			ID:              uuid.New(),
 			TicketID:        ticketID,
-			AuthorUserID:    userUUID,
+			AuthorUserID:    pgtype.UUID{Bytes: userUUID, Valid: true},
 			AuthorRole:      authorRole,
 			Text:            in.Text,
 			ClientMessageID: in.ClientMessageID,

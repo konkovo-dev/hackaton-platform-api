@@ -21,7 +21,6 @@ type GetTicketMessagesContext struct {
 	hackathonStage string
 	actorRoles     []string
 	ticket         *entity.Ticket
-	actorTeamID    *uuid.UUID
 }
 
 func NewGetTicketMessagesContext() *GetTicketMessagesContext {
@@ -68,14 +67,6 @@ func (c *GetTicketMessagesContext) Ticket() *entity.Ticket {
 	return c.ticket
 }
 
-func (c *GetTicketMessagesContext) SetActorTeamID(teamID *uuid.UUID) {
-	c.actorTeamID = teamID
-}
-
-func (c *GetTicketMessagesContext) ActorTeamID() *uuid.UUID {
-	return c.actorTeamID
-}
-
 func (c *GetTicketMessagesContext) IsOrganizer() bool {
 	for _, role := range c.actorRoles {
 		if role == domain.RoleOrganizer || role == domain.RoleOwner {
@@ -99,25 +90,6 @@ func (c *GetTicketMessagesContext) IsAssignedMentor() bool {
 		return false
 	}
 	return *c.ticket.AssignedMentorUserID == c.actorUserID
-}
-
-func (c *GetTicketMessagesContext) IsOwner() bool {
-	if c.ticket == nil {
-		return false
-	}
-	
-	if c.ticket.OwnerKind == domain.OwnerKindUser {
-		return c.ticket.OwnerID == c.actorUserID
-	}
-	
-	if c.ticket.OwnerKind == domain.OwnerKindTeam {
-		if c.actorTeamID == nil {
-			return false
-		}
-		return c.ticket.OwnerID == *c.actorTeamID
-	}
-	
-	return false
 }
 
 type GetTicketMessagesPolicy struct{}
@@ -155,10 +127,10 @@ func (p *GetTicketMessagesPolicy) Check(ctx context.Context, pctx *GetTicketMess
 		return decision
 	}
 
-	if !pctx.IsOwner() && !pctx.IsAssignedMentor() && !pctx.IsOrganizer() {
+	if !pctx.IsMentor() && !pctx.IsOrganizer() {
 		decision.Deny(policy.Violation{
 			Code:    policy.ViolationCodeForbidden,
-			Message: "only ticket owner, assigned mentor, or organizers can view messages",
+			Message: "only mentors or organizers can view ticket messages",
 		})
 		return decision
 	}

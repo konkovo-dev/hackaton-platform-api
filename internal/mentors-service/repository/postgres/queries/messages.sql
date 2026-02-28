@@ -57,3 +57,18 @@ SELECT
 FROM mentors.messages
 WHERE client_message_id = $1
 LIMIT 1;
+
+-- name: ListMessagesByOwner :many
+SELECT
+    m.id,
+    m.ticket_id,
+    m.author_user_id,
+    m.author_role,
+    m.text,
+    m.client_message_id,
+    m.created_at
+FROM mentors.messages m
+JOIN mentors.tickets t ON m.ticket_id = t.id
+WHERE t.hackathon_id = $1 AND t.owner_kind = $2 AND t.owner_id = $3
+ORDER BY m.created_at ASC
+LIMIT $4 OFFSET $5;

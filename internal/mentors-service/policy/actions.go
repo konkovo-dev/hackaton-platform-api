@@ -6,7 +6,7 @@ import (
 
 const (
 	ActionSendMessage          policy.Action = "send_message"
-	ActionGetMyTickets         policy.Action = "get_my_tickets"
+	ActionGetMyChatMessages    policy.Action = "get_my_chat_messages"
 	ActionGetTicketMessages    policy.Action = "get_ticket_messages"
 	ActionReplyInTicket        policy.Action = "reply_in_ticket"
 	ActionCloseTicket          policy.Action = "close_ticket"

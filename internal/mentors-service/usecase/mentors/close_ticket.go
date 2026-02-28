@@ -16,6 +16,7 @@ import (
 	"github.com/belikoooova/hackaton-platform-api/pkg/outbox"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type CloseTicketIn struct {
@@ -109,7 +110,7 @@ func (s *Service) CloseTicket(ctx context.Context, in CloseTicketIn) (*CloseTick
 	baseRecipients := make([]string, 0)
 	switch ticket.OwnerKind {
 	case domain.OwnerKindTeam:
-		teamMembers, err := s.teamClient.ListTeamMembers(ctx, ticket.OwnerID.String())
+		teamMembers, err := s.teamClient.ListTeamMembers(ctx, ticket.HackathonID.String(), ticket.OwnerID.String())
 		if err != nil {
 			return nil, fmt.Errorf("failed to list team members: %w", err)
 		}
@@ -144,7 +145,7 @@ func (s *Service) CloseTicket(ctx context.Context, in CloseTicketIn) (*CloseTick
 		systemMessage := &entity.Message{
 			ID:              uuid.New(),
 			TicketID:        ticketID,
-			AuthorUserID:    uuid.Nil,
+			AuthorUserID:    pgtype.UUID{Valid: false},
 			AuthorRole:      domain.AuthorRoleSystem,
 			Text:            "Ticket closed",
 			ClientMessageID: "",

@@ -17,7 +17,7 @@ func (s *Service) getTicketRecipients(ctx context.Context, ticketID uuid.UUID, o
 
 	switch ownerKind {
 	case domain.OwnerKindTeam:
-		teamMembers, err := s.teamClient.ListTeamMembers(ctx, ownerID.String())
+		teamMembers, err := s.teamClient.ListTeamMembers(ctx, hackathonID.String(), ownerID.String())
 		if err != nil {
 			return nil, fmt.Errorf("failed to list team members: %w", err)
 		}

@@ -41,9 +41,10 @@ func (c *Client) Close() error {
 	return nil
 }
 
-func (c *Client) ListTeamMembers(ctx context.Context, teamID string) ([]string, error) {
+func (c *Client) ListTeamMembers(ctx context.Context, hackathonID, teamID string) ([]string, error) {
 	req := &teamv1.ListTeamMembersRequest{
-		TeamId: teamID,
+		HackathonId: hackathonID,
+		TeamId:      teamID,
 	}
 
 	ctx = metadata.AppendToOutgoingContext(ctx, "x-service-token", c.serviceToken)

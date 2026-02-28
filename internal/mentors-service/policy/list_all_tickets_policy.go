@@ -64,6 +64,15 @@ func (c *ListAllTicketsContext) IsOrganizer() bool {
 	return false
 }
 
+func (c *ListAllTicketsContext) IsMentor() bool {
+	for _, role := range c.actorRoles {
+		if role == domain.RoleMentor {
+			return true
+		}
+	}
+	return false
+}
+
 type ListAllTicketsPolicy struct{}
 
 func NewListAllTicketsPolicy() *ListAllTicketsPolicy {
@@ -97,10 +106,10 @@ func (p *ListAllTicketsPolicy) Check(ctx context.Context, pctx *ListAllTicketsCo
 		return decision
 	}
 
-	if !pctx.IsOrganizer() {
+	if !pctx.IsOrganizer() && !pctx.IsMentor() {
 		decision.Deny(policy.Violation{
 			Code:    policy.ViolationCodeForbidden,
-			Message: "only organizers can list all tickets",
+			Message: "only organizers and mentors can list all tickets",
 		})
 		return decision
 	}

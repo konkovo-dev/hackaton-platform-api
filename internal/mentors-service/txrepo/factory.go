@@ -106,6 +106,42 @@ func (r *TicketRepository) AssignTicket(ctx context.Context, ticketID uuid.UUID,
 	return rowsAffected, nil
 }
 
+func (r *TicketRepository) CreateOrGetOpenTicket(ctx context.Context, hackathonID uuid.UUID, ownerKind string, ownerID uuid.UUID) (*entity.Ticket, error) {
+	row, err := r.Queries().CreateOrGetOpenTicket(ctx, queries.CreateOrGetOpenTicketParams{
+		ID:          uuid.New(),
+		HackathonID: hackathonID,
+		OwnerKind:   ownerKind,
+		OwnerID:     ownerID,
+	})
+	if err != nil {
+		err = pgxutil.MapDBError(err)
+		return nil, fmt.Errorf("failed to create or get open ticket: %w", err)
+	}
+
+	var mentorPtr *uuid.UUID
+	if row.AssignedMentorUserID.Valid {
+		mentorID := uuid.UUID(row.AssignedMentorUserID.Bytes)
+		mentorPtr = &mentorID
+	}
+
+	var closedAtPtr *time.Time
+	if row.ClosedAt.Valid {
+		closedAtPtr = &row.ClosedAt.Time
+	}
+
+	return &entity.Ticket{
+		ID:                   row.ID,
+		HackathonID:          row.HackathonID,
+		OwnerKind:            row.OwnerKind,
+		OwnerID:              row.OwnerID,
+		Status:               row.Status,
+		AssignedMentorUserID: mentorPtr,
+		CreatedAt:            row.CreatedAt,
+		UpdatedAt:            row.UpdatedAt,
+		ClosedAt:             closedAtPtr,
+	}, nil
+}
+
 func (r *TicketRepository) FindOpenTicketByOwner(ctx context.Context, hackathonID uuid.UUID, ownerKind string, ownerID uuid.UUID) (*entity.Ticket, error) {
 	row, err := r.Queries().FindOpenTicketByOwner(ctx, queries.FindOpenTicketByOwnerParams{
 		HackathonID: hackathonID,
@@ -113,7 +149,11 @@ func (r *TicketRepository) FindOpenTicketByOwner(ctx context.Context, hackathonI
 		OwnerID:     ownerID,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to find open ticket: %w", pgxutil.MapDBError(err))
+		err = pgxutil.MapDBError(err)
+		if pgxutil.IsNotFound(err) {
+			return nil, nil
+		}
+		return nil, err
 	}
 
 	var mentorPtr *uuid.UUID

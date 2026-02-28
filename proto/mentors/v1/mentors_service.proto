@@ -25,13 +25,13 @@ service MentorsService {
     };
   }
 
-  rpc GetMyTickets(GetMyTicketsRequest) returns (GetMyTicketsResponse) {
+  rpc GetMyChatMessages(GetMyChatMessagesRequest) returns (GetMyChatMessagesResponse) {
     option (google.api.http) = {
-      get: "/v1/hackathons/{hackathon_id}/support/tickets/my"
+      get: "/v1/hackathons/{hackathon_id}/support/my-messages"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Get my support tickets"
-      description: "Returns tickets for the authenticated participant. Available only during RUNNING stage."
+      summary: "Get all my chat messages"
+      description: "Returns all messages from all tickets (open and closed) for the authenticated participant. Available only during RUNNING stage."
       tags: "Mentors"
     };
   }
@@ -42,7 +42,7 @@ service MentorsService {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get ticket messages"
-      description: "Returns messages for a ticket. Participant can only access their own tickets. Mentor can access assigned tickets. Available only during RUNNING stage."
+      description: "Returns messages for a specific ticket. Only mentors and organizers can access. Participants should use GetMyChatMessages instead. Available only during RUNNING stage."
       tags: "Mentors"
     };
   }
@@ -144,13 +144,13 @@ message SendMessageResponse {
   string ticket_id = 2;
 }
 
-message GetMyTicketsRequest {
+message GetMyChatMessagesRequest {
   string hackathon_id = 1;
   common.v1.Query query = 10;
 }
 
-message GetMyTicketsResponse {
-  repeated Ticket tickets = 1;
+message GetMyChatMessagesResponse {
+  repeated Message messages = 1;
   bool has_more = 2;
 }
 
