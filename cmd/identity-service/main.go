@@ -6,9 +6,12 @@ import (
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/usecase/me"
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/usecase/skills"
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/usecase/users"
+	outboxusecase "github.com/belikoooova/hackaton-platform-api/internal/identity-service/usecase/outbox"
 	authclient "github.com/belikoooova/hackaton-platform-api/pkg/auth/client"
 	"github.com/belikoooova/hackaton-platform-api/pkg/idempotency"
 	"github.com/belikoooova/hackaton-platform-api/pkg/logger"
+	natsclient "github.com/belikoooova/hackaton-platform-api/pkg/nats"
+	"github.com/belikoooova/hackaton-platform-api/pkg/outbox"
 	"github.com/belikoooova/hackaton-platform-api/pkg/pgxutil"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -19,11 +22,14 @@ func main() {
 	app := fx.New(
 		logger.Module,
 		authclient.Module,
+		natsclient.Module,
 		postgres.Module,
 		idempotency.Module,
 		me.Module,
 		users.Module,
 		skills.Module,
+		outboxusecase.Module,
+		outbox.Module,
 		grpc.Module,
 		fx.Provide(
 			func(repo *postgres.UserRepository) me.UserRepository { return repo },
@@ -37,6 +43,7 @@ func main() {
 						Skills:     postgres.NewSkillRepository(tx),
 						Contacts:   postgres.NewContactRepository(tx),
 						Visibility: postgres.NewVisibilityRepository(tx),
+						Outbox:     postgres.NewOutboxRepository(tx),
 					}
 				})
 			},

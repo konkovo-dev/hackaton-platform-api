@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/belikoooova/hackaton-platform-api/internal/team-service/domain/entity"
+	"github.com/belikoooova/hackaton-platform-api/pkg/outbox"
 	"github.com/google/uuid"
 )
 
@@ -36,4 +37,8 @@ type ParticipationAndRolesClient interface {
 	GetHackathonContext(ctx context.Context, hackathonID string) (userID, participationStatus string, roles []string, err error)
 	ConvertToTeamParticipation(ctx context.Context, hackathonID, userID, teamID string, isCaptain bool) error
 	ConvertFromTeamParticipation(ctx context.Context, hackathonID, userID string) error
+}
+
+type OutboxRepository interface {
+	Create(ctx context.Context, event *outbox.Event) error
 }

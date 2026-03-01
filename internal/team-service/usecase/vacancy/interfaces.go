@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/belikoooova/hackaton-platform-api/internal/team-service/domain/entity"
+	"github.com/belikoooova/hackaton-platform-api/pkg/outbox"
 	"github.com/google/uuid"
 )
 
@@ -26,4 +27,8 @@ type MembershipRepository interface {
 
 type HackathonClient interface {
 	GetHackathon(ctx context.Context, hackathonID string) (stage string, allowTeam bool, teamSizeMax int32, err error)
+}
+
+type OutboxRepository interface {
+	Create(ctx context.Context, event *outbox.Event) error
 }

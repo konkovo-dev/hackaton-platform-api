@@ -2,11 +2,15 @@ package me
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/domain"
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/domain/entity"
 	identitypolicy "github.com/belikoooova/hackaton-platform-api/internal/identity-service/policy"
+	outboxusecase "github.com/belikoooova/hackaton-platform-api/internal/identity-service/usecase/outbox"
+	"github.com/belikoooova/hackaton-platform-api/pkg/outbox"
 	"github.com/google/uuid"
 )
 
@@ -74,6 +78,40 @@ func (s *Service) UpdateMySkills(ctx context.Context, in UpdateMySkillsIn) (*Upd
 
 		if err := txRepos.Visibility.Upsert(ctx, visibility); err != nil {
 			return fmt.Errorf("failed to update visibility: %w", err)
+		}
+
+		catalogSkillIDStrs := make([]string, len(in.CatalogSkillIDs))
+		for i, skillID := range in.CatalogSkillIDs {
+			catalogSkillIDStrs[i] = skillID.String()
+		}
+
+		eventPayload := outboxusecase.UserSkillsUpdatedPayload{
+			UserID:           in.UserID.String(),
+			CatalogSkillIDs:  catalogSkillIDStrs,
+			CustomSkillNames: in.CustomSkills,
+			UpdatedAt:        time.Now().UTC(),
+		}
+
+		payloadBytes, err := json.Marshal(eventPayload)
+		if err != nil {
+			return fmt.Errorf("failed to marshal event payload: %w", err)
+		}
+
+		outboxEvent := &outbox.Event{
+			ID:            uuid.New(),
+			AggregateID:   in.UserID.String(),
+			AggregateType: "user",
+			EventType:     outboxusecase.EventTypeUserSkillsUpdated,
+			Payload:       payloadBytes,
+			Status:        outbox.EventStatusPending,
+			AttemptCount:  0,
+			LastError:     "",
+			CreatedAt:     time.Now().UTC(),
+			UpdatedAt:     time.Now().UTC(),
+		}
+
+		if err := txRepos.Outbox.Create(ctx, outboxEvent); err != nil {
+			return fmt.Errorf("failed to create outbox event: %w", err)
 		}
 
 		return nil

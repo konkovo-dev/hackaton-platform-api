@@ -19,6 +19,19 @@ type IdentityIdempotencyKey struct {
 	ExpiresAt    time.Time `json:"expires_at"`
 }
 
+type IdentityOutboxEvent struct {
+	ID            pgtype.UUID `json:"id"`
+	AggregateID   string      `json:"aggregate_id"`
+	AggregateType string      `json:"aggregate_type"`
+	EventType     string      `json:"event_type"`
+	Payload       []byte      `json:"payload"`
+	Status        string      `json:"status"`
+	AttemptCount  int32       `json:"attempt_count"`
+	LastError     string      `json:"last_error"`
+	CreatedAt     time.Time   `json:"created_at"`
+	UpdatedAt     time.Time   `json:"updated_at"`
+}
+
 type IdentitySkillCatalog struct {
 	ID   pgtype.UUID `json:"id"`
 	Name string      `json:"name"`

@@ -100,12 +100,15 @@ services:
       AUTH_CLIENT_SERVICE_URL: auth-service:50057
       AUTH_CLIENT_MAX_CACHE_TTL: 60s
       AUTH_CLIENT_CACHE_CLEANUP_INTERVAL: 1m
+      NATS_URL: nats://nats:4222
       IDEMPOTENCY_TTL: 24h
       SERVICE_AUTH_TOKEN: dev-service-token-change-in-production
     ports:
       - "50051:50051"
     depends_on:
       postgres:
+        condition: service_healthy
+      nats:
         condition: service_healthy
     networks:
       - hackathon-network
@@ -159,12 +162,15 @@ services:
       AUTH_CLIENT_CACHE_CLEANUP_INTERVAL: 1m
       HACKATHON_SERVICE_URL: hackaton-service:50052
       PARTICIPATION_ROLES_SERVICE_URL: participation-and-roles-service:50055
+      NATS_URL: nats://nats:4222
       IDEMPOTENCY_TTL: 24h
       SERVICE_AUTH_TOKEN: dev-service-token-change-in-production
     ports:
       - "50053:50053"
     depends_on:
       postgres:
+        condition: service_healthy
+      nats:
         condition: service_healthy
     networks:
       - hackathon-network
@@ -207,12 +213,15 @@ services:
       HACKATHON_SERVICE_URL: hackaton-service:50052
       IDENTITY_SERVICE_URL: identity-service:50051
       IDENTITY_CLIENT_SERVICE_URL: identity-service:50051
+      NATS_URL: nats://nats:4222
       IDEMPOTENCY_TTL: 24h
       SERVICE_AUTH_TOKEN: dev-service-token-change-in-production
     ports:
       - "50055:50055"
     depends_on:
       postgres:
+        condition: service_healthy
+      nats:
         condition: service_healthy
     networks:
       - hackathon-network
@@ -260,6 +269,40 @@ services:
       - hackathon-network
     restart: unless-stopped
 
+  matchmaking-service:
+    build:
+      context: ..
+      dockerfile: deployments/Dockerfile.matchmaking-service
+    container_name: hackathon-matchmaking-service
+    environment:
+      ENV: dev
+      MATCHMAKING_SERVICE_GRPC_PORT: 50059
+      DB_DSN: postgres://hackathon:hackathon_dev_password@postgres:5432/hackathon?sslmode=disable&search_path=matchmaking
+      DB_MAX_CONNS: 25
+      DB_MIN_CONNS: 5
+      DB_MAX_CONN_LIFETIME: 1h
+      DB_MAX_CONN_IDLE_TIME: 30m
+      DB_HEALTH_CHECK_PERIOD: 1m
+      NATS_URL: nats://nats:4222
+      AUTH_CLIENT_SERVICE_URL: auth-service:50057
+      AUTH_CLIENT_MAX_CACHE_TTL: 60s
+      AUTH_CLIENT_CACHE_CLEANUP_INTERVAL: 1m
+      HACKATHON_SERVICE_URL: hackaton-service:50052
+      PARTICIPATION_ROLES_SERVICE_URL: participation-and-roles-service:50055
+      TEAM_SERVICE_URL: team-service:50053
+      IDEMPOTENCY_TTL: 24h
+      SERVICE_AUTH_TOKEN: dev-service-token-change-in-production
+    ports:
+      - "50059:50059"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    networks:
+      - hackathon-network
+    restart: unless-stopped
+
   gateway:
     build:
       context: ..
@@ -275,6 +318,7 @@ services:
       SUBMISSION_GRPC_ENDPOINT: submission-service:50054
       PARTICIPATION_ROLES_GRPC_ENDPOINT: participation-and-roles-service:50055
       MENTORS_GRPC_ENDPOINT: mentors-service:50056
+      MATCHMAKING_GRPC_ENDPOINT: matchmaking-service:50059
     ports:
       - "8080:8080"
     depends_on:
@@ -284,6 +328,7 @@ services:
       - submission-service
       - participation-and-roles-service
       - mentors-service
+      - matchmaking-service
       - auth-service
     networks:
       - hackathon-network

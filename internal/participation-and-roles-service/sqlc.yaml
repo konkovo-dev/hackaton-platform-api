@@ -3,6 +3,7 @@ sql:
   - schema:
       - "migrations/00001_init.sql"
       - "migrations/00002_add_participation_profile.sql"
+      - "migrations/00003_add_outbox.sql"
     queries: "repository/postgres/queries"
     engine: "postgresql"
     gen:

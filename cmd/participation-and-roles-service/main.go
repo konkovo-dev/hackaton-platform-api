@@ -4,11 +4,14 @@ import (
 	identityclient "github.com/belikoooova/hackaton-platform-api/internal/participation-and-roles-service/client/identity"
 	"github.com/belikoooova/hackaton-platform-api/internal/participation-and-roles-service/repository/postgres"
 	"github.com/belikoooova/hackaton-platform-api/internal/participation-and-roles-service/transport/grpc"
-	"github.com/belikoooova/hackaton-platform-api/internal/participation-and-roles-service/usecase/role"
 	usecaseparticipation "github.com/belikoooova/hackaton-platform-api/internal/participation-and-roles-service/usecase/participation"
+	"github.com/belikoooova/hackaton-platform-api/internal/participation-and-roles-service/usecase/role"
+	outboxusecase "github.com/belikoooova/hackaton-platform-api/internal/participation-and-roles-service/usecase/outbox"
 	authclient "github.com/belikoooova/hackaton-platform-api/pkg/auth/client"
 	"github.com/belikoooova/hackaton-platform-api/pkg/idempotency"
 	"github.com/belikoooova/hackaton-platform-api/pkg/logger"
+	natsclient "github.com/belikoooova/hackaton-platform-api/pkg/nats"
+	"github.com/belikoooova/hackaton-platform-api/pkg/outbox"
 	"github.com/belikoooova/hackaton-platform-api/pkg/pgxutil"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -20,10 +23,13 @@ func main() {
 		logger.Module,
 		authclient.Module,
 		identityclient.Module,
+		natsclient.Module,
 		postgres.Module,
 		idempotency.Module,
 		role.Module,
 		usecaseparticipation.Module,
+		outboxusecase.Module,
+		outbox.Module,
 		grpc.Module,
 		fx.Provide(
 			func(repo *postgres.StaffRoleRepository) role.StaffRoleRepository { return repo },
@@ -32,6 +38,7 @@ func main() {
 			func(repo *postgres.StaffRoleRepository) usecaseparticipation.StaffRoleRepository { return repo },
 			func(repo *postgres.ParticipationRepository) usecaseparticipation.ParticipationRepository { return repo },
 			func(repo *postgres.TeamRoleRepository) usecaseparticipation.TeamRoleRepository { return repo },
+			func(repo *postgres.OutboxRepository) usecaseparticipation.OutboxRepository { return repo },
 			func(pool *pgxpool.Pool) role.UnitOfWork {
 				return pgxutil.NewUnitOfWork(pool, func(tx pgx.Tx) *role.TxRepositories {
 					return &role.TxRepositories{

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/belikoooova/hackaton-platform-api/internal/identity-service/domain/entity"
+	"github.com/belikoooova/hackaton-platform-api/pkg/outbox"
 	"github.com/belikoooova/hackaton-platform-api/pkg/pgxutil"
 	"github.com/google/uuid"
 )
@@ -35,9 +36,14 @@ type VisibilityRepository interface {
 
 type UnitOfWork = pgxutil.UnitOfWork[*TxRepositories]
 
+type OutboxRepository interface {
+	Create(ctx context.Context, event *outbox.Event) error
+}
+
 type TxRepositories struct {
 	Users      UserRepository
 	Skills     SkillRepository
 	Contacts   ContactRepository
 	Visibility VisibilityRepository
+	Outbox     OutboxRepository
 }

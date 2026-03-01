@@ -2,10 +2,13 @@ package participation
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/belikoooova/hackaton-platform-api/internal/participation-and-roles-service/domain"
+	outboxusecase "github.com/belikoooova/hackaton-platform-api/internal/participation-and-roles-service/usecase/outbox"
+	"github.com/belikoooova/hackaton-platform-api/pkg/outbox"
 	"github.com/google/uuid"
 )
 
@@ -47,9 +50,40 @@ func (s *Service) ConvertToTeam(ctx context.Context, in ConvertToTeamIn) (*Conve
 		newStatus = string(domain.ParticipationTeamMember)
 	}
 
-	err = s.participRepo.Update(ctx, in.HackathonID, in.UserID, newStatus, &in.TeamID, time.Now().UTC())
+	now := time.Now().UTC()
+	err = s.participRepo.Update(ctx, in.HackathonID, in.UserID, newStatus, &in.TeamID, now)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update participation: %w", err)
+	}
+
+	eventPayload := outboxusecase.ParticipationTeamAssignedPayload{
+		HackathonID: in.HackathonID.String(),
+		UserID:      in.UserID.String(),
+		TeamID:      in.TeamID.String(),
+		IsCaptain:   in.IsCaptain,
+		AssignedAt:  now,
+	}
+
+	payloadBytes, err := json.Marshal(eventPayload)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal event payload: %w", err)
+	}
+
+	outboxEvent := &outbox.Event{
+		ID:            uuid.New(),
+		AggregateID:   fmt.Sprintf("%s:%s", in.HackathonID.String(), in.UserID.String()),
+		AggregateType: "participation",
+		EventType:     outboxusecase.EventTypeParticipationTeamAssigned,
+		Payload:       payloadBytes,
+		Status:        outbox.EventStatusPending,
+		AttemptCount:  0,
+		LastError:     "",
+		CreatedAt:     time.Now().UTC(),
+		UpdatedAt:     time.Now().UTC(),
+	}
+
+	if err := s.outboxRepo.Create(ctx, outboxEvent); err != nil {
+		return nil, fmt.Errorf("failed to create outbox event: %w", err)
 	}
 
 	return &ConvertToTeamOut{

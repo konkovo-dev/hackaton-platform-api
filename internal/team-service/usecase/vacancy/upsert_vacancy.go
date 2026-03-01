@@ -2,12 +2,15 @@ package vacancy
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/belikoooova/hackaton-platform-api/internal/team-service/domain/entity"
 	"github.com/belikoooova/hackaton-platform-api/internal/team-service/policy"
+	outboxusecase "github.com/belikoooova/hackaton-platform-api/internal/team-service/usecase/outbox"
 	"github.com/belikoooova/hackaton-platform-api/pkg/auth"
+	"github.com/belikoooova/hackaton-platform-api/pkg/outbox"
 	pkgpolicy "github.com/belikoooova/hackaton-platform-api/pkg/policy"
 	"github.com/google/uuid"
 )
@@ -157,6 +160,67 @@ func (s *Service) UpsertVacancy(ctx context.Context, in UpsertVacancyIn) (*Upser
 	if err != nil {
 		s.logger.Error("failed to upsert vacancy", "error", err, "is_update", isUpdate)
 		return nil, fmt.Errorf("failed to upsert vacancy: %w", err)
+	}
+
+	desiredRoleIDStrs := make([]string, len(in.DesiredRoleIDs))
+	for i, roleID := range in.DesiredRoleIDs {
+		desiredRoleIDStrs[i] = roleID.String()
+	}
+
+	desiredSkillIDStrs := make([]string, len(in.DesiredSkillIDs))
+	for i, skillID := range in.DesiredSkillIDs {
+		desiredSkillIDStrs[i] = skillID.String()
+	}
+
+	var eventType string
+	var eventPayload interface{}
+
+	if isUpdate {
+		eventType = outboxusecase.EventTypeVacancyUpdated
+		eventPayload = outboxusecase.VacancyUpdatedPayload{
+			VacancyID:       vacancyID.String(),
+			TeamID:          team.ID.String(),
+			HackathonID:     team.HackathonID.String(),
+			Description:     in.Description,
+			DesiredRoleIDs:  desiredRoleIDStrs,
+			DesiredSkillIDs: desiredSkillIDStrs,
+			SlotsOpen:       int32(slotsOpen),
+			UpdatedAt:       vacancy.UpdatedAt,
+		}
+	} else {
+		eventType = outboxusecase.EventTypeVacancyCreated
+		eventPayload = outboxusecase.VacancyCreatedPayload{
+			VacancyID:       vacancyID.String(),
+			TeamID:          team.ID.String(),
+			HackathonID:     team.HackathonID.String(),
+			Description:     in.Description,
+			DesiredRoleIDs:  desiredRoleIDStrs,
+			DesiredSkillIDs: desiredSkillIDStrs,
+			SlotsOpen:       int32(slotsOpen),
+			CreatedAt:       vacancy.CreatedAt,
+		}
+	}
+
+	payloadBytes, err := json.Marshal(eventPayload)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal event payload: %w", err)
+	}
+
+	outboxEvent := &outbox.Event{
+		ID:            uuid.New(),
+		AggregateID:   vacancyID.String(),
+		AggregateType: "vacancy",
+		EventType:     eventType,
+		Payload:       payloadBytes,
+		Status:        outbox.EventStatusPending,
+		AttemptCount:  0,
+		LastError:     "",
+		CreatedAt:     time.Now().UTC(),
+		UpdatedAt:     time.Now().UTC(),
+	}
+
+	if err := s.outboxRepo.Create(ctx, outboxEvent); err != nil {
+		return nil, fmt.Errorf("failed to create outbox event: %w", err)
 	}
 
 	return &UpsertVacancyOut{VacancyID: vacancyID}, nil

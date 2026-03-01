@@ -1,6 +1,6 @@
 .PHONY: help run-all build-all clean test lint deps
 
-SERVICES := identity-service hackaton-service team-service submission-service participation-and-roles-service mentors-service auth-service
+SERVICES := identity-service hackaton-service team-service submission-service participation-and-roles-service mentors-service matchmaking-service auth-service
 
 help:
 	@echo "Hackathon Platform API - Monorepo"
@@ -107,6 +107,9 @@ participation-and-roles-service-%:
 
 mentors-service-%:
 	@$(MAKE) -C cmd/mentors-service $*
+
+matchmaking-service-%:
+	@$(MAKE) -C cmd/matchmaking-service $*
 
 auth-service-%:
 	@$(MAKE) -C cmd/auth-service $*
