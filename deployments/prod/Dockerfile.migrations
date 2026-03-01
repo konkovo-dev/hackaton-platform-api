@@ -12,6 +12,9 @@ COPY internal/identity-service/migrations ./identity
 COPY internal/hackaton-service/migrations ./hackaton
 COPY internal/participation-and-roles-service/migrations ./participation
 COPY internal/team-service/migrations ./team
+COPY internal/mentors-service/migrations ./mentors
+COPY internal/matchmaking-service/migrations ./matchmaking
+COPY internal/submission-service/migrations ./submission
 
 # Скрипт для запуска миграций во всех БД
 COPY deployments/prod/run-migrations.sh /run-migrations.sh

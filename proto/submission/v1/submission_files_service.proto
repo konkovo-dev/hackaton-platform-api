@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+package submission.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/submission/v1;submissionv1";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "common/v1/idempotency.proto";
+import "submission/v1/submission.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+service SubmissionFilesService {
+  // Initiate file upload
+  rpc CreateSubmissionUpload(CreateSubmissionUploadRequest) returns (CreateSubmissionUploadResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/submissions/{submission_id}/files"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create submission file upload"
+      description: "Initiates a file upload and returns a pre-signed PUT URL. Validates file type and size limits. Available only during RUNNING stage."
+      tags: "Submission Files"
+    };
+  }
+
+  // Complete file upload
+  rpc CompleteSubmissionUpload(CompleteSubmissionUploadRequest) returns (CompleteSubmissionUploadResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/submissions/{submission_id}/files/{file_id}/complete"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Complete submission file upload"
+      description: "Marks the file upload as completed after successful upload to S3. Available only during RUNNING stage."
+      tags: "Submission Files"
+    };
+  }
+
+  // Get file download URL
+  rpc GetSubmissionFileDownloadURL(GetSubmissionFileDownloadURLRequest) returns (GetSubmissionFileDownloadURLResponse) {
+    option (google.api.http) = {
+      get: "/v1/hackathons/{hackathon_id}/submissions/{submission_id}/files/{file_id}/download-url"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get submission file download URL"
+      description: "Returns a pre-signed GET URL for downloading a submission file. Owner can download their own files. Staff (owners, organizers, mentors, judges) can download any submission files. Available from RUNNING stage onwards."
+      tags: "Submission Files"
+    };
+  }
+}
+
+// === Request/Response messages ===
+
+message CreateSubmissionUploadRequest {
+  string hackathon_id = 1;
+  string submission_id = 2;
+  
+  string filename = 3;
+  int64 size_bytes = 4;
+  string content_type = 5;
+  
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message CreateSubmissionUploadResponse {
+  string file_id = 1;
+  string upload_url = 2; // Pre-signed PUT URL
+  google.protobuf.Timestamp expires_at = 3;
+}
+
+message CompleteSubmissionUploadRequest {
+  string hackathon_id = 1;
+  string submission_id = 2;
+  string file_id = 3;
+  
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message CompleteSubmissionUploadResponse {
+  SubmissionFile file = 1;
+}
+
+message GetSubmissionFileDownloadURLRequest {
+  string hackathon_id = 1;
+  string submission_id = 2;
+  string file_id = 3;
+}
+
+message GetSubmissionFileDownloadURLResponse {
+  string download_url = 1; // Pre-signed GET URL
+  google.protobuf.Timestamp expires_at = 2;
+}

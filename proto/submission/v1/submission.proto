@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package submission.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/submission/v1;submissionv1";
+
+import "google/protobuf/timestamp.proto";
+import "submission/v1/common.proto";
+
+message Submission {
+  string submission_id = 1;
+  string hackathon_id = 2;
+  
+  // Owner of the submission (user or team)
+  OwnerKind owner_kind = 3;
+  string owner_id = 4;
+  
+  // User who actually created/uploaded this submission
+  // (for team submissions, this is the team member who uploaded)
+  string created_by_user_id = 5;
+  
+  string title = 6;
+  string description = 7;
+  
+  // Whether this is the final submission selected by the owner
+  bool is_final = 8;
+  
+  // Files attached to this submission
+  repeated SubmissionFile files = 9;
+  
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+}
+
+message SubmissionFile {
+  string file_id = 1;
+  string submission_id = 2;
+  
+  string filename = 3;
+  int64 size_bytes = 4;
+  string content_type = 5;
+  
+  FileUploadStatus upload_status = 6;
+  
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp completed_at = 8;
+}

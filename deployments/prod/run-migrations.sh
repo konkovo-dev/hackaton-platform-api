@@ -41,4 +41,26 @@ GOOSE_DRIVER=postgres \
 GOOSE_DBSTRING="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/hackathon_team?sslmode=disable" \
 goose -dir /migrations/team up
 
+# Matchmaking DB
+echo "→ Migrating hackathon_matchmaking..."
+GOOSE_DRIVER=postgres \
+GOOSE_DBSTRING="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/hackathon_matchmaking?sslmode=disable" \
+goose -dir /migrations/matchmaking up
+
+echo "✓ All migrations completed successfully."
+
+# Mentors DB
+echo "→ Migrating hackathon_mentors..."
+GOOSE_DRIVER=postgres \
+GOOSE_DBSTRING="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/hackathon_mentors?sslmode=disable" \
+goose -dir /migrations/mentors up
+
+echo "✓ All migrations completed successfully."
+
+# Submission DB
+echo "→ Migrating hackathon_submission..."
+GOOSE_DRIVER=postgres \
+GOOSE_DBSTRING="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/hackathon_submission?sslmode=disable" \
+goose -dir /migrations/submission up
+
 echo "✓ All migrations completed successfully."

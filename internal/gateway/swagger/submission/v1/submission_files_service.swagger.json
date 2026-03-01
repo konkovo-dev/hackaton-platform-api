@@ -1,0 +1,305 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "submission/v1/submission_files_service.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "submission.v1.SubmissionFilesService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/hackathons/{hackathonId}/submissions/{submissionId}/files": {
+      "post": {
+        "summary": "Create submission file upload",
+        "description": "Initiates a file upload and returns a pre-signed PUT URL. Validates file type and size limits. Available only during RUNNING stage.",
+        "operationId": "SubmissionFilesService_CreateSubmissionUpload",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateSubmissionUploadResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SubmissionFilesServiceCreateSubmissionUploadBody"
+            }
+          }
+        ],
+        "tags": [
+          "Submission Files"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/submissions/{submissionId}/files/{fileId}/complete": {
+      "post": {
+        "summary": "Complete submission file upload",
+        "description": "Marks the file upload as completed after successful upload to S3. Available only during RUNNING stage.",
+        "operationId": "SubmissionFilesService_CompleteSubmissionUpload",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CompleteSubmissionUploadResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "fileId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SubmissionFilesServiceCompleteSubmissionUploadBody"
+            }
+          }
+        ],
+        "tags": [
+          "Submission Files"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/submissions/{submissionId}/files/{fileId}/download-url": {
+      "get": {
+        "summary": "Get submission file download URL",
+        "description": "Returns a pre-signed GET URL for downloading a submission file. Owner can download their own files. Staff (owners, organizers, mentors, judges) can download any submission files. Available from RUNNING stage onwards.",
+        "operationId": "SubmissionFilesService_GetSubmissionFileDownloadURL",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetSubmissionFileDownloadURLResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "fileId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Submission Files"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "SubmissionFilesServiceCompleteSubmissionUploadBody": {
+      "type": "object",
+      "properties": {
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "SubmissionFilesServiceCreateSubmissionUploadBody": {
+      "type": "object",
+      "properties": {
+        "filename": {
+          "type": "string"
+        },
+        "sizeBytes": {
+          "type": "string",
+          "format": "int64"
+        },
+        "contentType": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1CompleteSubmissionUploadResponse": {
+      "type": "object",
+      "properties": {
+        "file": {
+          "$ref": "#/definitions/v1SubmissionFile"
+        }
+      }
+    },
+    "v1CreateSubmissionUploadResponse": {
+      "type": "object",
+      "properties": {
+        "fileId": {
+          "type": "string"
+        },
+        "uploadUrl": {
+          "type": "string",
+          "title": "Pre-signed PUT URL"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1FileUploadStatus": {
+      "type": "string",
+      "enum": [
+        "FILE_UPLOAD_STATUS_UNSPECIFIED",
+        "FILE_UPLOAD_STATUS_PENDING",
+        "FILE_UPLOAD_STATUS_COMPLETED",
+        "FILE_UPLOAD_STATUS_FAILED"
+      ],
+      "default": "FILE_UPLOAD_STATUS_UNSPECIFIED"
+    },
+    "v1GetSubmissionFileDownloadURLResponse": {
+      "type": "object",
+      "properties": {
+        "downloadUrl": {
+          "type": "string",
+          "title": "Pre-signed GET URL"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1IdempotencyKey": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string"
+        }
+      }
+    },
+    "v1SubmissionFile": {
+      "type": "object",
+      "properties": {
+        "fileId": {
+          "type": "string"
+        },
+        "submissionId": {
+          "type": "string"
+        },
+        "filename": {
+          "type": "string"
+        },
+        "sizeBytes": {
+          "type": "string",
+          "format": "int64"
+        },
+        "contentType": {
+          "type": "string"
+        },
+        "uploadStatus": {
+          "$ref": "#/definitions/v1FileUploadStatus"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

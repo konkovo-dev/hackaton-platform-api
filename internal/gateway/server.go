@@ -14,6 +14,7 @@ import (
 	matchmakingv1 "github.com/belikoooova/hackaton-platform-api/api/matchmaking/v1"
 	mentorsv1 "github.com/belikoooova/hackaton-platform-api/api/mentors/v1"
 	participationandrolesv1 "github.com/belikoooova/hackaton-platform-api/api/participationandroles/v1"
+	submissionv1 "github.com/belikoooova/hackaton-platform-api/api/submission/v1"
 	teamv1 "github.com/belikoooova/hackaton-platform-api/api/team/v1"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/fx"
@@ -137,6 +138,14 @@ func Run(lc fx.Lifecycle, s *http.Server, lis net.Listener, mux *runtime.ServeMu
 				return fmt.Errorf("failed to register matchmaking service gateway handlers: %v", err)
 			}
 
+			if err := submissionv1.RegisterSubmissionServiceHandlerFromEndpoint(bgCtx, mux, cfg.SubmissionGRPCEndpoint, opts); err != nil {
+				return fmt.Errorf("failed to register submission service gateway handlers: %v", err)
+			}
+
+			if err := submissionv1.RegisterSubmissionFilesServiceHandlerFromEndpoint(bgCtx, mux, cfg.SubmissionGRPCEndpoint, opts); err != nil {
+				return fmt.Errorf("failed to register submission files service gateway handlers: %v", err)
+			}
+
 			logger.Info("starting http gateway",
 				slog.String("addr", lis.Addr().String()),
 				slog.String("identity_grpc_endpoint", cfg.IdentityGRPCEndpoint),
@@ -146,6 +155,7 @@ func Run(lc fx.Lifecycle, s *http.Server, lis net.Listener, mux *runtime.ServeMu
 				slog.String("team_grpc_endpoint", cfg.TeamGRPCEndpoint),
 				slog.String("mentors_grpc_endpoint", cfg.MentorsGRPCEndpoint),
 				slog.String("matchmaking_grpc_endpoint", cfg.MatchmakingGRPCEndpoint),
+				slog.String("submission_grpc_endpoint", cfg.SubmissionGRPCEndpoint),
 			)
 
 			go func() {

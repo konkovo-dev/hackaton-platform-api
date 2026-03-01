@@ -1,0 +1,656 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "submission/v1/submission_service.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "submission.v1.SubmissionService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/hackathons/{hackathonId}/participants/{ownerKind}/{ownerId}/final-submission": {
+      "get": {
+        "summary": "Get final submission",
+        "description": "Returns the final submission for a participant or team. Owner can view their own final submission. Staff (owners, organizers, mentors, judges) can view any final submission. Available from RUNNING stage onwards.",
+        "operationId": "SubmissionService_GetFinalSubmission",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetFinalSubmissionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "ownerKind",
+            "description": "\"user\" or \"team\"",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "ownerId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Submissions"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/submissions": {
+      "post": {
+        "summary": "Create a submission",
+        "description": "Creates a new submission for the hackathon. Automatically marks it as final if no other final submission exists. Available only during RUNNING stage.",
+        "operationId": "SubmissionService_CreateSubmission",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateSubmissionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SubmissionServiceCreateSubmissionBody"
+            }
+          }
+        ],
+        "tags": [
+          "Submissions"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/submissions/list": {
+      "post": {
+        "summary": "List submissions",
+        "description": "Returns submissions for the hackathon. If owner_kind and owner_id are specified, returns submissions for that owner. If not specified, returns submissions for the authenticated user/team. Staff (owners, organizers, mentors, judges) can list submissions for any participant/team. Available from RUNNING stage onwards.",
+        "operationId": "SubmissionService_ListSubmissions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListSubmissionsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SubmissionServiceListSubmissionsBody"
+            }
+          }
+        ],
+        "tags": [
+          "Submissions"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/submissions/{submissionId}": {
+      "get": {
+        "summary": "Get submission",
+        "description": "Returns a submission by ID. Owner can view their own submissions. Staff (owners, organizers, mentors, judges) can view any submission. Available from RUNNING stage onwards.",
+        "operationId": "SubmissionService_GetSubmission",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetSubmissionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Submissions"
+        ]
+      },
+      "put": {
+        "summary": "Update submission description",
+        "description": "Updates the description of a submission. Only the creator can update. Available only during RUNNING stage.",
+        "operationId": "SubmissionService_UpdateSubmission",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UpdateSubmissionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SubmissionServiceUpdateSubmissionBody"
+            }
+          }
+        ],
+        "tags": [
+          "Submissions"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/submissions/{submissionId}/select-final": {
+      "post": {
+        "summary": "Select final submission",
+        "description": "Marks a submission as final. Unmarks any previously selected final submission. Only team captain (for team submissions) or individual participant can perform this. Available only during RUNNING stage.",
+        "operationId": "SubmissionService_SelectFinalSubmission",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1SelectFinalSubmissionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SubmissionServiceSelectFinalSubmissionBody"
+            }
+          }
+        ],
+        "tags": [
+          "Submissions"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "SubmissionServiceCreateSubmissionBody": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "SubmissionServiceListSubmissionsBody": {
+      "type": "object",
+      "properties": {
+        "ownerKind": {
+          "type": "string",
+          "description": "Optional: filter by owner. If not specified, returns submissions for the authenticated user/team.\nStaff can specify any owner to view their submissions.\n\n\"user\" or \"team\""
+        },
+        "ownerId": {
+          "type": "string"
+        },
+        "query": {
+          "$ref": "#/definitions/v1Query"
+        }
+      }
+    },
+    "SubmissionServiceSelectFinalSubmissionBody": {
+      "type": "object",
+      "properties": {
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "SubmissionServiceUpdateSubmissionBody": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1CreateSubmissionResponse": {
+      "type": "object",
+      "properties": {
+        "submissionId": {
+          "type": "string"
+        },
+        "isFinal": {
+          "type": "boolean",
+          "title": "true if automatically marked as final"
+        }
+      }
+    },
+    "v1FileUploadStatus": {
+      "type": "string",
+      "enum": [
+        "FILE_UPLOAD_STATUS_UNSPECIFIED",
+        "FILE_UPLOAD_STATUS_PENDING",
+        "FILE_UPLOAD_STATUS_COMPLETED",
+        "FILE_UPLOAD_STATUS_FAILED"
+      ],
+      "default": "FILE_UPLOAD_STATUS_UNSPECIFIED"
+    },
+    "v1Filter": {
+      "type": "object",
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "operation": {
+          "$ref": "#/definitions/v1FilterOperation"
+        },
+        "stringValue": {
+          "type": "string"
+        },
+        "int64Value": {
+          "type": "string",
+          "format": "int64"
+        },
+        "boolValue": {
+          "type": "boolean"
+        },
+        "stringList": {
+          "$ref": "#/definitions/v1StringList"
+        }
+      }
+    },
+    "v1FilterGroup": {
+      "type": "object",
+      "properties": {
+        "filters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Filter"
+          }
+        }
+      }
+    },
+    "v1FilterOperation": {
+      "type": "string",
+      "enum": [
+        "FILTER_OPERATION_UNSPECIFIED",
+        "FILTER_OPERATION_EQUAL",
+        "FILTER_OPERATION_IN",
+        "FILTER_OPERATION_CONTAINS",
+        "FILTER_OPERATION_PREFIX"
+      ],
+      "default": "FILTER_OPERATION_UNSPECIFIED"
+    },
+    "v1GetFinalSubmissionResponse": {
+      "type": "object",
+      "properties": {
+        "submission": {
+          "$ref": "#/definitions/v1Submission"
+        }
+      }
+    },
+    "v1GetSubmissionResponse": {
+      "type": "object",
+      "properties": {
+        "submission": {
+          "$ref": "#/definitions/v1Submission"
+        }
+      }
+    },
+    "v1IdempotencyKey": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string"
+        }
+      }
+    },
+    "v1ListSubmissionsResponse": {
+      "type": "object",
+      "properties": {
+        "submissions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Submission"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/v1PageResponse"
+        }
+      }
+    },
+    "v1OwnerKind": {
+      "type": "string",
+      "enum": [
+        "OWNER_KIND_UNSPECIFIED",
+        "OWNER_KIND_USER",
+        "OWNER_KIND_TEAM"
+      ],
+      "default": "OWNER_KIND_UNSPECIFIED"
+    },
+    "v1PageRequest": {
+      "type": "object",
+      "properties": {
+        "pageSize": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "pageToken": {
+          "type": "string"
+        }
+      }
+    },
+    "v1PageResponse": {
+      "type": "object",
+      "properties": {
+        "nextPageToken": {
+          "type": "string"
+        },
+        "hasMore": {
+          "type": "boolean"
+        }
+      }
+    },
+    "v1Query": {
+      "type": "object",
+      "properties": {
+        "q": {
+          "type": "string"
+        },
+        "filterGroups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1FilterGroup"
+          },
+          "description": "OR between groups, AND inside group."
+        },
+        "sort": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Sort"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/v1PageRequest"
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "offset": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1SelectFinalSubmissionResponse": {
+      "type": "object",
+      "properties": {
+        "submissionId": {
+          "type": "string"
+        },
+        "selectedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1Sort": {
+      "type": "object",
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "direction": {
+          "$ref": "#/definitions/v1SortDirection"
+        }
+      }
+    },
+    "v1SortDirection": {
+      "type": "string",
+      "enum": [
+        "SORT_DIRECTION_UNSPECIFIED",
+        "SORT_DIRECTION_ASC",
+        "SORT_DIRECTION_DESC"
+      ],
+      "default": "SORT_DIRECTION_UNSPECIFIED"
+    },
+    "v1StringList": {
+      "type": "object",
+      "properties": {
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "v1Submission": {
+      "type": "object",
+      "properties": {
+        "submissionId": {
+          "type": "string"
+        },
+        "hackathonId": {
+          "type": "string"
+        },
+        "ownerKind": {
+          "$ref": "#/definitions/v1OwnerKind",
+          "title": "Owner of the submission (user or team)"
+        },
+        "ownerId": {
+          "type": "string"
+        },
+        "createdByUserId": {
+          "type": "string",
+          "title": "User who actually created/uploaded this submission\n(for team submissions, this is the team member who uploaded)"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "isFinal": {
+          "type": "boolean",
+          "title": "Whether this is the final submission selected by the owner"
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1SubmissionFile"
+          },
+          "title": "Files attached to this submission"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1SubmissionFile": {
+      "type": "object",
+      "properties": {
+        "fileId": {
+          "type": "string"
+        },
+        "submissionId": {
+          "type": "string"
+        },
+        "filename": {
+          "type": "string"
+        },
+        "sizeBytes": {
+          "type": "string",
+          "format": "int64"
+        },
+        "contentType": {
+          "type": "string"
+        },
+        "uploadStatus": {
+          "$ref": "#/definitions/v1FileUploadStatus"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1UpdateSubmissionResponse": {
+      "type": "object",
+      "properties": {
+        "submission": {
+          "$ref": "#/definitions/v1Submission"
+        }
+      }
+    }
+  }
+}

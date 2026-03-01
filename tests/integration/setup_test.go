@@ -24,6 +24,7 @@ type TestContext struct {
 	HackathonDBName     string
 	ParticipationDBName string
 	MatchmakingDBName   string
+	SubmissionDBName    string
 }
 
 type UserCredentials struct {
@@ -53,15 +54,18 @@ func NewTestContext(t *testing.T) *TestContext {
 	hackathonTable := "hackathon.hackathons"
 	participationTable := "participation_and_roles.staff_roles"
 	matchmakingPrefix := "matchmaking"
+	submissionPrefix := "submission"
 	if dbDSN != "" && (dbDSN == "postgres://hackathon:hackathon_dev_password@localhost:5432/hackathon?sslmode=disable" ||
 		!contains(dbDSN, "hackathon_hackaton")) {
 		hackathonTable = "hackathon.hackathons"
 		participationTable = "participation_and_roles.staff_roles"
 		matchmakingPrefix = "matchmaking"
+		submissionPrefix = "submission"
 	} else {
 		hackathonTable = "hackathons"
 		participationTable = "staff_roles"
 		matchmakingPrefix = "matchmaking"
+		submissionPrefix = "submission"
 	}
 
 	return &TestContext{
@@ -74,6 +78,7 @@ func NewTestContext(t *testing.T) *TestContext {
 		HackathonDBName:     hackathonTable,
 		ParticipationDBName: participationTable,
 		MatchmakingDBName:   matchmakingPrefix,
+		SubmissionDBName:    submissionPrefix,
 	}
 }
 

@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package submission.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/submission/v1;submissionv1";
+
+enum OwnerKind {
+  OWNER_KIND_UNSPECIFIED = 0;
+  OWNER_KIND_USER = 1;
+  OWNER_KIND_TEAM = 2;
+}
+
+enum FileUploadStatus {
+  FILE_UPLOAD_STATUS_UNSPECIFIED = 0;
+  FILE_UPLOAD_STATUS_PENDING = 1;
+  FILE_UPLOAD_STATUS_COMPLETED = 2;
+  FILE_UPLOAD_STATUS_FAILED = 3;
+}
