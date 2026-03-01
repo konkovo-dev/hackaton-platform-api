@@ -1,6 +1,6 @@
 # Hackathon Platform - Docker Setup
 
-Полная инструкция по запуску всей платформы (Gateway + Auth + Identity + Hackathon + Participation & Roles + Team + Mentors + Matchmaking + NATS + Centrifugo)
+Полная инструкция по запуску всей платформы (Gateway + Auth + Identity + Hackathon + Participation & Roles + Team + Mentors + Matchmaking + Submission + NATS + Centrifugo + MinIO)
 
 ## Предусловия
 
@@ -33,6 +33,7 @@ make participation-and-roles-service-sqlc-generate
 make team-service-sqlc-generate
 make mentors-service-sqlc-generate
 make matchmaking-service-sqlc-generate
+make submission-service-sqlc-generate
 ```
 
 ### 4. Генерация RSA ключей для auth-service
@@ -41,10 +42,10 @@ make matchmaking-service-sqlc-generate
 make auth-service-generate-keys
 ```
 
-### 5. Запуск инфраструктуры (Postgres, NATS, Centrifugo)
+### 5. Запуск инфраструктуры (Postgres, NATS, Centrifugo, MinIO)
 
 ```bash
-docker-compose -f deployments/docker-compose.yml up -d postgres nats centrifugo
+docker-compose -f deployments/docker-compose.yml up -d postgres nats centrifugo minio
 make ps
 ```
 
@@ -54,6 +55,7 @@ make ps
 - **Postgres** (порт 5432) — основная БД
 - **NATS** (порты 4222, 8222) — message broker для event streaming
 - **Centrifugo** (порт 8000) — WebSocket сервер для real-time уведомлений
+- **MinIO** (порты 9000, 9001) — S3-совместимое хранилище для файлов посылок
 
 ### 6. Миграции
 
@@ -74,6 +76,8 @@ make mentors-service-migrate-up
 make mentors-service-migrate-status
 make matchmaking-service-migrate-up
 make matchmaking-service-migrate-status
+make submission-service-migrate-up
+make submission-service-migrate-status
 ```
 
 ### 7. Запуск сервисов
@@ -153,6 +157,20 @@ docker rmi $(docker images -q deployments-matchmaking-service)
 
 **Важно**: Matchmaking Service требует NATS для синхронизации read-model из других сервисов.
 
+#### Submission Service
+
+```bash
+docker-compose -f deployments/docker-compose.yml build submission-service
+docker-compose -f deployments/docker-compose.yml up -d submission-service
+docker-compose -f deployments/docker-compose.yml logs --tail=20 submission-service
+```
+
+docker-compose -f deployments/docker-compose.yml stop submission-service 
+docker-compose -f deployments/docker-compose.yml rm -f submission-service                   
+docker rmi $(docker images -q deployments-submission-service)
+
+**Важно**: Submission Service требует MinIO для хранения файлов посылок.
+
 #### Gateway
 
 ```bash
@@ -175,6 +193,7 @@ make ps
 - `hackathon-postgres`
 - `hackathon-nats`
 - `hackathon-centrifugo`
+- `hackathon-minio`
 - `hackathon-identity-service`
 - `hackathon-auth-service`
 - `hackathon-hackaton-service`
@@ -182,6 +201,7 @@ make ps
 - `hackathon-team-service`
 - `hackathon-mentors-service`
 - `hackathon-matchmaking-service`
+- `hackathon-submission-service`
 - `hackathon-gateway`
 
 ## Endpoints
@@ -197,12 +217,14 @@ make ps
 - **Participation & Roles gRPC**: `localhost:50055`
 - **Mentors gRPC**: `localhost:50056`
 - **Auth gRPC**: `localhost:50057`
+- **Submission gRPC**: `localhost:50058`
 - **Matchmaking gRPC**: `localhost:50059`
 
 ### Infrastructure
 - **Postgres**: `localhost:5432`
 - **NATS**: `localhost:4222` (client), `localhost:8222` (monitoring)
 - **Centrifugo**: `localhost:8000` (WebSocket + HTTP API)
+- **MinIO**: `localhost:9000` (S3 API), `localhost:9001` (Console UI)
 
 ## Быстрая проверка работоспособности
 
