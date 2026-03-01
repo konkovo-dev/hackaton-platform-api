@@ -9,8 +9,11 @@ import (
 	"github.com/belikoooova/hackaton-platform-api/internal/team-service/usecase/teaminbox"
 	"github.com/belikoooova/hackaton-platform-api/internal/team-service/usecase/teammember"
 	"github.com/belikoooova/hackaton-platform-api/internal/team-service/usecase/vacancy"
+	outboxusecase "github.com/belikoooova/hackaton-platform-api/internal/team-service/usecase/outbox"
 	authclient "github.com/belikoooova/hackaton-platform-api/pkg/auth/client"
 	"github.com/belikoooova/hackaton-platform-api/pkg/logger"
+	natsclient "github.com/belikoooova/hackaton-platform-api/pkg/nats"
+	"github.com/belikoooova/hackaton-platform-api/pkg/outbox"
 	"github.com/belikoooova/hackaton-platform-api/pkg/pgxutil"
 	"go.uber.org/fx"
 )
@@ -19,6 +22,7 @@ func main() {
 	app := fx.New(
 		logger.Module,
 		authclient.Module,
+		natsclient.Module,
 		postgres.Module,
 		hackathon.Module,
 		participationroles.Module,
@@ -26,6 +30,8 @@ func main() {
 		vacancy.Module,
 		teammember.Module,
 		teaminbox.Module,
+		outboxusecase.Module,
+		outbox.Module,
 		grpc.Module,
 		fx.Provide(
 			func(repo *postgres.TeamRepository) team.TeamRepository { return repo },
@@ -33,9 +39,11 @@ func main() {
 			func(repo *postgres.MembershipRepository) team.MembershipRepository { return repo },
 			func(client *hackathon.Client) team.HackathonClient { return client },
 			func(client *participationroles.Client) team.ParticipationAndRolesClient { return client },
+			func(repo *postgres.OutboxRepository) team.OutboxRepository { return repo },
 			func(repo *postgres.VacancyRepository) vacancy.VacancyRepository { return repo },
 			func(repo *postgres.TeamRepository) vacancy.TeamRepository { return repo },
 			func(repo *postgres.MembershipRepository) vacancy.MembershipRepository { return repo },
+			func(repo *postgres.OutboxRepository) vacancy.OutboxRepository { return repo },
 			func(client *hackathon.Client) vacancy.HackathonClient { return client },
 			func(repo *postgres.MembershipRepository) teammember.MembershipRepository { return repo },
 			func(repo *postgres.VacancyRepository) teammember.VacancyRepository { return repo },

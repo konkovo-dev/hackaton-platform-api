@@ -7,31 +7,34 @@ import (
 )
 
 type Service struct {
-	teamRepo       TeamRepository
-	vacancyRepo    VacancyRepository
-	membershipRepo MembershipRepository
-	txManager      *pgxutil.TxManager
+	teamRepo        TeamRepository
+	vacancyRepo     VacancyRepository
+	membershipRepo  MembershipRepository
+	outboxRepo      OutboxRepository
+	txManager       *pgxutil.TxManager
 	hackathonClient HackathonClient
-	parClient      ParticipationAndRolesClient
-	logger         *slog.Logger
+	parClient       ParticipationAndRolesClient
+	logger          *slog.Logger
 }
 
 func NewService(
 	teamRepo TeamRepository,
 	vacancyRepo VacancyRepository,
 	membershipRepo MembershipRepository,
+	outboxRepo OutboxRepository,
 	txManager *pgxutil.TxManager,
 	hackathonClient HackathonClient,
 	parClient ParticipationAndRolesClient,
 	logger *slog.Logger,
 ) *Service {
 	return &Service{
-		teamRepo:       teamRepo,
-		vacancyRepo:    vacancyRepo,
-		membershipRepo: membershipRepo,
-		txManager:      txManager,
+		teamRepo:        teamRepo,
+		vacancyRepo:     vacancyRepo,
+		membershipRepo:  membershipRepo,
+		outboxRepo:      outboxRepo,
+		txManager:       txManager,
 		hackathonClient: hackathonClient,
-		parClient:      parClient,
-		logger:         logger,
+		parClient:       parClient,
+		logger:          logger,
 	}
 }

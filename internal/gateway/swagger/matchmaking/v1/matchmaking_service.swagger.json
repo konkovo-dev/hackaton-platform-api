@@ -1,0 +1,289 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "matchmaking/v1/matchmaking_service.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "matchmaking.v1.MatchmakingService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/hackathons/{hackathonId}/matchmaking/candidates": {
+      "get": {
+        "summary": "Get candidate recommendations for team captain",
+        "description": "Returns a ranked list of participants that match the team's vacancy requirements. Available during REGISTRATION stage.",
+        "operationId": "MatchmakingService_RecommendCandidates",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1RecommendCandidatesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "teamId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "vacancyId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "Matchmaking"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/matchmaking/teams": {
+      "get": {
+        "summary": "Get team recommendations for participant",
+        "description": "Returns a ranked list of teams that match the participant's skills and desired roles. Available during REGISTRATION and RUNNING stages.",
+        "operationId": "MatchmakingService_RecommendTeams",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1RecommendTeamsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "Matchmaking"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1CandidateRecommendation": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "matchScore": {
+          "$ref": "#/definitions/v1MatchScore"
+        }
+      }
+    },
+    "v1MatchScore": {
+      "type": "object",
+      "properties": {
+        "totalScore": {
+          "type": "number",
+          "format": "double"
+        },
+        "skills": {
+          "$ref": "#/definitions/v1SkillsBreakdown"
+        },
+        "roles": {
+          "$ref": "#/definitions/v1RolesBreakdown"
+        },
+        "text": {
+          "$ref": "#/definitions/v1TextBreakdown"
+        },
+        "bestVacancyId": {
+          "type": "string"
+        }
+      }
+    },
+    "v1RecommendCandidatesResponse": {
+      "type": "object",
+      "properties": {
+        "recommendations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1CandidateRecommendation"
+          }
+        }
+      }
+    },
+    "v1RecommendTeamsResponse": {
+      "type": "object",
+      "properties": {
+        "recommendations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1TeamRecommendation"
+          }
+        }
+      }
+    },
+    "v1RolesBreakdown": {
+      "type": "object",
+      "properties": {
+        "score": {
+          "type": "number",
+          "format": "double"
+        },
+        "weight": {
+          "type": "number",
+          "format": "double"
+        },
+        "matchedRoles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "matchedCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "requiredCount": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1SkillsBreakdown": {
+      "type": "object",
+      "properties": {
+        "score": {
+          "type": "number",
+          "format": "double"
+        },
+        "weight": {
+          "type": "number",
+          "format": "double"
+        },
+        "matchedSkills": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "missingSkills": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "matchedCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "requiredCount": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1TeamRecommendation": {
+      "type": "object",
+      "properties": {
+        "teamId": {
+          "type": "string"
+        },
+        "bestVacancyId": {
+          "type": "string"
+        },
+        "matchScore": {
+          "$ref": "#/definitions/v1MatchScore"
+        }
+      }
+    },
+    "v1TextBreakdown": {
+      "type": "object",
+      "properties": {
+        "score": {
+          "type": "number",
+          "format": "double"
+        },
+        "weight": {
+          "type": "number",
+          "format": "double"
+        },
+        "matchedKeywords": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

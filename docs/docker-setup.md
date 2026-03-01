@@ -1,6 +1,6 @@
 # Hackathon Platform - Docker Setup
 
-Полная инструкция по запуску всей платформы (Gateway + Auth + Identity + Hackathon + Participation & Roles + Team + Mentors + NATS + Centrifugo)
+Полная инструкция по запуску всей платформы (Gateway + Auth + Identity + Hackathon + Participation & Roles + Team + Mentors + Matchmaking + NATS + Centrifugo)
 
 ## Предусловия
 
@@ -32,6 +32,7 @@ make hackaton-service-sqlc-generate
 make participation-and-roles-service-sqlc-generate
 make team-service-sqlc-generate
 make mentors-service-sqlc-generate
+make matchmaking-service-sqlc-generate
 ```
 
 ### 4. Генерация RSA ключей для auth-service
@@ -71,6 +72,8 @@ make team-service-migrate-up
 make team-service-migrate-status
 make mentors-service-migrate-up
 make mentors-service-migrate-status
+make matchmaking-service-migrate-up
+make matchmaking-service-migrate-status
 ```
 
 ### 7. Запуск сервисов
@@ -102,6 +105,10 @@ docker-compose -f deployments/docker-compose.yml up -d hackaton-service
 docker-compose -f deployments/docker-compose.yml logs --tail=20 hackaton-service
 ```
 
+docker-compose -f deployments/docker-compose.yml stop hackaton-service 
+docker-compose -f deployments/docker-compose.yml rm -f hackaton-service                   
+docker rmi $(docker images -q deployments-hackaton-service)
+
 #### Participation and Roles Service
 
 ```bash
@@ -132,6 +139,20 @@ docker rmi $(docker images -q deployments-mentors-service)
 
 **Важно**: Mentors Service требует NATS и Centrifugo для работы outbox и real-time уведомлений.
 
+#### Matchmaking Service
+
+```bash
+docker-compose -f deployments/docker-compose.yml build matchmaking-service
+docker-compose -f deployments/docker-compose.yml up -d matchmaking-service
+docker-compose -f deployments/docker-compose.yml logs --tail=20 matchmaking-service
+```
+
+docker-compose -f deployments/docker-compose.yml stop matchmaking-service 
+docker-compose -f deployments/docker-compose.yml rm -f matchmaking-service                   
+docker rmi $(docker images -q deployments-matchmaking-service)
+
+**Важно**: Matchmaking Service требует NATS для синхронизации read-model из других сервисов.
+
 #### Gateway
 
 ```bash
@@ -160,6 +181,7 @@ make ps
 - `hackathon-participation-and-roles-service`
 - `hackathon-team-service`
 - `hackathon-mentors-service`
+- `hackathon-matchmaking-service`
 - `hackathon-gateway`
 
 ## Endpoints
@@ -175,6 +197,7 @@ make ps
 - **Participation & Roles gRPC**: `localhost:50055`
 - **Mentors gRPC**: `localhost:50056`
 - **Auth gRPC**: `localhost:50057`
+- **Matchmaking gRPC**: `localhost:50059`
 
 ### Infrastructure
 - **Postgres**: `localhost:5432`
@@ -243,6 +266,14 @@ curl -X POST http://localhost:8080/v1/hackathons/<HACKATHON_ID>/support/messages
 # Получить токен для WebSocket (Centrifugo)
 curl http://localhost:8080/v1/hackathons/<HACKATHON_ID>/support/realtime-token \
   -H "Authorization: Bearer $ACCESS_TOKEN" | jq .
+
+# Получить рекомендации команд для участника (matchmaking-service)
+curl http://localhost:8080/v1/hackathons/<HACKATHON_ID>/matchmaking/teams?limit=10 \
+  -H "Authorization: Bearer $ACCESS_TOKEN" | jq .
+
+# Получить рекомендации кандидатов для капитана команды (matchmaking-service)
+curl "http://localhost:8080/v1/hackathons/<HACKATHON_ID>/matchmaking/candidates?team_id=<TEAM_ID>&vacancy_id=<VACANCY_ID>&limit=10" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" | jq .
 ```
 
 ### Через gRPC напрямую
@@ -265,6 +296,12 @@ grpcurl -plaintext localhost:50056 grpc.health.v1.Health/Check
 
 # List mentors methods
 grpcurl -plaintext localhost:50056 list mentors.v1.MentorsService
+
+# Ping matchmaking
+grpcurl -plaintext localhost:50059 grpc.health.v1.Health/Check
+
+# List matchmaking methods
+grpcurl -plaintext localhost:50059 list matchmaking.v1.MatchmakingService
 ```
 
 ## Управление сервисами
@@ -289,6 +326,9 @@ docker-compose -f deployments/docker-compose.yml restart team-service
 
 # Mentors
 docker-compose -f deployments/docker-compose.yml restart mentors-service
+
+# Matchmaking
+docker-compose -f deployments/docker-compose.yml restart matchmaking-service
 
 # Gateway
 docker-compose -f deployments/docker-compose.yml restart gateway
@@ -337,6 +377,12 @@ docker-compose -f deployments/docker-compose.yml rm -f mentors-service
 docker-compose -f deployments/docker-compose.yml build mentors-service
 docker-compose -f deployments/docker-compose.yml up -d mentors-service
 
+# Matchmaking
+docker-compose -f deployments/docker-compose.yml stop matchmaking-service
+docker-compose -f deployments/docker-compose.yml rm -f matchmaking-service
+docker-compose -f deployments/docker-compose.yml build matchmaking-service
+docker-compose -f deployments/docker-compose.yml up -d matchmaking-service
+
 # Gateway
 docker-compose -f deployments/docker-compose.yml stop gateway
 docker-compose -f deployments/docker-compose.yml rm -f gateway
@@ -357,6 +403,7 @@ docker-compose -f deployments/docker-compose.yml logs -f hackaton-service
 docker-compose -f deployments/docker-compose.yml logs -f participation-and-roles-service
 docker-compose -f deployments/docker-compose.yml logs -f team-service
 docker-compose -f deployments/docker-compose.yml logs -f mentors-service
+docker-compose -f deployments/docker-compose.yml logs -f matchmaking-service
 docker-compose -f deployments/docker-compose.yml logs -f gateway
 
 # Infrastructure
@@ -402,6 +449,7 @@ make hackaton-service-migrate-status
 make participation-and-roles-service-migrate-status
 make team-service-migrate-status
 make mentors-service-migrate-status
+make matchmaking-service-migrate-status
 
 # Примените заново
 make auth-service-migrate-up
@@ -410,6 +458,7 @@ make hackaton-service-migrate-up
 make participation-and-roles-service-migrate-up
 make team-service-migrate-up
 make mentors-service-migrate-up
+make matchmaking-service-migrate-up
 ```
 
 ### Postgres не стартует
@@ -565,4 +614,14 @@ sudo apt-get install jq
   - Real-time через Centrifugo WebSocket
   - Audit log через NATS
 - **Доступность**: Только на стадии RUNNING хакатона
+
+#### Matchmaking Service
+- **Назначение**: Рекомендательная система для подбора команд и участников
+- **Особенности**:
+  - Read-model синхронизируется через NATS события от identity, team, participation сервисов
+  - Scoring algorithm: 63% skills + 27% roles + 10% text matching
+  - PostgreSQL Full-Text Search для мотивационных текстов и описаний (english + russian)
+  - Explainable recommendations с детальным breakdown скоринга
+  - Два режима: User→Teams (участник ищет команду), Vacancy→Candidates (капитан ищет участников)
+- **Доступность**: REGISTRATION и RUNNING стадии хакатона
 

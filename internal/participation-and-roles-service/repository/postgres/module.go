@@ -6,6 +6,7 @@ import (
 
 	"github.com/belikoooova/hackaton-platform-api/internal/participation-and-roles-service/repository/postgres/queries"
 	"github.com/belikoooova/hackaton-platform-api/pkg/idempotency"
+	"github.com/belikoooova/hackaton-platform-api/pkg/outbox"
 	"github.com/belikoooova/hackaton-platform-api/pkg/pgxutil"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/fx"
@@ -23,6 +24,12 @@ var Module = fx.Module("postgres",
 		NewStaffInvitationRepository,
 		NewParticipationRepository,
 		NewTeamRoleRepository,
+		func(pool *pgxpool.Pool) *OutboxRepository {
+			return NewOutboxRepository(pool)
+		},
+		func(r *OutboxRepository) outbox.EventRepository {
+			return r
+		},
 	),
 	fx.Provide(
 		func(lc fx.Lifecycle, cfg *pgxutil.Config, logger *slog.Logger) (*pgxpool.Pool, error) {

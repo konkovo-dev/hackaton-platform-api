@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package matchmaking.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/matchmaking/v1;matchmakingv1";
+
+import "google/protobuf/timestamp.proto";
+
+message TeamRecommendation {
+  string team_id = 1;
+  string best_vacancy_id = 2;
+  MatchScore match_score = 3;
+}
+
+message CandidateRecommendation {
+  string user_id = 1;
+  MatchScore match_score = 2;
+}
+
+message MatchScore {
+  double total_score = 1;
+  SkillsBreakdown skills = 2;
+  RolesBreakdown roles = 3;
+  TextBreakdown text = 4;
+  string best_vacancy_id = 5;
+}
+
+message SkillsBreakdown {
+  double score = 1;
+  double weight = 2;
+  repeated string matched_skills = 3;
+  repeated string missing_skills = 4;
+  int32 matched_count = 5;
+  int32 required_count = 6;
+}
+
+message RolesBreakdown {
+  double score = 1;
+  double weight = 2;
+  repeated string matched_roles = 3;
+  int32 matched_count = 4;
+  int32 required_count = 5;
+}
+
+message TextBreakdown {
+  double score = 1;
+  double weight = 2;
+  repeated string matched_keywords = 3;
+}

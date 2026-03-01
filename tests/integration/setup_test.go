@@ -17,12 +17,13 @@ import (
 )
 
 type TestContext struct {
-	BaseURL              string
-	HTTPClient           *http.Client
-	T                    *testing.T
-	DB                   *pgxpool.Pool
-	HackathonDBName      string
-	ParticipationDBName  string
+	BaseURL             string
+	HTTPClient          *http.Client
+	T                   *testing.T
+	DB                  *pgxpool.Pool
+	HackathonDBName     string
+	ParticipationDBName string
+	MatchmakingDBName   string
 }
 
 type UserCredentials struct {
@@ -51,13 +52,16 @@ func NewTestContext(t *testing.T) *TestContext {
 
 	hackathonTable := "hackathon.hackathons"
 	participationTable := "participation_and_roles.staff_roles"
+	matchmakingPrefix := "matchmaking"
 	if dbDSN != "" && (dbDSN == "postgres://hackathon:hackathon_dev_password@localhost:5432/hackathon?sslmode=disable" ||
 		!contains(dbDSN, "hackathon_hackaton")) {
 		hackathonTable = "hackathon.hackathons"
 		participationTable = "participation_and_roles.staff_roles"
+		matchmakingPrefix = "matchmaking"
 	} else {
 		hackathonTable = "hackathons"
 		participationTable = "staff_roles"
+		matchmakingPrefix = "matchmaking"
 	}
 
 	return &TestContext{
@@ -69,6 +73,7 @@ func NewTestContext(t *testing.T) *TestContext {
 		DB:                  db,
 		HackathonDBName:     hackathonTable,
 		ParticipationDBName: participationTable,
+		MatchmakingDBName:   matchmakingPrefix,
 	}
 }
 
@@ -263,4 +268,72 @@ func (tc *TestContext) WaitForParticipationRegistered(hackathonID string, token 
 		time.Sleep(200 * time.Millisecond)
 	}
 	tc.T.Logf("Warning: Participation not confirmed after %d attempts", maxAttempts)
+}
+
+func (tc *TestContext) WaitForMatchmakingUserSync(userID string) {
+	maxAttempts := 20
+	for i := 0; i < maxAttempts; i++ {
+		var count int
+		err := tc.DB.QueryRow(context.Background(),
+			fmt.Sprintf("SELECT COUNT(*) FROM %s.users WHERE user_id = $1", tc.MatchmakingDBName),
+			userID,
+		).Scan(&count)
+		if err == nil && count > 0 {
+			tc.T.Logf("User synced to matchmaking after %d attempts", i+1)
+			return
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	tc.T.Fatalf("Timeout waiting for user sync to matchmaking (user_id: %s)", userID)
+}
+
+func (tc *TestContext) WaitForMatchmakingParticipationSync(hackathonID, userID string) {
+	maxAttempts := 20
+	for i := 0; i < maxAttempts; i++ {
+		var count int
+		err := tc.DB.QueryRow(context.Background(),
+			fmt.Sprintf("SELECT COUNT(*) FROM %s.participations WHERE hackathon_id = $1 AND user_id = $2", tc.MatchmakingDBName),
+			hackathonID, userID,
+		).Scan(&count)
+		if err == nil && count > 0 {
+			tc.T.Logf("Participation synced to matchmaking after %d attempts", i+1)
+			return
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	tc.T.Fatalf("Timeout waiting for participation sync to matchmaking (hackathon_id: %s, user_id: %s)", hackathonID, userID)
+}
+
+func (tc *TestContext) WaitForMatchmakingTeamSync(teamID string) {
+	maxAttempts := 20
+	for i := 0; i < maxAttempts; i++ {
+		var count int
+		err := tc.DB.QueryRow(context.Background(),
+			fmt.Sprintf("SELECT COUNT(*) FROM %s.teams WHERE team_id = $1", tc.MatchmakingDBName),
+			teamID,
+		).Scan(&count)
+		if err == nil && count > 0 {
+			tc.T.Logf("Team synced to matchmaking after %d attempts", i+1)
+			return
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	tc.T.Fatalf("Timeout waiting for team sync to matchmaking (team_id: %s)", teamID)
+}
+
+func (tc *TestContext) WaitForMatchmakingVacancySync(vacancyID string) {
+	maxAttempts := 20
+	for i := 0; i < maxAttempts; i++ {
+		var count int
+		err := tc.DB.QueryRow(context.Background(),
+			fmt.Sprintf("SELECT COUNT(*) FROM %s.vacancies WHERE vacancy_id = $1", tc.MatchmakingDBName),
+			vacancyID,
+		).Scan(&count)
+		if err == nil && count > 0 {
+			tc.T.Logf("Vacancy synced to matchmaking after %d attempts", i+1)
+			return
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	tc.T.Fatalf("Timeout waiting for vacancy sync to matchmaking (vacancy_id: %s)", vacancyID)
 }

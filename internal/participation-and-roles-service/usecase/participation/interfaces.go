@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/belikoooova/hackaton-platform-api/internal/participation-and-roles-service/domain/entity"
+	"github.com/belikoooova/hackaton-platform-api/pkg/outbox"
 	"github.com/google/uuid"
 )
 
@@ -35,4 +36,8 @@ type TeamRoleRepository interface {
 	GetByParticipation(ctx context.Context, hackathonID, userID uuid.UUID) ([]*entity.TeamRole, error)
 	SetForParticipation(ctx context.Context, hackathonID, userID uuid.UUID, roleIDs []uuid.UUID) error
 	ListAll(ctx context.Context) ([]*entity.TeamRole, error)
+}
+
+type OutboxRepository interface {
+	Create(ctx context.Context, event *outbox.Event) error
 }

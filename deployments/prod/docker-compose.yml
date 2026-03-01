@@ -5,7 +5,7 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_MULTIPLE_DATABASES: hackathon_auth,hackathon_identity,hackathon_hackaton,hackathon_participation,hackathon_team,hackathon_mentors
+      POSTGRES_MULTIPLE_DATABASES: hackathon_auth,hackathon_identity,hackathon_hackaton,hackathon_participation,hackathon_team,hackathon_mentors,hackathon_matchmaking
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init-postgres.sh:/docker-entrypoint-initdb.d/init-postgres.sh:ro
@@ -120,6 +120,7 @@ services:
       AUTH_CLIENT_SERVICE_URL: auth-service:50057
       AUTH_CLIENT_MAX_CACHE_TTL: 60s
       AUTH_CLIENT_CACHE_CLEANUP_INTERVAL: 1m
+      NATS_URL: nats://nats:4222
       IDEMPOTENCY_TTL: 24h
       SERVICE_AUTH_TOKEN: ${SERVICE_AUTH_TOKEN}
     depends_on:
@@ -127,6 +128,8 @@ services:
         condition: service_healthy
       migrations:
         condition: service_completed_successfully
+      nats:
+        condition: service_healthy
     networks:
       - hackathon-network
     restart: unless-stopped
@@ -176,6 +179,7 @@ services:
       HACKATHON_SERVICE_URL: hackaton-service:50052
       IDENTITY_SERVICE_URL: identity-service:50051
       IDENTITY_CLIENT_SERVICE_URL: identity-service:50051
+      NATS_URL: nats://nats:4222
       IDEMPOTENCY_TTL: 24h
       SERVICE_AUTH_TOKEN: ${SERVICE_AUTH_TOKEN}
     depends_on:
@@ -183,6 +187,8 @@ services:
         condition: service_healthy
       migrations:
         condition: service_completed_successfully
+      nats:
+        condition: service_healthy
     networks:
       - hackathon-network
     restart: unless-stopped
@@ -204,6 +210,7 @@ services:
       AUTH_CLIENT_CACHE_CLEANUP_INTERVAL: 1m
       HACKATHON_SERVICE_URL: hackaton-service:50052
       PARTICIPATION_ROLES_SERVICE_URL: participation-and-roles-service:50055
+      NATS_URL: nats://nats:4222
       IDEMPOTENCY_TTL: 24h
       SERVICE_AUTH_TOKEN: ${SERVICE_AUTH_TOKEN}
     depends_on:
@@ -211,6 +218,8 @@ services:
         condition: service_healthy
       migrations:
         condition: service_completed_successfully
+      nats:
+        condition: service_healthy
     networks:
       - hackathon-network
     restart: unless-stopped
@@ -255,6 +264,38 @@ services:
       - hackathon-network
     restart: unless-stopped
 
+  matchmaking-service:
+    image: ${DOCKER_REGISTRY}/hackathon-matchmaking-service:${IMAGE_TAG}
+    container_name: hackathon-matchmaking-service
+    environment:
+      ENV: production
+      MATCHMAKING_SERVICE_GRPC_PORT: 50059
+      DB_DSN: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/hackathon_matchmaking?sslmode=disable&search_path=matchmaking
+      DB_MAX_CONNS: 25
+      DB_MIN_CONNS: 5
+      DB_MAX_CONN_LIFETIME: 1h
+      DB_MAX_CONN_IDLE_TIME: 30m
+      DB_HEALTH_CHECK_PERIOD: 1m
+      NATS_URL: nats://nats:4222
+      AUTH_CLIENT_SERVICE_URL: auth-service:50057
+      AUTH_CLIENT_MAX_CACHE_TTL: 60s
+      AUTH_CLIENT_CACHE_CLEANUP_INTERVAL: 1m
+      HACKATHON_SERVICE_URL: hackaton-service:50052
+      PARTICIPATION_ROLES_SERVICE_URL: participation-and-roles-service:50055
+      TEAM_SERVICE_URL: team-service:50053
+      IDEMPOTENCY_TTL: 24h
+      SERVICE_AUTH_TOKEN: ${SERVICE_AUTH_TOKEN}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+      nats:
+        condition: service_healthy
+    networks:
+      - hackathon-network
+    restart: unless-stopped
+
   gateway:
     image: ${DOCKER_REGISTRY}/hackathon-gateway:${IMAGE_TAG}
     container_name: hackathon-gateway
@@ -267,6 +308,7 @@ services:
       PARTICIPATION_ROLES_GRPC_ENDPOINT: participation-and-roles-service:50055
       TEAM_GRPC_ENDPOINT: team-service:50053
       MENTORS_GRPC_ENDPOINT: mentors-service:50056
+      MATCHMAKING_GRPC_ENDPOINT: matchmaking-service:50059
     ports:
       - "8080:8080"
     depends_on:
@@ -276,6 +318,7 @@ services:
       - auth-service
       - team-service
       - mentors-service
+      - matchmaking-service
     networks:
       - hackathon-network
     restart: unless-stopped

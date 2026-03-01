@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package matchmaking.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/matchmaking/v1;matchmakingv1";
+
+import "google/api/annotations.proto";
+import "matchmaking/v1/recommendation.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+service MatchmakingService {
+  rpc RecommendTeams(RecommendTeamsRequest) returns (RecommendTeamsResponse) {
+    option (google.api.http) = {
+      get: "/v1/hackathons/{hackathon_id}/matchmaking/teams"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get team recommendations for participant"
+      description: "Returns a ranked list of teams that match the participant's skills and desired roles. Available during REGISTRATION and RUNNING stages."
+      tags: "Matchmaking"
+    };
+  }
+
+  rpc RecommendCandidates(RecommendCandidatesRequest) returns (RecommendCandidatesResponse) {
+    option (google.api.http) = {
+      get: "/v1/hackathons/{hackathon_id}/matchmaking/candidates"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get candidate recommendations for team captain"
+      description: "Returns a ranked list of participants that match the team's vacancy requirements. Available during REGISTRATION stage."
+      tags: "Matchmaking"
+    };
+  }
+}
+
+message RecommendTeamsRequest {
+  string hackathon_id = 1;
+  int32 limit = 2;
+}
+
+message RecommendTeamsResponse {
+  repeated TeamRecommendation recommendations = 1;
+}
+
+message RecommendCandidatesRequest {
+  string hackathon_id = 1;
+  string team_id = 2;
+  string vacancy_id = 3;
+  int32 limit = 4;
+}
+
+message RecommendCandidatesResponse {
+  repeated CandidateRecommendation recommendations = 1;
+}

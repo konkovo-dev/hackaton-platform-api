@@ -6,6 +6,7 @@ import (
 
 	"github.com/belikoooova/hackaton-platform-api/internal/team-service/domain/entity"
 	"github.com/belikoooova/hackaton-platform-api/internal/team-service/repository/postgres/queries"
+	"github.com/belikoooova/hackaton-platform-api/pkg/outbox"
 	"github.com/belikoooova/hackaton-platform-api/pkg/pgxutil"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -192,5 +193,34 @@ func (r *JoinRequestRepository) CancelCompeting(ctx context.Context, userID, hac
 		return fmt.Errorf("failed to cancel competing join requests: %w", pgxutil.MapDBError(err))
 	}
 
+	return nil
+}
+
+type OutboxRepository struct {
+	*pgxutil.BaseRepository[*queries.Queries, queries.DBTX]
+}
+
+func NewOutboxRepository(tx pgx.Tx) *OutboxRepository {
+	return &OutboxRepository{
+		BaseRepository: pgxutil.NewBaseRepository[*queries.Queries, queries.DBTX](tx, queries.New),
+	}
+}
+
+func (r *OutboxRepository) Create(ctx context.Context, event *outbox.Event) error {
+	err := r.Queries().CreateOutboxEvent(ctx, queries.CreateOutboxEventParams{
+		ID:            event.ID,
+		AggregateID:   event.AggregateID,
+		AggregateType: event.AggregateType,
+		EventType:     event.EventType,
+		Payload:       event.Payload,
+		Status:        string(event.Status),
+		AttemptCount:  int32(event.AttemptCount),
+		LastError:     event.LastError,
+		CreatedAt:     event.CreatedAt,
+		UpdatedAt:     event.UpdatedAt,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create outbox event: %w", pgxutil.MapDBError(err))
+	}
 	return nil
 }

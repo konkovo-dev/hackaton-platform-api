@@ -3,6 +3,8 @@ sql:
   - schema:
       - "migrations/00001_init.sql"
       - "migrations/00002_skills_contacts_visibility.sql"
+      - "migrations/00003_skill_catalog_with_ids.sql"
+      - "migrations/00004_add_outbox.sql"
     queries: "repository/postgres/queries"
     engine: "postgresql"
     gen:
