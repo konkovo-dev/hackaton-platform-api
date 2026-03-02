@@ -267,7 +267,7 @@ func TestCreateSubmission_AsIndividual_ShouldSucceed(t *testing.T) {
 
 	var ownerKind, ownerID, createdByUserID string
 	var isFinal bool
-	err := tc.DB.QueryRow(context.Background(),
+	err := tc.SubmissionDB.QueryRow(context.Background(),
 		fmt.Sprintf("SELECT owner_kind, owner_id, created_by_user_id, is_final FROM %s.submissions WHERE id = $1", tc.SubmissionDBName),
 		submissionID,
 	).Scan(&ownerKind, &ownerID, &createdByUserID, &isFinal)
@@ -292,7 +292,7 @@ func TestUpdateSubmission_AsCreator_ShouldUpdateDescription(t *testing.T) {
 	updateSubmission(tc, hackathonID, submissionID, participant, "Updated description with more details")
 
 	var description string
-	err := tc.DB.QueryRow(context.Background(),
+	err := tc.SubmissionDB.QueryRow(context.Background(),
 		fmt.Sprintf("SELECT description FROM %s.submissions WHERE id = $1", tc.SubmissionDBName),
 		submissionID,
 	).Scan(&description)
@@ -314,7 +314,7 @@ func TestUpdateSubmission_AsTeamMember_ShouldSucceed(t *testing.T) {
 	updateSubmission(tc, hackathonID, submissionID, member, "Updated by team member")
 
 	var description, createdByUserID string
-	err := tc.DB.QueryRow(context.Background(),
+	err := tc.SubmissionDB.QueryRow(context.Background(),
 		fmt.Sprintf("SELECT description, created_by_user_id FROM %s.submissions WHERE id = $1", tc.SubmissionDBName),
 		submissionID,
 	).Scan(&description, &createdByUserID)
@@ -405,7 +405,7 @@ func TestCreateSubmission_AsTeamMember_ShouldSucceed(t *testing.T) {
 	submissionID := createSubmission(tc, hackathonID, member, "Team Solution", "Created by team member")
 
 	var ownerKind, ownerID, createdByUserID string
-	err := tc.DB.QueryRow(context.Background(),
+	err := tc.SubmissionDB.QueryRow(context.Background(),
 		fmt.Sprintf("SELECT owner_kind, owner_id, created_by_user_id FROM %s.submissions WHERE id = $1", tc.SubmissionDBName),
 		submissionID,
 	).Scan(&ownerKind, &ownerID, &createdByUserID)
@@ -431,13 +431,13 @@ func TestSelectFinalSubmission_AsCaptain_ShouldSucceed(t *testing.T) {
 	selectFinalSubmission(tc, hackathonID, submissionID1, captain)
 
 	var isFinal1, isFinal2 bool
-	err := tc.DB.QueryRow(context.Background(),
+	err := tc.SubmissionDB.QueryRow(context.Background(),
 		fmt.Sprintf("SELECT is_final FROM %s.submissions WHERE id = $1", tc.SubmissionDBName),
 		submissionID1,
 	).Scan(&isFinal1)
 	require.NoError(t, err)
 
-	err = tc.DB.QueryRow(context.Background(),
+	err = tc.SubmissionDB.QueryRow(context.Background(),
 		fmt.Sprintf("SELECT is_final FROM %s.submissions WHERE id = $1", tc.SubmissionDBName),
 		submissionID2,
 	).Scan(&isFinal2)
@@ -528,17 +528,17 @@ func TestCreateMultipleSubmissions_ShouldMarkLatestAsFinal(t *testing.T) {
 	submissionID3 := createSubmission(tc, hackathonID, participant, "Solution v3", "Third version")
 
 	var isFinal1, isFinal2, isFinal3 bool
-	tc.DB.QueryRow(context.Background(),
+	tc.SubmissionDB.QueryRow(context.Background(),
 		fmt.Sprintf("SELECT is_final FROM %s.submissions WHERE id = $1", tc.SubmissionDBName),
 		submissionID1,
 	).Scan(&isFinal1)
 
-	tc.DB.QueryRow(context.Background(),
+	tc.SubmissionDB.QueryRow(context.Background(),
 		fmt.Sprintf("SELECT is_final FROM %s.submissions WHERE id = $1", tc.SubmissionDBName),
 		submissionID2,
 	).Scan(&isFinal2)
 
-	tc.DB.QueryRow(context.Background(),
+	tc.SubmissionDB.QueryRow(context.Background(),
 		fmt.Sprintf("SELECT is_final FROM %s.submissions WHERE id = $1", tc.SubmissionDBName),
 		submissionID3,
 	).Scan(&isFinal3)
@@ -565,17 +565,17 @@ func TestSelectFinalSubmission_ShouldUnmarkPrevious(t *testing.T) {
 	selectFinalSubmission(tc, hackathonID, submissionID2, participant)
 
 	var isFinal1, isFinal2, isFinal3 bool
-	tc.DB.QueryRow(context.Background(),
+	tc.SubmissionDB.QueryRow(context.Background(),
 		fmt.Sprintf("SELECT is_final FROM %s.submissions WHERE id = $1", tc.SubmissionDBName),
 		submissionID1,
 	).Scan(&isFinal1)
 
-	tc.DB.QueryRow(context.Background(),
+	tc.SubmissionDB.QueryRow(context.Background(),
 		fmt.Sprintf("SELECT is_final FROM %s.submissions WHERE id = $1", tc.SubmissionDBName),
 		submissionID2,
 	).Scan(&isFinal2)
 
-	tc.DB.QueryRow(context.Background(),
+	tc.SubmissionDB.QueryRow(context.Background(),
 		fmt.Sprintf("SELECT is_final FROM %s.submissions WHERE id = $1", tc.SubmissionDBName),
 		submissionID3,
 	).Scan(&isFinal3)
@@ -629,7 +629,7 @@ func TestCreateSubmissionUpload_ShouldReturnPresignedURL(t *testing.T) {
 	assert.Contains(t, uploadURL, "X-Amz-Algorithm", "Upload URL should be pre-signed S3 URL")
 
 	var uploadStatus string
-	err := tc.DB.QueryRow(context.Background(),
+	err := tc.SubmissionDB.QueryRow(context.Background(),
 		fmt.Sprintf("SELECT upload_status FROM %s.submission_files WHERE id = $1", tc.SubmissionDBName),
 		fileID,
 	).Scan(&uploadStatus)
@@ -657,7 +657,7 @@ func TestUploadFile_ToMinIO_ShouldSucceed(t *testing.T) {
 
 	// Get storage_key from DB
 	var storageKey string
-	err := tc.DB.QueryRow(context.Background(),
+	err := tc.SubmissionDB.QueryRow(context.Background(),
 		fmt.Sprintf("SELECT storage_key FROM %s.submission_files WHERE id = $1", tc.SubmissionDBName),
 		fileID,
 	).Scan(&storageKey)
@@ -675,7 +675,7 @@ func TestUploadFile_ToMinIO_ShouldSucceed(t *testing.T) {
 
 	var uploadStatus string
 	var completedAt *time.Time
-	err = tc.DB.QueryRow(context.Background(),
+	err = tc.SubmissionDB.QueryRow(context.Background(),
 		fmt.Sprintf("SELECT upload_status, completed_at FROM %s.submission_files WHERE id = $1", tc.SubmissionDBName),
 		fileID,
 	).Scan(&uploadStatus, &completedAt)
@@ -699,7 +699,7 @@ func TestCompleteSubmissionUpload_ShouldMarkCompleted(t *testing.T) {
 	fileID := uploadFileToSubmission(tc, hackathonID, submissionID, participant, "document.pdf", testContent, "application/pdf")
 
 	var uploadStatus string
-	err := tc.DB.QueryRow(context.Background(),
+	err := tc.SubmissionDB.QueryRow(context.Background(),
 		fmt.Sprintf("SELECT upload_status FROM %s.submission_files WHERE id = $1", tc.SubmissionDBName),
 		fileID,
 	).Scan(&uploadStatus)
@@ -741,7 +741,7 @@ func TestDownloadFile_FromMinIO_ShouldSucceed(t *testing.T) {
 
 	// Get storage_key from DB
 	var storageKey string
-	err := tc.DB.QueryRow(context.Background(),
+	err := tc.SubmissionDB.QueryRow(context.Background(),
 		fmt.Sprintf("SELECT storage_key FROM %s.submission_files WHERE id = $1", tc.SubmissionDBName),
 		fileID,
 	).Scan(&storageKey)
@@ -778,7 +778,7 @@ func TestCompleteSubmissionUpload_WithoutS3File_ShouldFail(t *testing.T) {
 	time.Sleep(200 * time.Millisecond)
 
 	var uploadStatus string
-	err := tc.DB.QueryRow(context.Background(),
+	err := tc.SubmissionDB.QueryRow(context.Background(),
 		fmt.Sprintf("SELECT upload_status FROM %s.submission_files WHERE id = $1", tc.SubmissionDBName),
 		fileID,
 	).Scan(&uploadStatus)
@@ -1076,17 +1076,17 @@ func TestTeamSubmissionWorkflow_MultipleMembersUpload(t *testing.T) {
 	submissionID3 := createSubmission(tc, hackathonID, member2, "Final Version", "By member2")
 
 	var createdBy1, createdBy2, createdBy3 string
-	tc.DB.QueryRow(context.Background(),
+	tc.SubmissionDB.QueryRow(context.Background(),
 		fmt.Sprintf("SELECT created_by_user_id FROM %s.submissions WHERE id = $1", tc.SubmissionDBName),
 		submissionID1,
 	).Scan(&createdBy1)
 
-	tc.DB.QueryRow(context.Background(),
+	tc.SubmissionDB.QueryRow(context.Background(),
 		fmt.Sprintf("SELECT created_by_user_id FROM %s.submissions WHERE id = $1", tc.SubmissionDBName),
 		submissionID2,
 	).Scan(&createdBy2)
 
-	tc.DB.QueryRow(context.Background(),
+	tc.SubmissionDB.QueryRow(context.Background(),
 		fmt.Sprintf("SELECT created_by_user_id FROM %s.submissions WHERE id = $1", tc.SubmissionDBName),
 		submissionID3,
 	).Scan(&createdBy3)
@@ -1406,7 +1406,7 @@ func uploadFileToSubmission(tc *TestContext, hackathonID, submissionID string, u
 
 	// Get storage_key from DB
 	var storageKey string
-	err := tc.DB.QueryRow(context.Background(),
+	err := tc.SubmissionDB.QueryRow(context.Background(),
 		fmt.Sprintf("SELECT storage_key FROM %s.submission_files WHERE id = $1", tc.SubmissionDBName),
 		fileID,
 	).Scan(&storageKey)
@@ -1423,7 +1423,7 @@ func uploadFileToSubmission(tc *TestContext, hackathonID, submissionID string, u
 
 // assignJudgeRole assigns judge role to a user in a hackathon
 func assignJudgeRole(tc *TestContext, hackathonID string, judge *UserCredentials) {
-	_, err := tc.DB.Exec(context.Background(),
+	_, err := tc.ParticipationDB.Exec(context.Background(),
 		fmt.Sprintf("INSERT INTO %s (hackathon_id, user_id, role) VALUES ($1, $2, 'judge') ON CONFLICT DO NOTHING",
 			tc.ParticipationDBName),
 		hackathonID, judge.UserID,
@@ -1435,7 +1435,7 @@ func assignJudgeRole(tc *TestContext, hackathonID string, judge *UserCredentials
 
 // assignOrganizerRole assigns organizer role to a user in a hackathon
 func assignOrganizerRole(tc *TestContext, hackathonID string, organizer *UserCredentials) {
-	_, err := tc.DB.Exec(context.Background(),
+	_, err := tc.ParticipationDB.Exec(context.Background(),
 		fmt.Sprintf("INSERT INTO %s (hackathon_id, user_id, role) VALUES ($1, $2, 'organizer') ON CONFLICT DO NOTHING",
 			tc.ParticipationDBName),
 		hackathonID, organizer.UserID,

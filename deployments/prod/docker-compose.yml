@@ -61,9 +61,11 @@ services:
       CENTRIFUGO_ADMIN_PASSWORD: ${CENTRIFUGO_ADMIN_PASSWORD}
       CENTRIFUGO_ADMIN_SECRET: ${CENTRIFUGO_ADMIN_SECRET}
       CENTRIFUGO_ALLOWED_ORIGINS: ${CENTRIFUGO_ALLOWED_ORIGINS}
+    volumes:
+      - ./centrifugo-config.json:/centrifugo/config.json:ro
     networks:
       - hackathon-network
-    command: centrifugo --config=/dev/null --port=8000 --health
+    command: centrifugo --config=/centrifugo/config.json --port=8000 --health
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8000/health"]
       interval: 5s

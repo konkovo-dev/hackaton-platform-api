@@ -276,7 +276,7 @@ func TestMatchmakingSync_UserSkillsUpdate_ShouldSyncToReadModel(t *testing.T) {
 
 	var catalogSkillIDs []string
 	var customSkillNames []string
-	err := tc.DB.QueryRow(context.Background(),
+	err := tc.MatchmakingDB.QueryRow(context.Background(),
 		fmt.Sprintf("SELECT catalog_skill_ids, custom_skill_names FROM %s.users WHERE user_id = $1", tc.MatchmakingDBName),
 		user.UserID,
 	).Scan(&catalogSkillIDs, &customSkillNames)
@@ -301,7 +301,7 @@ func TestMatchmakingSync_ParticipationRegistered_ShouldSyncToReadModel(t *testin
 
 	var status string
 	var motivationText string
-	err := tc.DB.QueryRow(context.Background(),
+	err := tc.MatchmakingDB.QueryRow(context.Background(),
 		fmt.Sprintf("SELECT status, motivation_text FROM %s.participations WHERE hackathon_id = $1 AND user_id = $2", tc.MatchmakingDBName),
 		hackathonID, participant.UserID,
 	).Scan(&status, &motivationText)
@@ -326,7 +326,7 @@ func TestMatchmakingSync_TeamCreated_ShouldSyncToReadModel(t *testing.T) {
 	var name string
 	var description string
 	var isJoinable bool
-	err := tc.DB.QueryRow(context.Background(),
+	err := tc.MatchmakingDB.QueryRow(context.Background(),
 		fmt.Sprintf("SELECT name, description, is_joinable FROM %s.teams WHERE team_id = $1", tc.MatchmakingDBName),
 		teamID,
 	).Scan(&name, &description, &isJoinable)
@@ -352,7 +352,7 @@ func TestMatchmakingSync_VacancyCreated_ShouldSyncToReadModel(t *testing.T) {
 
 	var slotsOpen int32
 	var description string
-	err := tc.DB.QueryRow(context.Background(),
+	err := tc.MatchmakingDB.QueryRow(context.Background(),
 		fmt.Sprintf("SELECT slots_open, description FROM %s.vacancies WHERE vacancy_id = $1", tc.MatchmakingDBName),
 		vacancyID,
 	).Scan(&slotsOpen, &description)
@@ -382,7 +382,7 @@ func TestMatchmakingScoring_SkillsMatch_ShouldRankCorrectly(t *testing.T) {
 	skillC := uuid.New()
 	skillD := uuid.New()
 
-	_, err := tc.DB.Exec(context.Background(),
+	_, err := tc.MatchmakingDB.Exec(context.Background(),
 		fmt.Sprintf("UPDATE %s.users SET catalog_skill_ids = $1 WHERE user_id = $2", tc.MatchmakingDBName),
 		[]uuid.UUID{skillA, skillB, skillC}, participant.UserID,
 	)
@@ -398,13 +398,13 @@ func TestMatchmakingScoring_SkillsMatch_ShouldRankCorrectly(t *testing.T) {
 	tc.WaitForMatchmakingVacancySync(vacancy1ID)
 	tc.WaitForMatchmakingVacancySync(vacancy2ID)
 
-	_, err = tc.DB.Exec(context.Background(),
+	_, err = tc.MatchmakingDB.Exec(context.Background(),
 		fmt.Sprintf("UPDATE %s.vacancies SET desired_skill_ids = $1 WHERE vacancy_id = $2", tc.MatchmakingDBName),
 		[]uuid.UUID{skillA, skillB}, vacancy1ID,
 	)
 	require.NoError(t, err)
 
-	_, err = tc.DB.Exec(context.Background(),
+	_, err = tc.MatchmakingDB.Exec(context.Background(),
 		fmt.Sprintf("UPDATE %s.vacancies SET desired_skill_ids = $1 WHERE vacancy_id = $2", tc.MatchmakingDBName),
 		[]uuid.UUID{skillD}, vacancy2ID,
 	)
@@ -449,7 +449,7 @@ func TestMatchmakingScoring_RolesMatch_ShouldRankCorrectly(t *testing.T) {
 	roleB := uuid.New()
 	roleC := uuid.New()
 
-	_, err := tc.DB.Exec(context.Background(),
+	_, err := tc.MatchmakingDB.Exec(context.Background(),
 		fmt.Sprintf("UPDATE %s.participations SET wished_role_ids = $1 WHERE hackathon_id = $2 AND user_id = $3", tc.MatchmakingDBName),
 		[]uuid.UUID{roleA, roleB}, hackathonID, participant.UserID,
 	)
@@ -465,13 +465,13 @@ func TestMatchmakingScoring_RolesMatch_ShouldRankCorrectly(t *testing.T) {
 	tc.WaitForMatchmakingVacancySync(vacancy1ID)
 	tc.WaitForMatchmakingVacancySync(vacancy2ID)
 
-	_, err = tc.DB.Exec(context.Background(),
+	_, err = tc.MatchmakingDB.Exec(context.Background(),
 		fmt.Sprintf("UPDATE %s.vacancies SET desired_role_ids = $1 WHERE vacancy_id = $2", tc.MatchmakingDBName),
 		[]uuid.UUID{roleA, roleB}, vacancy1ID,
 	)
 	require.NoError(t, err)
 
-	_, err = tc.DB.Exec(context.Background(),
+	_, err = tc.MatchmakingDB.Exec(context.Background(),
 		fmt.Sprintf("UPDATE %s.vacancies SET desired_role_ids = $1 WHERE vacancy_id = $2", tc.MatchmakingDBName),
 		[]uuid.UUID{roleC}, vacancy2ID,
 	)
@@ -509,7 +509,7 @@ func TestMatchmakingScoring_CustomSkills_ShouldMatchInText(t *testing.T) {
 	tc.WaitForMatchmakingParticipationSync(hackathonID, participant.UserID)
 	tc.WaitForMatchmakingParticipationSync(hackathonID, captain.UserID)
 
-	_, err := tc.DB.Exec(context.Background(),
+	_, err := tc.MatchmakingDB.Exec(context.Background(),
 		fmt.Sprintf("UPDATE %s.users SET custom_skill_names = $1 WHERE user_id = $2", tc.MatchmakingDBName),
 		[]string{"React", "TypeScript"}, participant.UserID,
 	)
@@ -521,7 +521,7 @@ func TestMatchmakingScoring_CustomSkills_ShouldMatchInText(t *testing.T) {
 	vacancyID := createVacancy(tc, hackathonID, teamID, captain, 2)
 	tc.WaitForMatchmakingVacancySync(vacancyID)
 
-	_, err = tc.DB.Exec(context.Background(),
+	_, err = tc.MatchmakingDB.Exec(context.Background(),
 		fmt.Sprintf("UPDATE %s.teams SET description = $1 WHERE team_id = $2", tc.MatchmakingDBName),
 		"Looking for React developer with TypeScript experience", teamID,
 	)
@@ -573,13 +573,13 @@ func TestMatchmakingScoring_CombinedWeights_ShouldCalculateCorrectly(t *testing.
 	skillB := uuid.New()
 	roleA := uuid.New()
 
-	_, err := tc.DB.Exec(context.Background(),
+	_, err := tc.MatchmakingDB.Exec(context.Background(),
 		fmt.Sprintf("UPDATE %s.users SET catalog_skill_ids = $1, custom_skill_names = $2 WHERE user_id = $3", tc.MatchmakingDBName),
 		[]uuid.UUID{skillA, skillB}, []string{"Docker"}, participant.UserID,
 	)
 	require.NoError(t, err)
 
-	_, err = tc.DB.Exec(context.Background(),
+	_, err = tc.MatchmakingDB.Exec(context.Background(),
 		fmt.Sprintf("UPDATE %s.participations SET wished_role_ids = $1 WHERE hackathon_id = $2 AND user_id = $3", tc.MatchmakingDBName),
 		[]uuid.UUID{roleA}, hackathonID, participant.UserID,
 	)
@@ -591,7 +591,7 @@ func TestMatchmakingScoring_CombinedWeights_ShouldCalculateCorrectly(t *testing.
 	vacancyID := createVacancy(tc, hackathonID, teamID, captain, 2)
 	tc.WaitForMatchmakingVacancySync(vacancyID)
 
-	_, err = tc.DB.Exec(context.Background(),
+	_, err = tc.MatchmakingDB.Exec(context.Background(),
 		fmt.Sprintf("UPDATE %s.vacancies SET desired_skill_ids = $1, desired_role_ids = $2, description = $3 WHERE vacancy_id = $4", tc.MatchmakingDBName),
 		[]uuid.UUID{skillA, skillB}, []uuid.UUID{roleA}, "Need Docker expert", vacancyID,
 	)
@@ -647,13 +647,13 @@ func TestMatchmakingScoring_CandidateSkillsMatch_ShouldRankCorrectly(t *testing.
 	skillB := uuid.New()
 	skillC := uuid.New()
 
-	_, err := tc.DB.Exec(context.Background(),
+	_, err := tc.MatchmakingDB.Exec(context.Background(),
 		fmt.Sprintf("UPDATE %s.users SET catalog_skill_ids = $1 WHERE user_id = $2", tc.MatchmakingDBName),
 		[]uuid.UUID{skillA, skillB}, candidate1.UserID,
 	)
 	require.NoError(t, err)
 
-	_, err = tc.DB.Exec(context.Background(),
+	_, err = tc.MatchmakingDB.Exec(context.Background(),
 		fmt.Sprintf("UPDATE %s.users SET catalog_skill_ids = $1 WHERE user_id = $2", tc.MatchmakingDBName),
 		[]uuid.UUID{skillC}, candidate2.UserID,
 	)
@@ -665,7 +665,7 @@ func TestMatchmakingScoring_CandidateSkillsMatch_ShouldRankCorrectly(t *testing.
 	vacancyID := createVacancy(tc, hackathonID, teamID, captain, 2)
 	tc.WaitForMatchmakingVacancySync(vacancyID)
 
-	_, err = tc.DB.Exec(context.Background(),
+	_, err = tc.MatchmakingDB.Exec(context.Background(),
 		fmt.Sprintf("UPDATE %s.vacancies SET desired_skill_ids = $1 WHERE vacancy_id = $2", tc.MatchmakingDBName),
 		[]uuid.UUID{skillA, skillB}, vacancyID,
 	)
@@ -710,13 +710,13 @@ func TestMatchmakingScoring_CandidateRolesMatch_ShouldRankCorrectly(t *testing.T
 	roleB := uuid.New()
 	roleC := uuid.New()
 
-	_, err := tc.DB.Exec(context.Background(),
+	_, err := tc.MatchmakingDB.Exec(context.Background(),
 		fmt.Sprintf("UPDATE %s.participations SET wished_role_ids = $1 WHERE hackathon_id = $2 AND user_id = $3", tc.MatchmakingDBName),
 		[]uuid.UUID{roleA, roleB}, hackathonID, candidate1.UserID,
 	)
 	require.NoError(t, err)
 
-	_, err = tc.DB.Exec(context.Background(),
+	_, err = tc.MatchmakingDB.Exec(context.Background(),
 		fmt.Sprintf("UPDATE %s.participations SET wished_role_ids = $1 WHERE hackathon_id = $2 AND user_id = $3", tc.MatchmakingDBName),
 		[]uuid.UUID{roleC}, hackathonID, candidate2.UserID,
 	)
@@ -728,7 +728,7 @@ func TestMatchmakingScoring_CandidateRolesMatch_ShouldRankCorrectly(t *testing.T
 	vacancyID := createVacancy(tc, hackathonID, teamID, captain, 2)
 	tc.WaitForMatchmakingVacancySync(vacancyID)
 
-	_, err = tc.DB.Exec(context.Background(),
+	_, err = tc.MatchmakingDB.Exec(context.Background(),
 		fmt.Sprintf("UPDATE %s.vacancies SET desired_role_ids = $1 WHERE vacancy_id = $2", tc.MatchmakingDBName),
 		[]uuid.UUID{roleA, roleB}, vacancyID,
 	)
@@ -766,13 +766,13 @@ func TestMatchmakingScoring_CandidateCustomSkills_ShouldMatchInText(t *testing.T
 	tc.WaitForMatchmakingParticipationSync(hackathonID, captain.UserID)
 	tc.WaitForMatchmakingParticipationSync(hackathonID, candidate.UserID)
 
-	_, err := tc.DB.Exec(context.Background(),
+	_, err := tc.MatchmakingDB.Exec(context.Background(),
 		fmt.Sprintf("UPDATE %s.users SET custom_skill_names = $1 WHERE user_id = $2", tc.MatchmakingDBName),
 		[]string{"Kubernetes", "Microservices"}, candidate.UserID,
 	)
 	require.NoError(t, err)
 
-	_, err = tc.DB.Exec(context.Background(),
+	_, err = tc.MatchmakingDB.Exec(context.Background(),
 		fmt.Sprintf("UPDATE %s.participations SET motivation_text = $1 WHERE hackathon_id = $2 AND user_id = $3", tc.MatchmakingDBName),
 		"I have experience with cloud-native architectures and distributed systems", candidate.UserID, hackathonID,
 	)
@@ -784,7 +784,7 @@ func TestMatchmakingScoring_CandidateCustomSkills_ShouldMatchInText(t *testing.T
 	vacancyID := createVacancy(tc, hackathonID, teamID, captain, 2)
 	tc.WaitForMatchmakingVacancySync(vacancyID)
 
-	_, err = tc.DB.Exec(context.Background(),
+	_, err = tc.MatchmakingDB.Exec(context.Background(),
 		fmt.Sprintf("UPDATE %s.vacancies SET description = $1 WHERE vacancy_id = $2", tc.MatchmakingDBName),
 		"Looking for backend developer with Kubernetes and microservices experience", vacancyID,
 	)

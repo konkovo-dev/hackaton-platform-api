@@ -502,7 +502,8 @@ func TestListUsersWithFilterSkills(t *testing.T) {
 	resp, body := tc.DoAuthenticatedRequest("PUT", "/v1/users/me/skills", user2.AccessToken, updateSkills)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to update skills: %s", string(body))
 
-	time.Sleep(100 * time.Millisecond)
+	// Wait longer for search index to update (eventual consistency)
+	time.Sleep(2 * time.Second)
 
 	reqBody := map[string]interface{}{
 		"query": map[string]interface{}{
@@ -518,28 +519,53 @@ func TestListUsersWithFilterSkills(t *testing.T) {
 				},
 			},
 			"page": map[string]interface{}{
-				"page_size": 20,
+				"page_size": 200, // Increased page size
 			},
 		},
 		"include_skills": true,
 	}
 
-	resp, body = tc.DoAuthenticatedRequest("POST", "/v1/users/list", user1.AccessToken, reqBody)
-	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to filter by skills: %s", string(body))
-
-	data := tc.ParseJSON(body)
-	users, ok := data["users"].([]interface{})
-	assert.True(t, ok, "Users array should be present")
-
+	// Retry search with exponential backoff (eventual consistency)
 	found := false
-	for _, u := range users {
-		user := u.(map[string]interface{})
-		userObj := user["user"].(map[string]interface{})
-		if userObj["userId"] == user2.UserID {
-			found = true
+	maxAttempts := 10
+	for attempt := 0; attempt < maxAttempts; attempt++ {
+		if attempt > 0 {
+			time.Sleep(time.Duration(200*attempt) * time.Millisecond)
+		}
+
+		resp, body = tc.DoAuthenticatedRequest("POST", "/v1/users/list", user1.AccessToken, reqBody)
+		require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to filter by skills: %s", string(body))
+
+		data := tc.ParseJSON(body)
+		users, ok := data["users"].([]interface{})
+		assert.True(t, ok, "Users array should be present")
+
+		if attempt == 0 || attempt == maxAttempts-1 {
+			t.Logf("Attempt %d: Found %d users in response", attempt+1, len(users))
+			if len(users) > 0 {
+				t.Logf("First user: %+v", users[0])
+			}
+		}
+
+		for _, u := range users {
+			user := u.(map[string]interface{})
+			userObj := user["user"].(map[string]interface{})
+			if userObj["userId"] == user2.UserID {
+				found = true
+				break
+			}
+		}
+
+		if found {
+			t.Logf("Found user with Go skill after %d attempts", attempt+1)
 			break
 		}
 	}
+
+	if !found {
+		t.Logf("User2 ID we're looking for: %s", user2.UserID)
+	}
+
 	assert.True(t, found, "Should find user with Go skill")
 }
 

@@ -82,8 +82,8 @@ func TestSendMessage_AsIndividualParticipant_ShouldCreateUserTicket(t *testing.T
 	var ownerKind string
 	var ownerID string
 	var status string
-	err := tc.DB.QueryRow(context.Background(),
-		"SELECT owner_kind, owner_id, status FROM mentors.tickets WHERE id = $1",
+	err := tc.MentorsDB.QueryRow(context.Background(),
+		fmt.Sprintf("SELECT owner_kind, owner_id, status FROM %s.tickets WHERE id = $1", tc.MentorsDBName),
 		ticketID,
 	).Scan(&ownerKind, &ownerID, &status)
 	require.NoError(t, err)
@@ -94,7 +94,7 @@ func TestSendMessage_AsIndividualParticipant_ShouldCreateUserTicket(t *testing.T
 
 	var messageText string
 	var authorRole string
-	err = tc.DB.QueryRow(context.Background(),
+	err = tc.MentorsDB.QueryRow(context.Background(),
 		"SELECT text, author_role FROM mentors.messages WHERE id = $1",
 		messageID,
 	).Scan(&messageText, &authorRole)
@@ -104,7 +104,7 @@ func TestSendMessage_AsIndividualParticipant_ShouldCreateUserTicket(t *testing.T
 	assert.Equal(t, "participant", authorRole)
 
 	var eventCount int
-	err = tc.DB.QueryRow(context.Background(),
+	err = tc.MentorsDB.QueryRow(context.Background(),
 		"SELECT COUNT(*) FROM mentors.outbox_events WHERE aggregate_id = $1 AND event_type = 'message.created'",
 		messageID,
 	).Scan(&eventCount)
@@ -151,7 +151,7 @@ func TestSendMessage_AsTeamMember_ShouldCreateTeamTicket(t *testing.T) {
 	time.Sleep(500 * time.Millisecond)
 
 	var memberCount int
-	err := tc.DB.QueryRow(context.Background(),
+	err := tc.TeamDB.QueryRow(context.Background(),
 		"SELECT COUNT(*) FROM team.memberships WHERE team_id = $1 AND user_id = $2",
 		teamID, member.UserID,
 	).Scan(&memberCount)
@@ -193,8 +193,8 @@ func TestSendMessage_AsTeamMember_ShouldCreateTeamTicket(t *testing.T) {
 	var ownerKind string
 	var ownerID string
 	var authorUserID string
-	err = tc.DB.QueryRow(context.Background(),
-		"SELECT t.owner_kind, t.owner_id, m.author_user_id FROM mentors.tickets t JOIN mentors.messages m ON t.id = m.ticket_id WHERE t.id = $1 AND m.id = $2",
+	err = tc.MentorsDB.QueryRow(context.Background(),
+		fmt.Sprintf("SELECT t.owner_kind, t.owner_id, m.author_user_id FROM %s.tickets t JOIN %s.messages m ON t.id = m.ticket_id WHERE t.id = $1 AND m.id = $2", tc.MentorsDBName, tc.MentorsDBName),
 		ticketID, messageID,
 	).Scan(&ownerKind, &ownerID, &authorUserID)
 	require.NoError(t, err)
@@ -245,8 +245,8 @@ func TestSendMessage_SecondMessageToOpenTicket_ShouldReuseTicket(t *testing.T) {
 	assert.Equal(t, firstTicketID, secondTicketID, "Should reuse the same OPEN ticket")
 
 	var openTicketCount int
-	err := tc.DB.QueryRow(context.Background(),
-		"SELECT COUNT(*) FROM mentors.tickets WHERE hackathon_id = $1 AND owner_id = $2 AND status = 'open'",
+	err := tc.MentorsDB.QueryRow(context.Background(),
+		fmt.Sprintf("SELECT COUNT(*) FROM %s.tickets WHERE hackathon_id = $1 AND owner_id = $2 AND status = 'open'", tc.MentorsDBName),
 		hackathonID, participant.UserID,
 	).Scan(&openTicketCount)
 	require.NoError(t, err)
@@ -254,7 +254,7 @@ func TestSendMessage_SecondMessageToOpenTicket_ShouldReuseTicket(t *testing.T) {
 	assert.Equal(t, 1, openTicketCount, "Should have exactly 1 OPEN ticket")
 
 	var messageCount int
-	err = tc.DB.QueryRow(context.Background(),
+	err = tc.MentorsDB.QueryRow(context.Background(),
 		"SELECT COUNT(*) FROM mentors.messages WHERE ticket_id = $1",
 		firstTicketID,
 	).Scan(&messageCount)
@@ -330,7 +330,7 @@ func TestSendMessage_WithClientMessageID_ShouldBeIdempotent(t *testing.T) {
 	assert.Equal(t, ticketID1, ticketID2, "Should return same ticket ID")
 
 	var messageCount int
-	err := tc.DB.QueryRow(context.Background(),
+	err := tc.MentorsDB.QueryRow(context.Background(),
 		"SELECT COUNT(*) FROM mentors.messages WHERE client_message_id = $1",
 		clientMsgID,
 	).Scan(&messageCount)
@@ -638,8 +638,8 @@ func TestClaimTicket_AsMentor_ShouldAssignTicket(t *testing.T) {
 	assert.NotEmpty(t, data["assignedAt"])
 
 	var assignedMentorID string
-	err := tc.DB.QueryRow(context.Background(),
-		"SELECT assigned_mentor_user_id FROM mentors.tickets WHERE id = $1",
+	err := tc.MentorsDB.QueryRow(context.Background(),
+		fmt.Sprintf("SELECT assigned_mentor_user_id FROM %s.tickets WHERE id = $1", tc.MentorsDBName),
 		ticketID,
 	).Scan(&assignedMentorID)
 	require.NoError(t, err)
@@ -647,7 +647,7 @@ func TestClaimTicket_AsMentor_ShouldAssignTicket(t *testing.T) {
 	assert.Equal(t, mentor.UserID, assignedMentorID, "Ticket should be assigned to mentor")
 
 	var eventCount int
-	err = tc.DB.QueryRow(context.Background(),
+	err = tc.MentorsDB.QueryRow(context.Background(),
 		"SELECT COUNT(*) FROM mentors.outbox_events WHERE aggregate_id = $1 AND event_type = 'ticket.assigned'",
 		ticketID,
 	).Scan(&eventCount)
@@ -656,7 +656,7 @@ func TestClaimTicket_AsMentor_ShouldAssignTicket(t *testing.T) {
 
 	// Check system message was created
 	var systemMessageCount int
-	err = tc.DB.QueryRow(context.Background(),
+	err = tc.MentorsDB.QueryRow(context.Background(),
 		"SELECT COUNT(*) FROM mentors.messages WHERE ticket_id = $1 AND author_role = 'system' AND text = 'Mentor joined the chat'",
 		ticketID,
 	).Scan(&systemMessageCount)
@@ -712,8 +712,8 @@ func TestClaimTicket_ParallelClaim_ShouldHaveOnlyOneWinner(t *testing.T) {
 	assert.Equal(t, 1, conflictCount, "Exactly one claim should conflict")
 
 	var assignedMentorID string
-	err := tc.DB.QueryRow(context.Background(),
-		"SELECT assigned_mentor_user_id FROM mentors.tickets WHERE id = $1",
+	err := tc.MentorsDB.QueryRow(context.Background(),
+		fmt.Sprintf("SELECT assigned_mentor_user_id FROM %s.tickets WHERE id = $1", tc.MentorsDBName),
 		ticketID,
 	).Scan(&assignedMentorID)
 	require.NoError(t, err)
@@ -757,8 +757,8 @@ func TestClaimTicket_AlreadyClosed_ShouldFail(t *testing.T) {
 	ticketID := sendMessage(tc, hackathonID, participant, "Need help")
 	time.Sleep(200 * time.Millisecond)
 
-	_, err := tc.DB.Exec(context.Background(),
-		"UPDATE mentors.tickets SET status = 'closed', closed_at = NOW() WHERE id = $1",
+	_, err := tc.MentorsDB.Exec(context.Background(),
+		fmt.Sprintf("UPDATE %s.tickets SET status = 'closed', closed_at = NOW() WHERE id = $1", tc.MentorsDBName),
 		ticketID,
 	)
 	require.NoError(t, err)
@@ -836,7 +836,7 @@ func TestReplyInTicket_AssignedMentor_ShouldSucceed(t *testing.T) {
 	assert.NotEmpty(t, messageID)
 
 	var authorRole string
-	err := tc.DB.QueryRow(context.Background(),
+	err := tc.MentorsDB.QueryRow(context.Background(),
 		"SELECT author_role FROM mentors.messages WHERE id = $1",
 		messageID,
 	).Scan(&authorRole)
@@ -953,7 +953,7 @@ func TestReplyInTicket_WithClientMessageID_ShouldBeIdempotent(t *testing.T) {
 	assert.Equal(t, messageID1, messageID2, "Should return same message ID")
 
 	var messageCount int
-	err := tc.DB.QueryRow(context.Background(),
+	err := tc.MentorsDB.QueryRow(context.Background(),
 		"SELECT COUNT(*) FROM mentors.messages WHERE id = $1",
 		messageID1,
 	).Scan(&messageCount)
@@ -989,8 +989,8 @@ func TestCloseTicket_AsAssignedMentor_ShouldCloseAndCreateSystemMessage(t *testi
 
 	var status string
 	var closedAt *time.Time
-	err := tc.DB.QueryRow(context.Background(),
-		"SELECT status, closed_at FROM mentors.tickets WHERE id = $1",
+	err := tc.MentorsDB.QueryRow(context.Background(),
+		fmt.Sprintf("SELECT status, closed_at FROM %s.tickets WHERE id = $1", tc.MentorsDBName),
 		ticketID,
 	).Scan(&status, &closedAt)
 	require.NoError(t, err)
@@ -1000,7 +1000,7 @@ func TestCloseTicket_AsAssignedMentor_ShouldCloseAndCreateSystemMessage(t *testi
 
 	// Check system message for "Mentor joined the chat" (from ClaimTicket)
 	var mentorJoinedCount int
-	err = tc.DB.QueryRow(context.Background(),
+	err = tc.MentorsDB.QueryRow(context.Background(),
 		"SELECT COUNT(*) FROM mentors.messages WHERE ticket_id = $1 AND author_role = 'system' AND text = 'Mentor joined the chat'",
 		ticketID,
 	).Scan(&mentorJoinedCount)
@@ -1009,7 +1009,7 @@ func TestCloseTicket_AsAssignedMentor_ShouldCloseAndCreateSystemMessage(t *testi
 
 	// Check system message for "Ticket closed" (from CloseTicket)
 	var ticketClosedMsgCount int
-	err = tc.DB.QueryRow(context.Background(),
+	err = tc.MentorsDB.QueryRow(context.Background(),
 		"SELECT COUNT(*) FROM mentors.messages WHERE ticket_id = $1 AND author_role = 'system' AND text = 'Ticket closed'",
 		ticketID,
 	).Scan(&ticketClosedMsgCount)
@@ -1020,7 +1020,7 @@ func TestCloseTicket_AsAssignedMentor_ShouldCloseAndCreateSystemMessage(t *testi
 	messagesResp := getTicketMessages(tc, hackathonID, ticketID, mentor, 10, 0)
 	require.NotNil(t, messagesResp)
 	require.NotNil(t, messagesResp.Messages)
-	
+
 	var systemMessageFound bool
 	for _, msg := range messagesResp.Messages {
 		if msg.AuthorRole == "AUTHOR_ROLE_SYSTEM" && msg.Text == "Ticket closed" {
@@ -1032,7 +1032,7 @@ func TestCloseTicket_AsAssignedMentor_ShouldCloseAndCreateSystemMessage(t *testi
 	assert.True(t, systemMessageFound, "Should find 'Ticket closed' system message in API response")
 
 	var ticketClosedCount int
-	err = tc.DB.QueryRow(context.Background(),
+	err = tc.MentorsDB.QueryRow(context.Background(),
 		"SELECT COUNT(*) FROM mentors.outbox_events WHERE aggregate_id = $1 AND event_type = 'ticket.closed'",
 		ticketID,
 	).Scan(&ticketClosedCount)
@@ -1124,7 +1124,7 @@ func TestCloseTicket_Idempotent_ShouldReturnSuccessOnSecondCall(t *testing.T) {
 		"Second close should be idempotent: %s", string(respBody2))
 
 	var systemMessageCount int
-	err := tc.DB.QueryRow(context.Background(),
+	err := tc.MentorsDB.QueryRow(context.Background(),
 		"SELECT COUNT(*) FROM mentors.messages WHERE ticket_id = $1 AND author_role = 'system' AND text = 'Ticket closed'",
 		ticketID,
 	).Scan(&systemMessageCount)
@@ -1152,7 +1152,7 @@ func TestSystemMessages_ClaimTicket_ShouldHaveNullAuthorUserId(t *testing.T) {
 	messagesResp := getTicketMessages(tc, hackathonID, ticketID, mentor, 10, 0)
 	require.NotNil(t, messagesResp)
 	require.NotNil(t, messagesResp.Messages)
-	
+
 	var systemMessageFound bool
 	for _, msg := range messagesResp.Messages {
 		if msg.AuthorRole == "AUTHOR_ROLE_SYSTEM" && msg.Text == "Mentor joined the chat" {
@@ -1195,7 +1195,7 @@ func TestSystemMessages_AssignTicket_ShouldCreateSystemMessage(t *testing.T) {
 	messagesResp := getTicketMessages(tc, hackathonID, ticketID, mentor, 10, 0)
 	require.NotNil(t, messagesResp)
 	require.NotNil(t, messagesResp.Messages)
-	
+
 	var systemMessageFound bool
 	for _, msg := range messagesResp.Messages {
 		if msg.AuthorRole == "AUTHOR_ROLE_SYSTEM" && msg.Text == "Mentor joined the chat" {
@@ -1232,8 +1232,8 @@ func TestSendMessage_AfterClose_ShouldCreateNewTicket(t *testing.T) {
 	assert.NotEqual(t, firstTicketID, secondTicketID, "Should create new ticket")
 
 	var ticketCount int
-	err := tc.DB.QueryRow(context.Background(),
-		"SELECT COUNT(*) FROM mentors.tickets WHERE hackathon_id = $1 AND owner_id = $2",
+	err := tc.MentorsDB.QueryRow(context.Background(),
+		fmt.Sprintf("SELECT COUNT(*) FROM %s.tickets WHERE hackathon_id = $1 AND owner_id = $2", tc.MentorsDBName),
 		hackathonID, participant.UserID,
 	).Scan(&ticketCount)
 	require.NoError(t, err)
@@ -1241,14 +1241,14 @@ func TestSendMessage_AfterClose_ShouldCreateNewTicket(t *testing.T) {
 	assert.Equal(t, 2, ticketCount, "Should have 2 tickets total")
 
 	var firstStatus, secondStatus string
-	err = tc.DB.QueryRow(context.Background(),
-		"SELECT status FROM mentors.tickets WHERE id = $1",
+	err = tc.MentorsDB.QueryRow(context.Background(),
+		fmt.Sprintf("SELECT status FROM %s.tickets WHERE id = $1", tc.MentorsDBName),
 		firstTicketID,
 	).Scan(&firstStatus)
 	require.NoError(t, err)
 
-	err = tc.DB.QueryRow(context.Background(),
-		"SELECT status FROM mentors.tickets WHERE id = $1",
+	err = tc.MentorsDB.QueryRow(context.Background(),
+		fmt.Sprintf("SELECT status FROM %s.tickets WHERE id = $1", tc.MentorsDBName),
 		secondTicketID,
 	).Scan(&secondStatus)
 	require.NoError(t, err)
@@ -1417,8 +1417,8 @@ func TestInvariant_OnlyOneOpenTicketPerOwner(t *testing.T) {
 	}
 
 	var openTicketCount int
-	err := tc.DB.QueryRow(context.Background(),
-		"SELECT COUNT(*) FROM mentors.tickets WHERE hackathon_id = $1 AND owner_id = $2 AND status = 'open'",
+	err := tc.MentorsDB.QueryRow(context.Background(),
+		fmt.Sprintf("SELECT COUNT(*) FROM %s.tickets WHERE hackathon_id = $1 AND owner_id = $2 AND status = 'open'", tc.MentorsDBName),
 		hackathonID, participant.UserID,
 	).Scan(&openTicketCount)
 	require.NoError(t, err)
@@ -1426,8 +1426,8 @@ func TestInvariant_OnlyOneOpenTicketPerOwner(t *testing.T) {
 	assert.Equal(t, 1, openTicketCount, "Should have exactly 1 OPEN ticket despite 3 messages")
 
 	var messageCount int
-	err = tc.DB.QueryRow(context.Background(),
-		"SELECT COUNT(*) FROM mentors.messages m JOIN mentors.tickets t ON m.ticket_id = t.id WHERE t.hackathon_id = $1 AND t.owner_id = $2",
+	err = tc.MentorsDB.QueryRow(context.Background(),
+		fmt.Sprintf("SELECT COUNT(*) FROM %s.messages m JOIN %s.tickets t ON m.ticket_id = t.id WHERE t.hackathon_id = $1 AND t.owner_id = $2", tc.MentorsDBName, tc.MentorsDBName),
 		hackathonID, participant.UserID,
 	).Scan(&messageCount)
 	require.NoError(t, err)
@@ -1476,8 +1476,8 @@ func TestSendMessage_ParallelFirstMessages_ShouldCreateOnlyOneTicket(t *testing.
 	assert.Equal(t, 1, len(ticketIDs), "Should create exactly 1 ticket despite parallel requests")
 
 	var openTicketCount int
-	err := tc.DB.QueryRow(context.Background(),
-		"SELECT COUNT(*) FROM mentors.tickets WHERE hackathon_id = $1 AND owner_id = $2 AND status = 'open'",
+	err := tc.MentorsDB.QueryRow(context.Background(),
+		fmt.Sprintf("SELECT COUNT(*) FROM %s.tickets WHERE hackathon_id = $1 AND owner_id = $2 AND status = 'open'", tc.MentorsDBName),
 		hackathonID, participant.UserID,
 	).Scan(&openTicketCount)
 	require.NoError(t, err)
@@ -1485,8 +1485,8 @@ func TestSendMessage_ParallelFirstMessages_ShouldCreateOnlyOneTicket(t *testing.
 	assert.Equal(t, 1, openTicketCount, "DB should have exactly 1 OPEN ticket")
 
 	var messageCount int
-	err = tc.DB.QueryRow(context.Background(),
-		"SELECT COUNT(*) FROM mentors.messages m JOIN mentors.tickets t ON m.ticket_id = t.id WHERE t.hackathon_id = $1 AND t.owner_id = $2",
+	err = tc.MentorsDB.QueryRow(context.Background(),
+		fmt.Sprintf("SELECT COUNT(*) FROM %s.messages m JOIN %s.tickets t ON m.ticket_id = t.id WHERE t.hackathon_id = $1 AND t.owner_id = $2", tc.MentorsDBName, tc.MentorsDBName),
 		hackathonID, participant.UserID,
 	).Scan(&messageCount)
 	require.NoError(t, err)
@@ -1616,7 +1616,7 @@ func assignMentorRole(tc *TestContext, hackathonID string, user *UserCredentials
 	// For testing, we assign mentor role via DB directly
 	// In production, this would be done through staff API by organizer
 
-	_, err := tc.DB.Exec(context.Background(),
+	_, err := tc.ParticipationDB.Exec(context.Background(),
 		fmt.Sprintf("INSERT INTO %s (hackathon_id, user_id, role) VALUES ($1, $2, 'mentor') ON CONFLICT DO NOTHING",
 			tc.ParticipationDBName),
 		hackathonID, user.UserID,

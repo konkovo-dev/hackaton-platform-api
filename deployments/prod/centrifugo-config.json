@@ -1,0 +1,16 @@
+{
+  "namespaces": [
+    {
+      "name": "support",
+      "presence": false,
+      "join_leave": false,
+      "force_push_join_leave": false,
+      "history_size": 0,
+      "history_ttl": "0s",
+      "allow_subscribe_for_client": true,
+      "allow_publish_for_client": false,
+      "allow_presence_for_client": false,
+      "allow_history_for_client": false
+    }
+  ]
+}

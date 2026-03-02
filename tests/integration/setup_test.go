@@ -20,11 +20,18 @@ type TestContext struct {
 	BaseURL             string
 	HTTPClient          *http.Client
 	T                   *testing.T
-	DB                  *pgxpool.Pool
+	DB                  *pgxpool.Pool // Main DB connection (hackathon or hackathon_hackaton)
+	MentorsDB           *pgxpool.Pool // Mentors DB connection
+	SubmissionDB        *pgxpool.Pool // Submission DB connection
+	TeamDB              *pgxpool.Pool // Team DB connection
+	ParticipationDB     *pgxpool.Pool // Participation DB connection
+	MatchmakingDB       *pgxpool.Pool // Matchmaking DB connection
 	HackathonDBName     string
 	ParticipationDBName string
 	MatchmakingDBName   string
 	SubmissionDBName    string
+	MentorsDBName       string
+	TeamDBName          string
 }
 
 type UserCredentials struct {
@@ -51,21 +58,57 @@ func NewTestContext(t *testing.T) *TestContext {
 		t.Fatalf("Failed to connect to database: %v", err)
 	}
 
+	// Determine table naming based on database structure
+	// Local: single DB "hackathon" with schemas (hackathon.hackathons, mentors.tickets, etc.)
+	// Prod: separate DBs (hackathon_hackaton, hackathon_mentors, etc.) with schemas inside each DB
 	hackathonTable := "hackathon.hackathons"
 	participationTable := "participation_and_roles.staff_roles"
 	matchmakingPrefix := "matchmaking"
 	submissionPrefix := "submission"
-	if dbDSN != "" && (dbDSN == "postgres://hackathon:hackathon_dev_password@localhost:5432/hackathon?sslmode=disable" ||
-		!contains(dbDSN, "hackathon_hackaton")) {
-		hackathonTable = "hackathon.hackathons"
-		participationTable = "participation_and_roles.staff_roles"
-		matchmakingPrefix = "matchmaking"
-		submissionPrefix = "submission"
+	mentorsPrefix := "mentors"
+	teamPrefix := "team"
+	
+	var mentorsDB, submissionDB, teamDB, participationDB, matchmakingDB *pgxpool.Pool
+	
+	// Check if we're on prod (separate databases)
+	if contains(dbDSN, "hackathon_hackaton") {
+		// Prod: connect to separate databases
+		mentorsDSN := replaceDatabaseName(dbDSN, "hackathon_mentors")
+		mentorsDB, err = pgxpool.New(context.Background(), mentorsDSN)
+		if err != nil {
+			t.Fatalf("Failed to connect to mentors database: %v", err)
+		}
+		
+		submissionDSN := replaceDatabaseName(dbDSN, "hackathon_submission")
+		submissionDB, err = pgxpool.New(context.Background(), submissionDSN)
+		if err != nil {
+			t.Fatalf("Failed to connect to submission database: %v", err)
+		}
+		
+		teamDSN := replaceDatabaseName(dbDSN, "hackathon_team")
+		teamDB, err = pgxpool.New(context.Background(), teamDSN)
+		if err != nil {
+			t.Fatalf("Failed to connect to team database: %v", err)
+		}
+		
+		participationDSN := replaceDatabaseName(dbDSN, "hackathon_participation")
+		participationDB, err = pgxpool.New(context.Background(), participationDSN)
+		if err != nil {
+			t.Fatalf("Failed to connect to participation database: %v", err)
+		}
+		
+		matchmakingDSN := replaceDatabaseName(dbDSN, "hackathon_matchmaking")
+		matchmakingDB, err = pgxpool.New(context.Background(), matchmakingDSN)
+		if err != nil {
+			t.Fatalf("Failed to connect to matchmaking database: %v", err)
+		}
 	} else {
-		hackathonTable = "hackathons"
-		participationTable = "staff_roles"
-		matchmakingPrefix = "matchmaking"
-		submissionPrefix = "submission"
+		// Local: use same DB connection for all services
+		mentorsDB = db
+		submissionDB = db
+		teamDB = db
+		participationDB = db
+		matchmakingDB = db
 	}
 
 	return &TestContext{
@@ -75,10 +118,17 @@ func NewTestContext(t *testing.T) *TestContext {
 		},
 		T:                   t,
 		DB:                  db,
+		MentorsDB:           mentorsDB,
+		SubmissionDB:        submissionDB,
+		TeamDB:              teamDB,
+		ParticipationDB:     participationDB,
+		MatchmakingDB:       matchmakingDB,
 		HackathonDBName:     hackathonTable,
 		ParticipationDBName: participationTable,
 		MatchmakingDBName:   matchmakingPrefix,
 		SubmissionDBName:    submissionPrefix,
+		MentorsDBName:       mentorsPrefix,
+		TeamDBName:          teamPrefix,
 	}
 }
 
@@ -95,6 +145,31 @@ func findSubstring(s, substr string) bool {
 		}
 	}
 	return false
+}
+
+func replaceDatabaseName(dsn, newDBName string) string {
+	// Replace database name in DSN
+	// Example: postgres://user:pass@host:5432/hackathon_hackaton?params
+	//       -> postgres://user:pass@host:5432/hackathon_mentors?params
+	parts := []rune(dsn)
+	lastSlash := -1
+	questionMark := len(parts)
+	
+	for i := len(parts) - 1; i >= 0; i-- {
+		if parts[i] == '?' && questionMark == len(parts) {
+			questionMark = i
+		}
+		if parts[i] == '/' {
+			lastSlash = i
+			break
+		}
+	}
+	
+	if lastSlash == -1 {
+		return dsn
+	}
+	
+	return string(parts[:lastSlash+1]) + newDBName + string(parts[questionMark:])
 }
 
 func (tc *TestContext) GenerateUniqueEmail() string {
@@ -279,7 +354,7 @@ func (tc *TestContext) WaitForMatchmakingUserSync(userID string) {
 	maxAttempts := 20
 	for i := 0; i < maxAttempts; i++ {
 		var count int
-		err := tc.DB.QueryRow(context.Background(),
+		err := tc.MatchmakingDB.QueryRow(context.Background(),
 			fmt.Sprintf("SELECT COUNT(*) FROM %s.users WHERE user_id = $1", tc.MatchmakingDBName),
 			userID,
 		).Scan(&count)
@@ -296,7 +371,7 @@ func (tc *TestContext) WaitForMatchmakingParticipationSync(hackathonID, userID s
 	maxAttempts := 20
 	for i := 0; i < maxAttempts; i++ {
 		var count int
-		err := tc.DB.QueryRow(context.Background(),
+		err := tc.MatchmakingDB.QueryRow(context.Background(),
 			fmt.Sprintf("SELECT COUNT(*) FROM %s.participations WHERE hackathon_id = $1 AND user_id = $2", tc.MatchmakingDBName),
 			hackathonID, userID,
 		).Scan(&count)
@@ -313,7 +388,7 @@ func (tc *TestContext) WaitForMatchmakingTeamSync(teamID string) {
 	maxAttempts := 20
 	for i := 0; i < maxAttempts; i++ {
 		var count int
-		err := tc.DB.QueryRow(context.Background(),
+		err := tc.MatchmakingDB.QueryRow(context.Background(),
 			fmt.Sprintf("SELECT COUNT(*) FROM %s.teams WHERE team_id = $1", tc.MatchmakingDBName),
 			teamID,
 		).Scan(&count)
@@ -330,7 +405,7 @@ func (tc *TestContext) WaitForMatchmakingVacancySync(vacancyID string) {
 	maxAttempts := 20
 	for i := 0; i < maxAttempts; i++ {
 		var count int
-		err := tc.DB.QueryRow(context.Background(),
+		err := tc.MatchmakingDB.QueryRow(context.Background(),
 			fmt.Sprintf("SELECT COUNT(*) FROM %s.vacancies WHERE vacancy_id = $1", tc.MatchmakingDBName),
 			vacancyID,
 		).Scan(&count)
@@ -341,4 +416,25 @@ func (tc *TestContext) WaitForMatchmakingVacancySync(vacancyID string) {
 		time.Sleep(500 * time.Millisecond)
 	}
 	tc.T.Fatalf("Timeout waiting for vacancy sync to matchmaking (vacancy_id: %s)", vacancyID)
+}
+
+func (tc *TestContext) Close() {
+	if tc.DB != nil {
+		tc.DB.Close()
+	}
+	if tc.MentorsDB != nil && tc.MentorsDB != tc.DB {
+		tc.MentorsDB.Close()
+	}
+	if tc.SubmissionDB != nil && tc.SubmissionDB != tc.DB {
+		tc.SubmissionDB.Close()
+	}
+	if tc.TeamDB != nil && tc.TeamDB != tc.DB {
+		tc.TeamDB.Close()
+	}
+	if tc.ParticipationDB != nil && tc.ParticipationDB != tc.DB {
+		tc.ParticipationDB.Close()
+	}
+	if tc.MatchmakingDB != nil && tc.MatchmakingDB != tc.DB {
+		tc.MatchmakingDB.Close()
+	}
 }

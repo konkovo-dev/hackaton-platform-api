@@ -5,7 +5,15 @@ echo "🚀 Setting up WebSocket test environment..."
 echo ""
 
 # Database connection (same as in tests)
+# Local: postgres://hackathon:hackathon_dev_password@localhost:5432/hackathon?sslmode=disable
+# Prod: postgres://hackathon:FBTZYAXcQ0gxfj5Y8b7gd3jRKzwq8jG@178.154.192.57:5432/hackathon_hackaton?sslmode=disable
 DB_DSN="${DB_DSN:-postgres://hackathon:hackathon_dev_password@localhost:5432/hackathon?sslmode=disable}"
+
+# API base URL
+API_BASE_URL="${API_BASE_URL:-http://localhost:8080}"
+
+# WebSocket URL
+WS_URL="${WS_URL:-ws://localhost:8000}"
 
 # Generate unique identifiers
 TIMESTAMP=$(date +%s)
@@ -20,15 +28,15 @@ echo "📝 Step 1: Registering users..."
 PARTICIPANT_EMAIL="participant_${TIMESTAMP}_${RANDOM_SUFFIX}@test.com"
 PARTICIPANT_USERNAME="participant_${RANDOM_SUFFIX}"
 
-curl -s -X POST http://localhost:8080/v1/auth/register \
+curl -s -X POST $API_BASE_URL/v1/auth/register \
   -H "Content-Type: application/json" \
   -d "{\"username\":\"$PARTICIPANT_USERNAME\",\"email\":\"$PARTICIPANT_EMAIL\",\"password\":\"Pass123!\",\"first_name\":\"Part\",\"last_name\":\"User\",\"timezone\":\"UTC\"}" > /dev/null
 
-PARTICIPANT_TOKEN=$(curl -s -X POST http://localhost:8080/v1/auth/login \
+PARTICIPANT_TOKEN=$(curl -s -X POST $API_BASE_URL/v1/auth/login \
   -H "Content-Type: application/json" \
   -d "{\"email\":\"$PARTICIPANT_EMAIL\",\"password\":\"Pass123!\"}" | jq -r '.accessToken')
 
-PARTICIPANT_ID=$(curl -s -X POST http://localhost:8080/v1/auth/introspect \
+PARTICIPANT_ID=$(curl -s -X POST $API_BASE_URL/v1/auth/introspect \
   -H "Content-Type: application/json" \
   -d "{\"access_token\":\"$PARTICIPANT_TOKEN\"}" | jq -r '.userId')
 
@@ -38,15 +46,15 @@ echo "✅ Participant: $PARTICIPANT_ID"
 MENTOR_EMAIL="mentor_${TIMESTAMP}_${RANDOM_SUFFIX}@test.com"
 MENTOR_USERNAME="mentor_${RANDOM_SUFFIX}"
 
-curl -s -X POST http://localhost:8080/v1/auth/register \
+curl -s -X POST $API_BASE_URL/v1/auth/register \
   -H "Content-Type: application/json" \
   -d "{\"username\":\"$MENTOR_USERNAME\",\"email\":\"$MENTOR_EMAIL\",\"password\":\"Pass123!\",\"first_name\":\"Mentor\",\"last_name\":\"User\",\"timezone\":\"UTC\"}" > /dev/null
 
-MENTOR_TOKEN=$(curl -s -X POST http://localhost:8080/v1/auth/login \
+MENTOR_TOKEN=$(curl -s -X POST $API_BASE_URL/v1/auth/login \
   -H "Content-Type: application/json" \
   -d "{\"email\":\"$MENTOR_EMAIL\",\"password\":\"Pass123!\"}" | jq -r '.accessToken')
 
-MENTOR_ID=$(curl -s -X POST http://localhost:8080/v1/auth/introspect \
+MENTOR_ID=$(curl -s -X POST $API_BASE_URL/v1/auth/introspect \
   -H "Content-Type: application/json" \
   -d "{\"access_token\":\"$MENTOR_TOKEN\"}" | jq -r '.userId')
 
@@ -56,15 +64,15 @@ echo "✅ Mentor: $MENTOR_ID"
 OWNER_EMAIL="owner_${TIMESTAMP}_${RANDOM_SUFFIX}@test.com"
 OWNER_USERNAME="owner_${RANDOM_SUFFIX}"
 
-curl -s -X POST http://localhost:8080/v1/auth/register \
+curl -s -X POST $API_BASE_URL/v1/auth/register \
   -H "Content-Type: application/json" \
   -d "{\"username\":\"$OWNER_USERNAME\",\"email\":\"$OWNER_EMAIL\",\"password\":\"Pass123!\",\"first_name\":\"Owner\",\"last_name\":\"User\",\"timezone\":\"UTC\"}" > /dev/null
 
-OWNER_TOKEN=$(curl -s -X POST http://localhost:8080/v1/auth/login \
+OWNER_TOKEN=$(curl -s -X POST $API_BASE_URL/v1/auth/login \
   -H "Content-Type: application/json" \
   -d "{\"email\":\"$OWNER_EMAIL\",\"password\":\"Pass123!\"}" | jq -r '.accessToken')
 
-OWNER_ID=$(curl -s -X POST http://localhost:8080/v1/auth/introspect \
+OWNER_ID=$(curl -s -X POST $API_BASE_URL/v1/auth/introspect \
   -H "Content-Type: application/json" \
   -d "{\"access_token\":\"$OWNER_TOKEN\"}" | jq -r '.userId')
 
@@ -83,7 +91,7 @@ STARTS=$(date -u -v+20d +"%Y-%m-%dT%H:%M:%SZ")
 ENDS=$(date -u -v+22d +"%Y-%m-%dT%H:%M:%SZ")
 JUDGING_ENDS=$(date -u -v+25d +"%Y-%m-%dT%H:%M:%SZ")
 
-HACKATHON_ID=$(curl -s -X POST http://localhost:8080/v1/hackathons \
+HACKATHON_ID=$(curl -s -X POST $API_BASE_URL/v1/hackathons \
   -H "Authorization: Bearer $OWNER_TOKEN" \
   -H "Content-Type: application/json" \
   -d "{
@@ -109,7 +117,7 @@ echo "⏳ Waiting for owner role assignment..."
 sleep 3
 
 # Add task
-curl -s -X PUT http://localhost:8080/v1/hackathons/$HACKATHON_ID/task \
+curl -s -X PUT $API_BASE_URL/v1/hackathons/$HACKATHON_ID/task \
   -H "Authorization: Bearer $OWNER_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"task":"Build something innovative"}' > /dev/null
@@ -117,7 +125,7 @@ curl -s -X PUT http://localhost:8080/v1/hackathons/$HACKATHON_ID/task \
 echo "✅ Task added"
 
 # Publish hackathon
-curl -s -X POST http://localhost:8080/v1/hackathons/$HACKATHON_ID/publish \
+curl -s -X POST $API_BASE_URL/v1/hackathons/$HACKATHON_ID/publish \
   -H "Authorization: Bearer $OWNER_TOKEN" \
   -d '{}' > /dev/null
 
@@ -129,7 +137,7 @@ sleep 2
 # ============================================================================
 echo "🎓 Step 3: Inviting mentor..."
 
-MENTOR_INVITATION_ID=$(curl -s -X POST http://localhost:8080/v1/hackathons/$HACKATHON_ID/staff-invitations \
+MENTOR_INVITATION_ID=$(curl -s -X POST $API_BASE_URL/v1/hackathons/$HACKATHON_ID/staff-invitations \
   -H "Authorization: Bearer $OWNER_TOKEN" \
   -H "Content-Type: application/json" \
   -d "{
@@ -141,7 +149,7 @@ MENTOR_INVITATION_ID=$(curl -s -X POST http://localhost:8080/v1/hackathons/$HACK
 echo "✅ Mentor invitation created: $MENTOR_INVITATION_ID"
 
 # Mentor accepts invitation
-curl -s -X POST http://localhost:8080/v1/users/me/staff-invitations/$MENTOR_INVITATION_ID/accept \
+curl -s -X POST $API_BASE_URL/v1/users/me/staff-invitations/$MENTOR_INVITATION_ID/accept \
   -H "Authorization: Bearer $MENTOR_TOKEN" \
   -d '{}' > /dev/null
 
@@ -171,7 +179,7 @@ echo ""
 # ============================================================================
 echo "👤 Step 5: Registering participant..."
 
-curl -s -X POST http://localhost:8080/v1/hackathons/$HACKATHON_ID/participations/register \
+curl -s -X POST $API_BASE_URL/v1/hackathons/$HACKATHON_ID/participations/register \
   -H "Authorization: Bearer $PARTICIPANT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"desired_status":"PART_INDIVIDUAL","motivation_text":"Testing support system"}' > /dev/null
@@ -202,13 +210,13 @@ echo ""
 # ============================================================================
 echo "🔑 Step 7: Getting WebSocket tokens..."
 
-PARTICIPANT_WS_TOKEN=$(curl -s http://localhost:8080/v1/hackathons/$HACKATHON_ID/support/realtime-token \
+PARTICIPANT_WS_TOKEN=$(curl -s $API_BASE_URL/v1/hackathons/$HACKATHON_ID/support/realtime-token \
   -H "Authorization: Bearer $PARTICIPANT_TOKEN" | jq -r '.token')
 
-MENTOR_WS_TOKEN=$(curl -s http://localhost:8080/v1/hackathons/$HACKATHON_ID/support/realtime-token \
+MENTOR_WS_TOKEN=$(curl -s $API_BASE_URL/v1/hackathons/$HACKATHON_ID/support/realtime-token \
   -H "Authorization: Bearer $MENTOR_TOKEN" | jq -r '.token')
 
-OWNER_WS_TOKEN=$(curl -s http://localhost:8080/v1/hackathons/$HACKATHON_ID/support/realtime-token \
+OWNER_WS_TOKEN=$(curl -s $API_BASE_URL/v1/hackathons/$HACKATHON_ID/support/realtime-token \
   -H "Authorization: Bearer $OWNER_TOKEN" | jq -r '.token')
 
 echo "✅ WebSocket tokens obtained"
@@ -231,7 +239,7 @@ echo "🌐 Open 3 terminals and run:"
 echo "=========================================="
 echo ""
 echo "# Terminal 1 (Participant):"
-echo "websocat 'ws://localhost:8000/connection/websocket?cf_ws_frame_ping_pong=true'"
+echo "websocat '$WS_URL/connection/websocket?cf_ws_frame_ping_pong=true'"
 echo ""
 echo "# Then paste these lines one by one:"
 echo "{\"id\":1,\"connect\":{\"token\":\"$PARTICIPANT_WS_TOKEN\"}}"
@@ -240,7 +248,7 @@ echo ""
 echo "=========================================="
 echo ""
 echo "# Terminal 2 (Mentor):"
-echo "websocat 'ws://localhost:8000/connection/websocket?cf_ws_frame_ping_pong=true'"
+echo "websocat '$WS_URL/connection/websocket?cf_ws_frame_ping_pong=true'"
 echo ""
 echo "# Then paste these lines one by one:"
 echo "{\"id\":1,\"connect\":{\"token\":\"$MENTOR_WS_TOKEN\"}}"
@@ -249,7 +257,7 @@ echo ""
 echo "=========================================="
 echo ""
 echo "# Terminal 3 (Owner):"
-echo "websocat 'ws://localhost:8000/connection/websocket?cf_ws_frame_ping_pong=true'"
+echo "websocat '$WS_URL/connection/websocket?cf_ws_frame_ping_pong=true'"
 echo ""
 echo "# Then paste these lines one by one:"
 echo "{\"id\":1,\"connect\":{\"token\":\"$OWNER_WS_TOKEN\"}}"
@@ -260,44 +268,44 @@ echo "📨 HTTP commands to test:"
 echo "=========================================="
 echo ""
 echo "# 1. Participant sends first message (creates ticket automatically):"
-echo "TICKET_ID=\$(curl -s -X POST http://localhost:8080/v1/hackathons/$HACKATHON_ID/support/messages -H \"Authorization: Bearer $PARTICIPANT_TOKEN\" -H \"Content-Type: application/json\" -d '{\"text\":\"Помогите с API!\"}' | jq -r '.ticketId')"
+echo "TICKET_ID=\$(curl -s -X POST $API_BASE_URL/v1/hackathons/$HACKATHON_ID/support/messages -H \"Authorization: Bearer $PARTICIPANT_TOKEN\" -H \"Content-Type: application/json\" -d '{\"text\":\"Помогите с API!\"}' | jq -r '.ticketId')"
 echo ""
 echo "echo \"Ticket ID: \$TICKET_ID\""
 echo ""
 echo "# 2. Participant views their chat (all messages from all tickets):"
-echo "curl -s \"http://localhost:8080/v1/hackathons/$HACKATHON_ID/support/my-messages?query.limit=50&query.offset=0\" -H \"Authorization: Bearer $PARTICIPANT_TOKEN\" | jq"
+echo "curl -s \"$API_BASE_URL/v1/hackathons/$HACKATHON_ID/support/my-messages?query.limit=50&query.offset=0\" -H \"Authorization: Bearer $PARTICIPANT_TOKEN\" | jq"
 echo ""
 echo "# 3. Mentor lists all tickets (to see new ticket):"
-echo "curl -s -X POST http://localhost:8080/v1/hackathons/$HACKATHON_ID/support/tickets/all/list -H \"Authorization: Bearer $MENTOR_TOKEN\" -H \"Content-Type: application/json\" -d '{\"limit\":10,\"offset\":0}' | jq"
+echo "curl -s -X POST $API_BASE_URL/v1/hackathons/$HACKATHON_ID/support/tickets/all/list -H \"Authorization: Bearer $MENTOR_TOKEN\" -H \"Content-Type: application/json\" -d '{\"limit\":10,\"offset\":0}' | jq"
 echo ""
 echo "# 4. Mentor claims ticket (system message: 'Mentor joined the chat'):"
-echo "curl -s -X POST http://localhost:8080/v1/hackathons/$HACKATHON_ID/support/tickets/\$TICKET_ID/claim -H \"Authorization: Bearer $MENTOR_TOKEN\" -d '{}' | jq"
+echo "curl -s -X POST $API_BASE_URL/v1/hackathons/$HACKATHON_ID/support/tickets/\$TICKET_ID/claim -H \"Authorization: Bearer $MENTOR_TOKEN\" -d '{}' | jq"
 echo ""
 echo "# 5. Mentor replies in ticket:"
-echo "curl -s -X POST http://localhost:8080/v1/hackathons/$HACKATHON_ID/support/tickets/\$TICKET_ID/reply -H \"Authorization: Bearer $MENTOR_TOKEN\" -H \"Content-Type: application/json\" -d '{\"text\":\"Вот документация по API!\"}' | jq"
+echo "curl -s -X POST $API_BASE_URL/v1/hackathons/$HACKATHON_ID/support/tickets/\$TICKET_ID/reply -H \"Authorization: Bearer $MENTOR_TOKEN\" -H \"Content-Type: application/json\" -d '{\"text\":\"Вот документация по API!\"}' | jq"
 echo ""
 echo "# 6. Participant sends another message (continues chat):"
-echo "curl -s -X POST http://localhost:8080/v1/hackathons/$HACKATHON_ID/support/messages -H \"Authorization: Bearer $PARTICIPANT_TOKEN\" -H \"Content-Type: application/json\" -d '{\"text\":\"Спасибо! А как работает аутентификация?\"}' | jq"
+echo "curl -s -X POST $API_BASE_URL/v1/hackathons/$HACKATHON_ID/support/messages -H \"Authorization: Bearer $PARTICIPANT_TOKEN\" -H \"Content-Type: application/json\" -d '{\"text\":\"Спасибо! А как работает аутентификация?\"}' | jq"
 echo ""
 echo "# 7. Mentor views all messages in this ticket:"
-echo "curl -s \"http://localhost:8080/v1/hackathons/$HACKATHON_ID/support/tickets/\$TICKET_ID/messages?query.limit=50&query.offset=0\" -H \"Authorization: Bearer $MENTOR_TOKEN\" | jq"
+echo "curl -s \"$API_BASE_URL/v1/hackathons/$HACKATHON_ID/support/tickets/\$TICKET_ID/messages?query.limit=50&query.offset=0\" -H \"Authorization: Bearer $MENTOR_TOKEN\" | jq"
 echo ""
 echo "# 8. Participant views their full chat history (all messages):"
-echo "curl -s \"http://localhost:8080/v1/hackathons/$HACKATHON_ID/support/my-messages?query.limit=50&query.offset=0\" -H \"Authorization: Bearer $PARTICIPANT_TOKEN\" | jq"
+echo "curl -s \"$API_BASE_URL/v1/hackathons/$HACKATHON_ID/support/my-messages?query.limit=50&query.offset=0\" -H \"Authorization: Bearer $PARTICIPANT_TOKEN\" | jq"
 echo ""
 echo "# 9. Mentor closes ticket (system message: 'Ticket closed'):"
-echo "curl -s -X POST http://localhost:8080/v1/hackathons/$HACKATHON_ID/support/tickets/\$TICKET_ID/close -H \"Authorization: Bearer $MENTOR_TOKEN\" -d '{}' | jq"
+echo "curl -s -X POST $API_BASE_URL/v1/hackathons/$HACKATHON_ID/support/tickets/\$TICKET_ID/close -H \"Authorization: Bearer $MENTOR_TOKEN\" -d '{}' | jq"
 echo ""
 echo "# 10. Participant sends message after close (creates NEW ticket):"
-echo "NEW_TICKET_ID=\$(curl -s -X POST http://localhost:8080/v1/hackathons/$HACKATHON_ID/support/messages -H \"Authorization: Bearer $PARTICIPANT_TOKEN\" -H \"Content-Type: application/json\" -d '{\"text\":\"У меня новый вопрос!\"}' | jq -r '.ticketId')"
+echo "NEW_TICKET_ID=\$(curl -s -X POST $API_BASE_URL/v1/hackathons/$HACKATHON_ID/support/messages -H \"Authorization: Bearer $PARTICIPANT_TOKEN\" -H \"Content-Type: application/json\" -d '{\"text\":\"У меня новый вопрос!\"}' | jq -r '.ticketId')"
 echo ""
 echo "echo \"New Ticket ID: \$NEW_TICKET_ID\""
 echo ""
 echo "# 11. Owner (read-only) lists all tickets:"
-echo "curl -s -X POST http://localhost:8080/v1/hackathons/$HACKATHON_ID/support/tickets/all/list -H \"Authorization: Bearer $OWNER_TOKEN\" -H \"Content-Type: application/json\" -d '{\"limit\":10,\"offset\":0}' | jq"
+echo "curl -s -X POST $API_BASE_URL/v1/hackathons/$HACKATHON_ID/support/tickets/all/list -H \"Authorization: Bearer $OWNER_TOKEN\" -H \"Content-Type: application/json\" -d '{\"limit\":10,\"offset\":0}' | jq"
 echo ""
 echo "# 12. Owner (read-only) views messages in a ticket:"
-echo "curl -s \"http://localhost:8080/v1/hackathons/$HACKATHON_ID/support/tickets/\$TICKET_ID/messages?query.limit=50&query.offset=0\" -H \"Authorization: Bearer $OWNER_TOKEN\" | jq"
+echo "curl -s \"$API_BASE_URL/v1/hackathons/$HACKATHON_ID/support/tickets/\$TICKET_ID/messages?query.limit=50&query.offset=0\" -H \"Authorization: Bearer $OWNER_TOKEN\" | jq"
 echo ""
 echo "=========================================="
 echo "💡 Key concepts:"

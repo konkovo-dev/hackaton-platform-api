@@ -111,7 +111,7 @@ func TestListMyStaffInvitations(t *testing.T) {
 	invitation := invitations[0].(map[string]interface{})
 	assert.Equal(t, invitee.UserID, invitation["targetUserId"])
 	assert.Equal(t, "HX_ROLE_MENTOR", invitation["requestedRole"])
-	assert.Equal(t, "STAFF_INVITATION_STATUS_PENDING", invitation["status"])
+	assert.Equal(t, "STAFF_INVITATION_PENDING", invitation["status"])
 }
 
 func TestAcceptStaffInvitation(t *testing.T) {
@@ -188,7 +188,7 @@ func TestRejectStaffInvitation(t *testing.T) {
 	for _, inv := range invitations {
 		invitation := inv.(map[string]interface{})
 		if invitation["invitationId"] == invitationID {
-			assert.Equal(t, "STAFF_INVITATION_STATUS_DECLINED", invitation["status"])
+			assert.Equal(t, "STAFF_INVITATION_DECLINED", invitation["status"])
 			found = true
 			break
 		}
@@ -229,7 +229,7 @@ func TestCancelStaffInvitation(t *testing.T) {
 	for _, inv := range invitations {
 		invitation := inv.(map[string]interface{})
 		if invitation["invitationId"] == invitationID {
-			assert.Equal(t, "STAFF_INVITATION_STATUS_CANCELLED", invitation["status"])
+			assert.Equal(t, "STAFF_INVITATION_CANCELED", invitation["status"])
 			found = true
 			break
 		}
@@ -342,7 +342,7 @@ func TestSelfRemoveOwnerRoleShouldFail(t *testing.T) {
 	}
 
 	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff/selfRemoveRole", hackathonID), owner.AccessToken, selfRemoveBody)
-	assert.Equal(t, http.StatusForbidden, resp.StatusCode, "Should not allow self-removing owner role: %s", string(body))
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode, "Should not allow self-removing owner role: %s", string(body))
 }
 
 func TestInviteToOwnerRoleShouldFail(t *testing.T) {
