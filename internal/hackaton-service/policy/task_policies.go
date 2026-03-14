@@ -45,7 +45,7 @@ func (p *ReadTaskPolicy) Check(ctx context.Context, pctx policy.PolicyContext) *
 	hasOwnerRole := hctx.HasRole(string(domain.RoleOwner))
 	hasOrganizerRole := hctx.HasRole(string(domain.RoleOrganizer))
 	hasMentorRole := hctx.HasRole(string(domain.RoleMentor))
-	hasJuryRole := hctx.HasRole(string(domain.RoleJury))
+	hasJuryRole := hctx.HasRole(string(domain.RoleJudge))
 
 	stage := domain.HackathonStage(hctx.Stage())
 	participationKind := domain.ParticipationStatus(hctx.ParticipationKind())

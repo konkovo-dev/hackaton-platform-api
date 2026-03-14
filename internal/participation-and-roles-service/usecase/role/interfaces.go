@@ -17,6 +17,8 @@ type StaffRoleRepository interface {
 	Delete(ctx context.Context, hackathonID, userID uuid.UUID, role string) error
 	HasRole(ctx context.Context, hackathonID, userID uuid.UUID, role string) (bool, error)
 	GetRoleStrings(ctx context.Context, hackathonID, userID uuid.UUID) ([]string, error)
+	GetHackathonIDsByUserRole(ctx context.Context, userID uuid.UUID, role string) ([]uuid.UUID, error)
+	GetHackathonIDsByUserAnyRole(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error)
 }
 
 type StaffInvitationRepository interface {
@@ -32,6 +34,8 @@ type StaffInvitationRepository interface {
 
 type ParticipationRepository interface {
 	GetStatus(ctx context.Context, hackathonID, userID uuid.UUID) (string, error)
+	GetHackathonIDsByUserParticipation(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error)
+	GetHackathonIDsByUserParticipationStatus(ctx context.Context, userID uuid.UUID, status string) ([]uuid.UUID, error)
 }
 
 type UnitOfWork = pgxutil.UnitOfWork[*TxRepositories]

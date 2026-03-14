@@ -18,6 +18,8 @@ service StaffService {
 
   rpc AssignHackathonRole(AssignHackathonRoleRequest) returns (AssignHackathonRoleResponse);
 
+  rpc GetMyHackathonIDs(GetMyHackathonIDsRequest) returns (GetMyHackathonIDsResponse);
+
   rpc ListHackathonStaff(ListHackathonStaffRequest) returns (ListHackathonStaffResponse) {
     option (google.api.http) = { get: "/v1/hackathons/{hackathon_id}/staff" };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -236,4 +238,14 @@ message StaffInvitation {
   google.protobuf.Timestamp created_at = 10;
   google.protobuf.Timestamp updated_at = 11;
   google.protobuf.Timestamp expires_at = 12;
+}
+
+message GetMyHackathonIDsRequest {
+  optional HackathonRole role_filter = 1;
+  optional bool participation_filter = 2;
+  optional ParticipationStatus participation_status_filter = 3;
+}
+
+message GetMyHackathonIDsResponse {
+  repeated string hackathon_ids = 1;
 }

@@ -36,3 +36,15 @@ SELECT EXISTS(
     WHERE hackathon_id = $1 AND user_id = $2 AND role = $3
 );
 
+-- name: GetHackathonIDsByUserRole :many
+SELECT DISTINCT hackathon_id
+FROM participation_and_roles.staff_roles
+WHERE user_id = $1 AND role = $2
+ORDER BY hackathon_id;
+
+-- name: GetHackathonIDsByUserAnyRole :many
+SELECT DISTINCT hackathon_id
+FROM participation_and_roles.staff_roles
+WHERE user_id = $1
+ORDER BY hackathon_id;
+

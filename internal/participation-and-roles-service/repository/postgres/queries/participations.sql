@@ -83,3 +83,15 @@ WHERE hackathon_id = $1;
 SELECT COUNT(*) FROM participation_and_roles.participations
 WHERE hackathon_id = $1 AND status = ANY($2::TEXT[]);
 
+-- name: GetHackathonIDsByUserParticipation :many
+SELECT DISTINCT hackathon_id
+FROM participation_and_roles.participations
+WHERE user_id = $1 AND status != 'none'
+ORDER BY hackathon_id;
+
+-- name: GetHackathonIDsByUserParticipationStatus :many
+SELECT DISTINCT hackathon_id
+FROM participation_and_roles.participations
+WHERE user_id = $1 AND status = $2
+ORDER BY hackathon_id;
+

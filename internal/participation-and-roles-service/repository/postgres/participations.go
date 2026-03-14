@@ -153,3 +153,24 @@ func (r *ParticipationRepository) Delete(ctx context.Context, hackathonID, userI
 	}
 	return nil
 }
+
+func (r *ParticipationRepository) GetHackathonIDsByUserParticipation(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
+	ids, err := r.Queries().GetHackathonIDsByUserParticipation(ctx, userID)
+	if err != nil {
+		err = pgxutil.MapDBError(err)
+		return nil, fmt.Errorf("failed to get hackathon IDs by user participation: %w", err)
+	}
+	return ids, nil
+}
+
+func (r *ParticipationRepository) GetHackathonIDsByUserParticipationStatus(ctx context.Context, userID uuid.UUID, status string) ([]uuid.UUID, error) {
+	ids, err := r.Queries().GetHackathonIDsByUserParticipationStatus(ctx, queries.GetHackathonIDsByUserParticipationStatusParams{
+		UserID: userID,
+		Status: status,
+	})
+	if err != nil {
+		err = pgxutil.MapDBError(err)
+		return nil, fmt.Errorf("failed to get hackathon IDs by user participation status: %w", err)
+	}
+	return ids, nil
+}

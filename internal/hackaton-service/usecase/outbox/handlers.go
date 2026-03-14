@@ -79,7 +79,7 @@ func mapDomainRoleToProto(role domain.HackathonRole) participationrolesv1.Hackat
 		return participationrolesv1.HackathonRole_HX_ROLE_ORGANIZER
 	case domain.RoleMentor:
 		return participationrolesv1.HackathonRole_HX_ROLE_MENTOR
-	case domain.RoleJury:
+	case domain.RoleJudge:
 		return participationrolesv1.HackathonRole_HX_ROLE_JUDGE
 	default:
 		return participationrolesv1.HackathonRole_HACKATHON_ROLE_UNSPECIFIED

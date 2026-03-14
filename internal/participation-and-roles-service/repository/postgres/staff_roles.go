@@ -138,3 +138,24 @@ func (r *StaffRoleRepository) GetRoleStrings(ctx context.Context, hackathonID, u
 
 	return roleStrings, nil
 }
+
+func (r *StaffRoleRepository) GetHackathonIDsByUserRole(ctx context.Context, userID uuid.UUID, role string) ([]uuid.UUID, error) {
+	ids, err := r.Queries().GetHackathonIDsByUserRole(ctx, queries.GetHackathonIDsByUserRoleParams{
+		UserID: userID,
+		Role:   role,
+	})
+	if err != nil {
+		err = pgxutil.MapDBError(err)
+		return nil, fmt.Errorf("failed to get hackathon IDs by user role: %w", err)
+	}
+	return ids, nil
+}
+
+func (r *StaffRoleRepository) GetHackathonIDsByUserAnyRole(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
+	ids, err := r.Queries().GetHackathonIDsByUserAnyRole(ctx, userID)
+	if err != nil {
+		err = pgxutil.MapDBError(err)
+		return nil, fmt.Errorf("failed to get hackathon IDs by user any role: %w", err)
+	}
+	return ids, nil
+}

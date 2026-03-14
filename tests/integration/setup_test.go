@@ -325,6 +325,16 @@ func (tc *TestContext) WaitForUserInIdentityService(token string) {
 	tc.T.Logf("Warning: User not found in identity service after %d attempts", maxAttempts)
 }
 
+func (tc *TestContext) AssignRole(hackathonID string, ownerToken string, userID string, role string) {
+	_, err := tc.ParticipationDB.Exec(context.Background(),
+		`INSERT INTO participation_and_roles.staff_roles (hackathon_id, user_id, role, created_at)
+		 VALUES ($1, $2, $3, NOW())
+		 ON CONFLICT (hackathon_id, user_id, role) DO NOTHING`,
+		hackathonID, userID, role)
+	require.NoError(tc.T, err, "Failed to assign role via DB")
+	time.Sleep(500 * time.Millisecond)
+}
+
 func (tc *TestContext) WaitForHackathonOwnerRole(hackathonID string, token string) {
 	maxAttempts := 20
 	for i := 0; i < maxAttempts; i++ {
