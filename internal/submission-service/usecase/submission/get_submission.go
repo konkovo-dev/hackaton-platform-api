@@ -22,6 +22,24 @@ type GetSubmissionOut struct {
 }
 
 func (s *Service) GetSubmission(ctx context.Context, in GetSubmissionIn) (*GetSubmissionOut, error) {
+	// Service-to-service calls bypass policy checks
+	if auth.IsServiceCall(ctx) {
+		submission, err := s.submissionRepo.GetByIDAndHackathonID(ctx, in.SubmissionID, in.HackathonID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get submission: %w", err)
+		}
+
+		files, err := s.fileRepo.ListBySubmission(ctx, in.SubmissionID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list files: %w", err)
+		}
+
+		return &GetSubmissionOut{
+			Submission: submission,
+			Files:      files,
+		}, nil
+	}
+
 	userID, ok := auth.GetUserID(ctx)
 	if !ok {
 		return nil, ErrUnauthorized

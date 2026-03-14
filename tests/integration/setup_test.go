@@ -26,12 +26,14 @@ type TestContext struct {
 	TeamDB              *pgxpool.Pool // Team DB connection
 	ParticipationDB     *pgxpool.Pool // Participation DB connection
 	MatchmakingDB       *pgxpool.Pool // Matchmaking DB connection
+	JudgingDB           *pgxpool.Pool // Judging DB connection
 	HackathonDBName     string
 	ParticipationDBName string
 	MatchmakingDBName   string
 	SubmissionDBName    string
 	MentorsDBName       string
 	TeamDBName          string
+	JudgingDBName       string
 }
 
 type UserCredentials struct {
@@ -68,7 +70,7 @@ func NewTestContext(t *testing.T) *TestContext {
 	mentorsPrefix := "mentors"
 	teamPrefix := "team"
 	
-	var mentorsDB, submissionDB, teamDB, participationDB, matchmakingDB *pgxpool.Pool
+	var mentorsDB, submissionDB, teamDB, participationDB, matchmakingDB, judgingDB *pgxpool.Pool
 	
 	// Check if we're on prod (separate databases)
 	if contains(dbDSN, "hackathon_hackaton") {
@@ -102,6 +104,12 @@ func NewTestContext(t *testing.T) *TestContext {
 		if err != nil {
 			t.Fatalf("Failed to connect to matchmaking database: %v", err)
 		}
+		
+		judgingDSN := replaceDatabaseName(dbDSN, "hackathon_judging")
+		judgingDB, err = pgxpool.New(context.Background(), judgingDSN)
+		if err != nil {
+			t.Fatalf("Failed to connect to judging database: %v", err)
+		}
 	} else {
 		// Local: use same DB connection for all services
 		mentorsDB = db
@@ -109,6 +117,7 @@ func NewTestContext(t *testing.T) *TestContext {
 		teamDB = db
 		participationDB = db
 		matchmakingDB = db
+		judgingDB = db
 	}
 
 	return &TestContext{
@@ -123,12 +132,14 @@ func NewTestContext(t *testing.T) *TestContext {
 		TeamDB:              teamDB,
 		ParticipationDB:     participationDB,
 		MatchmakingDB:       matchmakingDB,
+		JudgingDB:           judgingDB,
 		HackathonDBName:     hackathonTable,
 		ParticipationDBName: participationTable,
 		MatchmakingDBName:   matchmakingPrefix,
 		SubmissionDBName:    submissionPrefix,
 		MentorsDBName:       mentorsPrefix,
 		TeamDBName:          teamPrefix,
+		JudgingDBName:       "judging",
 	}
 }
 
@@ -436,5 +447,8 @@ func (tc *TestContext) Close() {
 	}
 	if tc.MatchmakingDB != nil && tc.MatchmakingDB != tc.DB {
 		tc.MatchmakingDB.Close()
+	}
+	if tc.JudgingDB != nil && tc.JudgingDB != tc.DB {
+		tc.JudgingDB.Close()
 	}
 }

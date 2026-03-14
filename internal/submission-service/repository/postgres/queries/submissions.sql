@@ -72,6 +72,23 @@ WHERE hackathon_id = $1 AND owner_kind = $2 AND owner_id = $3
 ORDER BY created_at DESC
 LIMIT $4 OFFSET $5;
 
+-- name: ListSubmissionsByHackathon :many
+SELECT
+    id,
+    hackathon_id,
+    owner_kind,
+    owner_id,
+    created_by_user_id,
+    title,
+    description,
+    is_final,
+    created_at,
+    updated_at
+FROM submission.submissions
+WHERE hackathon_id = $1
+ORDER BY created_at DESC
+LIMIT $2 OFFSET $3;
+
 -- name: CountSubmissionsByOwner :one
 SELECT COUNT(*)
 FROM submission.submissions

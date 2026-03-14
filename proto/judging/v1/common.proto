@@ -1,0 +1,5 @@
+syntax = "proto3";
+
+package judging.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/judging/v1;judgingv1";

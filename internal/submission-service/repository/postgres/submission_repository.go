@@ -118,6 +118,36 @@ func (r *SubmissionRepository) ListByOwner(ctx context.Context, hackathonID uuid
 	return submissions, nil
 }
 
+func (r *SubmissionRepository) ListByHackathon(ctx context.Context, hackathonID uuid.UUID, limit, offset int32) ([]*entity.Submission, error) {
+	rows, err := r.Queries().ListSubmissionsByHackathon(ctx, queries.ListSubmissionsByHackathonParams{
+		HackathonID: hackathonID,
+		Limit:       limit,
+		Offset:      offset,
+	})
+	if err != nil {
+		err = pgxutil.MapDBError(err)
+		return nil, fmt.Errorf("failed to list submissions by hackathon: %w", err)
+	}
+
+	submissions := make([]*entity.Submission, 0, len(rows))
+	for _, row := range rows {
+		submissions = append(submissions, &entity.Submission{
+			ID:              row.ID,
+			HackathonID:     row.HackathonID,
+			OwnerKind:       row.OwnerKind,
+			OwnerID:         row.OwnerID,
+			CreatedByUserID: row.CreatedByUserID,
+			Title:           row.Title,
+			Description:     row.Description,
+			IsFinal:         row.IsFinal,
+			CreatedAt:       row.CreatedAt,
+			UpdatedAt:       row.UpdatedAt,
+		})
+	}
+
+	return submissions, nil
+}
+
 func (r *SubmissionRepository) CountByOwner(ctx context.Context, hackathonID uuid.UUID, ownerKind string, ownerID uuid.UUID) (int64, error) {
 	count, err := r.Queries().CountSubmissionsByOwner(ctx, queries.CountSubmissionsByOwnerParams{
 		HackathonID: hackathonID,

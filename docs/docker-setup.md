@@ -1,6 +1,6 @@
 # Hackathon Platform - Docker Setup
 
-Полная инструкция по запуску всей платформы (Gateway + Auth + Identity + Hackathon + Participation & Roles + Team + Mentors + Matchmaking + Submission + NATS + Centrifugo + MinIO)
+Полная инструкция по запуску всей платформы (Gateway + Auth + Identity + Hackathon + Participation & Roles + Team + Mentors + Matchmaking + Submission + Judging + NATS + Centrifugo + MinIO)
 
 ## Предусловия
 
@@ -34,6 +34,7 @@ make team-service-sqlc-generate
 make mentors-service-sqlc-generate
 make matchmaking-service-sqlc-generate
 make submission-service-sqlc-generate
+make judging-service-sqlc-generate
 ```
 
 ### 4. Генерация RSA ключей для auth-service
@@ -78,6 +79,8 @@ make matchmaking-service-migrate-up
 make matchmaking-service-migrate-status
 make submission-service-migrate-up
 make submission-service-migrate-status
+make judging-service-migrate-up
+make judging-service-migrate-status
 ```
 
 ### 7. Запуск сервисов
@@ -171,6 +174,20 @@ docker rmi $(docker images -q deployments-submission-service)
 
 **Важно**: Submission Service требует MinIO для хранения файлов посылок.
 
+#### Judging Service
+
+```bash
+docker-compose -f deployments/docker-compose.yml build judging-service
+docker-compose -f deployments/docker-compose.yml up -d judging-service
+docker-compose -f deployments/docker-compose.yml logs --tail=20 judging-service
+```
+
+docker-compose -f deployments/docker-compose.yml stop judging-service 
+docker-compose -f deployments/docker-compose.yml rm -f judging-service                   
+docker rmi $(docker images -q deployments-judging-service)
+
+**Важно**: Judging Service работает с финальными посылками из Submission Service и требует Participation & Roles Service для получения списка судей.
+
 #### Gateway
 
 ```bash
@@ -202,6 +219,7 @@ make ps
 - `hackathon-mentors-service`
 - `hackathon-matchmaking-service`
 - `hackathon-submission-service`
+- `hackathon-judging-service`
 - `hackathon-gateway`
 
 ## Endpoints
@@ -219,6 +237,7 @@ make ps
 - **Auth gRPC**: `localhost:50057`
 - **Submission gRPC**: `localhost:50058`
 - **Matchmaking gRPC**: `localhost:50059`
+- **Judging gRPC**: `localhost:50060`
 
 ### Infrastructure
 - **Postgres**: `localhost:5432`
@@ -296,6 +315,34 @@ curl http://localhost:8080/v1/hackathons/<HACKATHON_ID>/matchmaking/teams?limit=
 # Получить рекомендации кандидатов для капитана команды (matchmaking-service)
 curl "http://localhost:8080/v1/hackathons/<HACKATHON_ID>/matchmaking/candidates?team_id=<TEAM_ID>&vacancy_id=<VACANCY_ID>&limit=10" \
   -H "Authorization: Bearer $ACCESS_TOKEN" | jq .
+
+# Распределить посылки по судьям (judging-service, только организатор)
+curl -X POST "http://localhost:8080/v1/hackathons/<HACKATHON_ID>/judging/assign" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"idempotency_key": "assign-001"}' | jq .
+
+# Получить мои назначенные посылки (для судьи)
+curl "http://localhost:8080/v1/hackathons/<HACKATHON_ID>/judging/assignments?page_size=10" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" | jq .
+
+# Отправить оценку (для судьи)
+curl -X POST "http://localhost:8080/v1/hackathons/<HACKATHON_ID>/judging/submissions/<SUBMISSION_ID>/evaluate" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "score": 8,
+    "comment": "Отличная работа, но есть небольшие замечания по коду",
+    "idempotency_key": "eval-001"
+  }' | jq .
+
+# Получить leaderboard (для организатора или судьи)
+curl "http://localhost:8080/v1/hackathons/<HACKATHON_ID>/judging/leaderboard?page_size=10" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" | jq .
+
+# Получить мой результат оценивания (для участника, после публикации результатов)
+curl "http://localhost:8080/v1/hackathons/<HACKATHON_ID>/judging/my-result" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" | jq .
 ```
 
 ### Через gRPC напрямую
@@ -324,6 +371,12 @@ grpcurl -plaintext localhost:50059 grpc.health.v1.Health/Check
 
 # List matchmaking methods
 grpcurl -plaintext localhost:50059 list matchmaking.v1.MatchmakingService
+
+# Ping judging
+grpcurl -plaintext localhost:50060 grpc.health.v1.Health/Check
+
+# List judging methods
+grpcurl -plaintext localhost:50060 list judging.v1.JudgingService
 ```
 
 ## Управление сервисами
@@ -351,6 +404,9 @@ docker-compose -f deployments/docker-compose.yml restart mentors-service
 
 # Matchmaking
 docker-compose -f deployments/docker-compose.yml restart matchmaking-service
+
+# Judging
+docker-compose -f deployments/docker-compose.yml restart judging-service
 
 # Gateway
 docker-compose -f deployments/docker-compose.yml restart gateway
@@ -405,6 +461,12 @@ docker-compose -f deployments/docker-compose.yml rm -f matchmaking-service
 docker-compose -f deployments/docker-compose.yml build matchmaking-service
 docker-compose -f deployments/docker-compose.yml up -d matchmaking-service
 
+# Judging
+docker-compose -f deployments/docker-compose.yml stop judging-service
+docker-compose -f deployments/docker-compose.yml rm -f judging-service
+docker-compose -f deployments/docker-compose.yml build judging-service
+docker-compose -f deployments/docker-compose.yml up -d judging-service
+
 # Gateway
 docker-compose -f deployments/docker-compose.yml stop gateway
 docker-compose -f deployments/docker-compose.yml rm -f gateway
@@ -426,6 +488,8 @@ docker-compose -f deployments/docker-compose.yml logs -f participation-and-roles
 docker-compose -f deployments/docker-compose.yml logs -f team-service
 docker-compose -f deployments/docker-compose.yml logs -f mentors-service
 docker-compose -f deployments/docker-compose.yml logs -f matchmaking-service
+docker-compose -f deployments/docker-compose.yml logs -f submission-service
+docker-compose -f deployments/docker-compose.yml logs -f judging-service
 docker-compose -f deployments/docker-compose.yml logs -f gateway
 
 # Infrastructure
@@ -472,6 +536,8 @@ make participation-and-roles-service-migrate-status
 make team-service-migrate-status
 make mentors-service-migrate-status
 make matchmaking-service-migrate-status
+make submission-service-migrate-status
+make judging-service-migrate-status
 
 # Примените заново
 make auth-service-migrate-up
@@ -481,6 +547,8 @@ make participation-and-roles-service-migrate-up
 make team-service-migrate-up
 make mentors-service-migrate-up
 make matchmaking-service-migrate-up
+make submission-service-migrate-up
+make judging-service-migrate-up
 ```
 
 ### Postgres не стартует
@@ -600,6 +668,8 @@ sudo apt-get install jq
 - **Participation & Roles Service**: [README](./participation-and-roles/README.md) | [REST](./participation-and-roles/rest-guide.md) | [gRPC](./participation-and-roles/grpc-guide.md)
 - **Team Service**: [README](./team/README.md)
 - **Mentors Service**: Support/Helpdesk с real-time уведомлениями через WebSocket
+- **Submission Service**: Управление посылками с поддержкой файлов через MinIO
+- **Judging Service**: Оценивание посылок судьями и формирование leaderboard
 
 ### Automated Scripts
 
@@ -646,4 +716,26 @@ sudo apt-get install jq
   - Explainable recommendations с детальным breakdown скоринга
   - Два режима: User→Teams (участник ищет команду), Vacancy→Candidates (капитан ищет участников)
 - **Доступность**: REGISTRATION и RUNNING стадии хакатона
+
+#### Submission Service
+- **Назначение**: Управление посылками участников с поддержкой файлов
+- **Особенности**:
+  - Интеграция с MinIO (S3-совместимое хранилище) для файлов
+  - Pre-signed URLs для загрузки и скачивания файлов
+  - Версионность посылок с возможностью выбора финальной
+  - Валидация файлов: размер (до 50MB), количество (до 20), форматы (pdf, zip, png, jpg, txt, md, csv)
+  - Лимиты: до 50 посылок на владельца, суммарно до 200MB на посылку
+  - Поддержка как индивидуальных, так и командных посылок
+  - Idempotency для всех мутирующих операций
+- **Доступность**: RUNNING стадия хакатона (создание/редактирование), JUDGING+ (просмотр финальных)
+
+#### Judging Service
+- **Назначение**: Оценивание финальных посылок судьями и формирование leaderboard
+- **Особенности**:
+  - Ручное распределение посылок по судьям (минимум 3 судьи на посылку, round-robin)
+  - Оценка: score (0-10) + обязательный комментарий (1-5000 символов)
+  - Idempotency для всех мутирующих операций
+  - Leaderboard с сортировкой по среднему баллу и дате создания
+  - Публикация результатов через hackathon-service (GetMyEvaluationResult доступен только после PublishHackathonResult)
+- **Доступность**: JUDGING стадия (оценивание), JUDGING+ (просмотр leaderboard и результатов)
 

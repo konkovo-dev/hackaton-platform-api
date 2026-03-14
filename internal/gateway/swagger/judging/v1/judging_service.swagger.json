@@ -1,0 +1,790 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "judging/v1/judging_service.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "judging.v1.JudgingService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/hackathons/{hackathonId}/judging/assign": {
+      "post": {
+        "summary": "Assign submissions to judges",
+        "description": "Manually assigns all final submissions to judges using round-robin algorithm. Each submission gets minimum 3 judges (or all judges if fewer than 3). Idempotent - returns success if already assigned. Only organizers can call this. Available only during JUDGING stage.",
+        "operationId": "JudgingService_AssignSubmissionsToJudges",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AssignSubmissionsToJudgesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/JudgingServiceAssignSubmissionsToJudgesBody"
+            }
+          }
+        ],
+        "tags": [
+          "Judging"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/judging/leaderboard": {
+      "post": {
+        "summary": "Get leaderboard",
+        "description": "Returns leaderboard with all submissions ranked by average score. Available to organizers and judges from JUDGING stage onwards. NEVER accessible to participants.",
+        "operationId": "JudgingService_GetLeaderboard",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetLeaderboardResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/JudgingServiceGetLeaderboardBody"
+            }
+          }
+        ],
+        "tags": [
+          "Judging"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/judging/my-assignments/list": {
+      "post": {
+        "summary": "Get my assignments",
+        "description": "Returns submissions assigned to the authenticated judge. Available from JUDGING stage onwards.",
+        "operationId": "JudgingService_GetMyAssignments",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetMyAssignmentsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/JudgingServiceGetMyAssignmentsBody"
+            }
+          }
+        ],
+        "tags": [
+          "Judging"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/judging/my-evaluations/list": {
+      "post": {
+        "summary": "Get my evaluations",
+        "description": "Returns evaluations submitted by the authenticated judge. Available from JUDGING stage onwards.",
+        "operationId": "JudgingService_GetMyEvaluations",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetMyEvaluationsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/JudgingServiceGetMyEvaluationsBody"
+            }
+          }
+        ],
+        "tags": [
+          "Judging"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/judging/my-result": {
+      "get": {
+        "summary": "Get my evaluation result",
+        "description": "Returns evaluation result for the authenticated participant's submission. Shows average score, rank, and all judge comments. Available only after hackathon results are published.",
+        "operationId": "JudgingService_GetMyEvaluationResult",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetMyEvaluationResultResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Judging"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/submissions/{submissionId}/evaluate": {
+      "post": {
+        "summary": "Submit evaluation",
+        "description": "Judge submits or updates their evaluation for an assigned submission. Score must be 0-10, comment is required. Idempotent - can update evaluation multiple times. Available only during JUDGING stage.",
+        "operationId": "JudgingService_SubmitEvaluation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1SubmitEvaluationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/JudgingServiceSubmitEvaluationBody"
+            }
+          }
+        ],
+        "tags": [
+          "Judging"
+        ]
+      }
+    },
+    "/v1/hackathons/{hackathonId}/submissions/{submissionId}/evaluations": {
+      "get": {
+        "summary": "Get submission evaluations",
+        "description": "Returns all evaluations for a specific submission. Available to organizers and judges from JUDGING stage onwards.",
+        "operationId": "JudgingService_GetSubmissionEvaluations",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetSubmissionEvaluationsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Judging"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "JudgingServiceAssignSubmissionsToJudgesBody": {
+      "type": "object",
+      "properties": {
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "JudgingServiceGetLeaderboardBody": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "$ref": "#/definitions/v1Query"
+        }
+      }
+    },
+    "JudgingServiceGetMyAssignmentsBody": {
+      "type": "object",
+      "properties": {
+        "evaluated": {
+          "type": "boolean",
+          "title": "Optional filter: show only evaluated or not evaluated assignments"
+        },
+        "query": {
+          "$ref": "#/definitions/v1Query"
+        }
+      }
+    },
+    "JudgingServiceGetMyEvaluationsBody": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "$ref": "#/definitions/v1Query"
+        }
+      }
+    },
+    "JudgingServiceSubmitEvaluationBody": {
+      "type": "object",
+      "properties": {
+        "score": {
+          "type": "integer",
+          "format": "int32",
+          "title": "0-10"
+        },
+        "comment": {
+          "type": "string",
+          "title": "required, 1-5000 characters"
+        },
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1AssignSubmissionsToJudgesResponse": {
+      "type": "object",
+      "properties": {
+        "assignmentsCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "judgesCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "submissionsCount": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1Assignment": {
+      "type": "object",
+      "properties": {
+        "assignmentId": {
+          "type": "string"
+        },
+        "hackathonId": {
+          "type": "string"
+        },
+        "submissionId": {
+          "type": "string"
+        },
+        "judgeUserId": {
+          "type": "string"
+        },
+        "isEvaluated": {
+          "type": "boolean"
+        },
+        "assignedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "title": "Assignment represents a submission assigned to a judge for evaluation"
+    },
+    "v1AssignmentWithSubmission": {
+      "type": "object",
+      "properties": {
+        "assignment": {
+          "$ref": "#/definitions/v1Assignment"
+        },
+        "submissionTitle": {
+          "type": "string",
+          "title": "Submission details"
+        },
+        "submissionOwnerKind": {
+          "$ref": "#/definitions/v1OwnerKind"
+        },
+        "submissionOwnerId": {
+          "type": "string"
+        },
+        "submissionCreatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "title": "AssignmentWithSubmission includes submission details for convenience"
+    },
+    "v1Evaluation": {
+      "type": "object",
+      "properties": {
+        "evaluationId": {
+          "type": "string"
+        },
+        "hackathonId": {
+          "type": "string"
+        },
+        "submissionId": {
+          "type": "string"
+        },
+        "judgeUserId": {
+          "type": "string"
+        },
+        "score": {
+          "type": "integer",
+          "format": "int32",
+          "title": "0-10"
+        },
+        "comment": {
+          "type": "string"
+        },
+        "evaluatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "title": "Evaluation represents a judge's evaluation of a submission"
+    },
+    "v1EvaluationResult": {
+      "type": "object",
+      "properties": {
+        "submissionId": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "averageScore": {
+          "type": "number",
+          "format": "double"
+        },
+        "evaluationCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "rank": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "comments": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "title": "EvaluationResult represents a participant's evaluation result"
+    },
+    "v1EvaluationWithSubmission": {
+      "type": "object",
+      "properties": {
+        "evaluation": {
+          "$ref": "#/definitions/v1Evaluation"
+        },
+        "submissionTitle": {
+          "type": "string",
+          "title": "Submission details"
+        },
+        "submissionOwnerKind": {
+          "$ref": "#/definitions/v1OwnerKind"
+        },
+        "submissionOwnerId": {
+          "type": "string"
+        }
+      },
+      "title": "EvaluationWithSubmission includes submission details for convenience"
+    },
+    "v1Filter": {
+      "type": "object",
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "operation": {
+          "$ref": "#/definitions/v1FilterOperation"
+        },
+        "stringValue": {
+          "type": "string"
+        },
+        "int64Value": {
+          "type": "string",
+          "format": "int64"
+        },
+        "boolValue": {
+          "type": "boolean"
+        },
+        "stringList": {
+          "$ref": "#/definitions/v1StringList"
+        }
+      }
+    },
+    "v1FilterGroup": {
+      "type": "object",
+      "properties": {
+        "filters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Filter"
+          }
+        }
+      }
+    },
+    "v1FilterOperation": {
+      "type": "string",
+      "enum": [
+        "FILTER_OPERATION_UNSPECIFIED",
+        "FILTER_OPERATION_EQUAL",
+        "FILTER_OPERATION_IN",
+        "FILTER_OPERATION_CONTAINS",
+        "FILTER_OPERATION_PREFIX"
+      ],
+      "default": "FILTER_OPERATION_UNSPECIFIED"
+    },
+    "v1GetLeaderboardResponse": {
+      "type": "object",
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1LeaderboardEntry"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/v1PageResponse"
+        }
+      }
+    },
+    "v1GetMyAssignmentsResponse": {
+      "type": "object",
+      "properties": {
+        "assignments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1AssignmentWithSubmission"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/v1PageResponse"
+        }
+      }
+    },
+    "v1GetMyEvaluationResultResponse": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "$ref": "#/definitions/v1EvaluationResult"
+        }
+      }
+    },
+    "v1GetMyEvaluationsResponse": {
+      "type": "object",
+      "properties": {
+        "evaluations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1EvaluationWithSubmission"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/v1PageResponse"
+        }
+      }
+    },
+    "v1GetSubmissionEvaluationsResponse": {
+      "type": "object",
+      "properties": {
+        "evaluations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Evaluation"
+          }
+        }
+      }
+    },
+    "v1IdempotencyKey": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string"
+        }
+      }
+    },
+    "v1LeaderboardEntry": {
+      "type": "object",
+      "properties": {
+        "submissionId": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "ownerKind": {
+          "$ref": "#/definitions/v1OwnerKind"
+        },
+        "ownerId": {
+          "type": "string"
+        },
+        "averageScore": {
+          "type": "number",
+          "format": "double"
+        },
+        "evaluationCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "rank": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "title": "LeaderboardEntry represents a submission's position in the leaderboard"
+    },
+    "v1OwnerKind": {
+      "type": "string",
+      "enum": [
+        "OWNER_KIND_UNSPECIFIED",
+        "OWNER_KIND_USER",
+        "OWNER_KIND_TEAM"
+      ],
+      "default": "OWNER_KIND_UNSPECIFIED"
+    },
+    "v1PageRequest": {
+      "type": "object",
+      "properties": {
+        "pageSize": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "pageToken": {
+          "type": "string"
+        }
+      }
+    },
+    "v1PageResponse": {
+      "type": "object",
+      "properties": {
+        "nextPageToken": {
+          "type": "string"
+        },
+        "hasMore": {
+          "type": "boolean"
+        }
+      }
+    },
+    "v1Query": {
+      "type": "object",
+      "properties": {
+        "q": {
+          "type": "string"
+        },
+        "filterGroups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1FilterGroup"
+          },
+          "description": "OR between groups, AND inside group."
+        },
+        "sort": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Sort"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/v1PageRequest"
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "offset": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1Sort": {
+      "type": "object",
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "direction": {
+          "$ref": "#/definitions/v1SortDirection"
+        }
+      }
+    },
+    "v1SortDirection": {
+      "type": "string",
+      "enum": [
+        "SORT_DIRECTION_UNSPECIFIED",
+        "SORT_DIRECTION_ASC",
+        "SORT_DIRECTION_DESC"
+      ],
+      "default": "SORT_DIRECTION_UNSPECIFIED"
+    },
+    "v1StringList": {
+      "type": "object",
+      "properties": {
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "v1SubmitEvaluationResponse": {
+      "type": "object",
+      "properties": {
+        "evaluationId": {
+          "type": "string"
+        },
+        "evaluatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}
