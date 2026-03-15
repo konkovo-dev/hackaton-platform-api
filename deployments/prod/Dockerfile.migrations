@@ -15,6 +15,7 @@ COPY internal/team-service/migrations ./team
 COPY internal/mentors-service/migrations ./mentors
 COPY internal/matchmaking-service/migrations ./matchmaking
 COPY internal/submission-service/migrations ./submission
+COPY internal/judging-service/migrations ./judging
 
 # Скрипт для запуска миграций во всех БД
 COPY deployments/prod/run-migrations.sh /run-migrations.sh
