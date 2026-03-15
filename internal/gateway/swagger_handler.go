@@ -28,6 +28,7 @@ var serviceSwaggerFiles = []string{
 	"swagger/matchmaking/v1/matchmaking_service.swagger.json",
 	"swagger/submission/v1/submission_service.swagger.json",
 	"swagger/submission/v1/submission_files_service.swagger.json",
+	"swagger/judging/v1/judging_service.swagger.json",
 }
 
 var (

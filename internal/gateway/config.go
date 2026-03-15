@@ -15,6 +15,7 @@ type Config struct {
 	MentorsGRPCEndpoint               string
 	MatchmakingGRPCEndpoint           string
 	SubmissionGRPCEndpoint            string
+	JudgingGRPCEndpoint               string
 	GatewayHTTPPort                   int
 }
 
@@ -27,6 +28,7 @@ func NewConfig() *Config {
 	mentorsGRPCEndpoint := env.GetEnv("MENTORS_GRPC_ENDPOINT", "localhost:50056")
 	matchmakingGRPCEndpoint := env.GetEnv("MATCHMAKING_GRPC_ENDPOINT", "localhost:50059")
 	submissionGRPCEndpoint := env.GetEnv("SUBMISSION_GRPC_ENDPOINT", "localhost:50058")
+	judgingGRPCEndpoint := env.GetEnv("JUDGING_GRPC_ENDPOINT", "localhost:50060")
 
 	gatewayHTTPPort, err := env.GetEnvInt("GATEWAY_HTTP_PORT", 8080)
 	if err != nil {
@@ -42,6 +44,7 @@ func NewConfig() *Config {
 		MentorsGRPCEndpoint:               mentorsGRPCEndpoint,
 		MatchmakingGRPCEndpoint:           matchmakingGRPCEndpoint,
 		SubmissionGRPCEndpoint:            submissionGRPCEndpoint,
+		JudgingGRPCEndpoint:               judgingGRPCEndpoint,
 		GatewayHTTPPort:                   gatewayHTTPPort,
 	}
 }

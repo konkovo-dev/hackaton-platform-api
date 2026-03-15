@@ -25,6 +25,34 @@ type ListSubmissionsOut struct {
 }
 
 func (s *Service) ListSubmissions(ctx context.Context, in ListSubmissionsIn) (*ListSubmissionsOut, error) {
+	// Service-to-service calls bypass policy checks
+	if auth.IsServiceCall(ctx) {
+		limit := in.Limit
+		if limit <= 0 {
+			limit = 50
+		}
+		if limit > 100 {
+			limit = 100
+		}
+
+		// For service calls, list all submissions in hackathon (no owner filter)
+		submissions, err := s.submissionRepo.ListByHackathon(ctx, in.HackathonID, limit+1, in.Offset)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list submissions: %w", err)
+		}
+
+		hasMore := false
+		if len(submissions) > int(limit) {
+			hasMore = true
+			submissions = submissions[:limit]
+		}
+
+		return &ListSubmissionsOut{
+			Submissions: submissions,
+			HasMore:     hasMore,
+		}, nil
+	}
+
 	userID, ok := auth.GetUserID(ctx)
 	if !ok {
 		return nil, ErrUnauthorized

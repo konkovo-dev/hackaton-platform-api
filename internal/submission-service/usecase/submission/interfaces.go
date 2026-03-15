@@ -13,6 +13,7 @@ type SubmissionRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*entity.Submission, error)
 	GetByIDAndHackathonID(ctx context.Context, id, hackathonID uuid.UUID) (*entity.Submission, error)
 	ListByOwner(ctx context.Context, hackathonID uuid.UUID, ownerKind string, ownerID uuid.UUID, limit, offset int32) ([]*entity.Submission, error)
+	ListByHackathon(ctx context.Context, hackathonID uuid.UUID, limit, offset int32) ([]*entity.Submission, error)
 	CountByOwner(ctx context.Context, hackathonID uuid.UUID, ownerKind string, ownerID uuid.UUID) (int64, error)
 	GetFinalByOwner(ctx context.Context, hackathonID uuid.UUID, ownerKind string, ownerID uuid.UUID) (*entity.Submission, error)
 	UpdateDescription(ctx context.Context, id uuid.UUID, description string) (*entity.Submission, error)

@@ -26,12 +26,14 @@ type TestContext struct {
 	TeamDB              *pgxpool.Pool // Team DB connection
 	ParticipationDB     *pgxpool.Pool // Participation DB connection
 	MatchmakingDB       *pgxpool.Pool // Matchmaking DB connection
+	JudgingDB           *pgxpool.Pool // Judging DB connection
 	HackathonDBName     string
 	ParticipationDBName string
 	MatchmakingDBName   string
 	SubmissionDBName    string
 	MentorsDBName       string
 	TeamDBName          string
+	JudgingDBName       string
 }
 
 type UserCredentials struct {
@@ -68,7 +70,7 @@ func NewTestContext(t *testing.T) *TestContext {
 	mentorsPrefix := "mentors"
 	teamPrefix := "team"
 	
-	var mentorsDB, submissionDB, teamDB, participationDB, matchmakingDB *pgxpool.Pool
+	var mentorsDB, submissionDB, teamDB, participationDB, matchmakingDB, judgingDB *pgxpool.Pool
 	
 	// Check if we're on prod (separate databases)
 	if contains(dbDSN, "hackathon_hackaton") {
@@ -102,6 +104,12 @@ func NewTestContext(t *testing.T) *TestContext {
 		if err != nil {
 			t.Fatalf("Failed to connect to matchmaking database: %v", err)
 		}
+		
+		judgingDSN := replaceDatabaseName(dbDSN, "hackathon_judging")
+		judgingDB, err = pgxpool.New(context.Background(), judgingDSN)
+		if err != nil {
+			t.Fatalf("Failed to connect to judging database: %v", err)
+		}
 	} else {
 		// Local: use same DB connection for all services
 		mentorsDB = db
@@ -109,6 +117,7 @@ func NewTestContext(t *testing.T) *TestContext {
 		teamDB = db
 		participationDB = db
 		matchmakingDB = db
+		judgingDB = db
 	}
 
 	return &TestContext{
@@ -123,12 +132,14 @@ func NewTestContext(t *testing.T) *TestContext {
 		TeamDB:              teamDB,
 		ParticipationDB:     participationDB,
 		MatchmakingDB:       matchmakingDB,
+		JudgingDB:           judgingDB,
 		HackathonDBName:     hackathonTable,
 		ParticipationDBName: participationTable,
 		MatchmakingDBName:   matchmakingPrefix,
 		SubmissionDBName:    submissionPrefix,
 		MentorsDBName:       mentorsPrefix,
 		TeamDBName:          teamPrefix,
+		JudgingDBName:       "judging",
 	}
 }
 
@@ -314,6 +325,16 @@ func (tc *TestContext) WaitForUserInIdentityService(token string) {
 	tc.T.Logf("Warning: User not found in identity service after %d attempts", maxAttempts)
 }
 
+func (tc *TestContext) AssignRole(hackathonID string, ownerToken string, userID string, role string) {
+	_, err := tc.ParticipationDB.Exec(context.Background(),
+		`INSERT INTO participation_and_roles.staff_roles (hackathon_id, user_id, role, created_at)
+		 VALUES ($1, $2, $3, NOW())
+		 ON CONFLICT (hackathon_id, user_id, role) DO NOTHING`,
+		hackathonID, userID, role)
+	require.NoError(tc.T, err, "Failed to assign role via DB")
+	time.Sleep(500 * time.Millisecond)
+}
+
 func (tc *TestContext) WaitForHackathonOwnerRole(hackathonID string, token string) {
 	maxAttempts := 20
 	for i := 0; i < maxAttempts; i++ {
@@ -436,5 +457,8 @@ func (tc *TestContext) Close() {
 	}
 	if tc.MatchmakingDB != nil && tc.MatchmakingDB != tc.DB {
 		tc.MatchmakingDB.Close()
+	}
+	if tc.JudgingDB != nil && tc.JudgingDB != tc.DB {
+		tc.JudgingDB.Close()
 	}
 }

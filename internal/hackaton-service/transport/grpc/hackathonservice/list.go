@@ -10,17 +10,8 @@ import (
 )
 
 func (s *HackathonService) ListHackathons(ctx context.Context, req *hackathonv1.ListHackathonsRequest) (*hackathonv1.ListHackathonsResponse, error) {
-	var pageSize uint32
-	var pageToken string
-
-	if req.Query != nil && req.Query.Page != nil {
-		pageSize = req.Query.Page.PageSize
-		pageToken = req.Query.Page.PageToken
-	}
-
 	result, err := s.hackathonService.ListHackathons(ctx, hackathon.ListHackathonsIn{
-		PageSize:           pageSize,
-		PageToken:          pageToken,
+		Query:              req.Query,
 		IncludeDescription: req.IncludeDescription,
 		IncludeLinks:       req.IncludeLinks,
 		IncludeLimits:      req.IncludeLimits,

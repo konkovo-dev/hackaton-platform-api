@@ -8,6 +8,7 @@ import (
 	participationrolesv1 "github.com/belikoooova/hackaton-platform-api/api/participationandroles/v1"
 	"github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/domain"
 	"github.com/belikoooova/hackaton-platform-api/pkg/idempotency"
+	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
@@ -96,4 +97,44 @@ func (c *Client) GetHackathonContext(ctx context.Context, hackathonID string) (u
 	domainParticipation := domain.MapProtoParticipationToDomain(resp.ParticipationStatus)
 
 	return resp.UserId, string(domainParticipation), "", rolesStr, nil
+}
+
+func (c *Client) GetMyHackathonIDs(ctx context.Context, roleFilter, participationStatusFilter *string, participationFilter *bool) ([]uuid.UUID, error) {
+	req := &participationrolesv1.GetMyHackathonIDsRequest{}
+
+	if roleFilter != nil {
+		protoRole := domain.MapDomainRoleToProto(domain.HackathonRole(*roleFilter))
+		req.RoleFilter = &protoRole
+	}
+
+	if participationFilter != nil {
+		req.ParticipationFilter = participationFilter
+	}
+
+	if participationStatusFilter != nil {
+		protoStatus := domain.MapDomainParticipationToProto(domain.ParticipationStatus(*participationStatusFilter))
+		req.ParticipationStatusFilter = &protoStatus
+	}
+
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if auth := md.Get("authorization"); len(auth) > 0 {
+			ctx = metadata.AppendToOutgoingContext(ctx, "authorization", auth[0])
+		}
+	}
+
+	resp, err := c.staffService.GetMyHackathonIDs(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get my hackathon IDs: %w", err)
+	}
+
+	hackathonIDs := make([]uuid.UUID, 0, len(resp.HackathonIds))
+	for _, idStr := range resp.HackathonIds {
+		id, err := uuid.Parse(idStr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid hackathon_id in response: %w", err)
+		}
+		hackathonIDs = append(hackathonIDs, id)
+	}
+
+	return hackathonIDs, nil
 }

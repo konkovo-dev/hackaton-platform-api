@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+package judging.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/judging/v1;judgingv1";
+
+import "google/protobuf/timestamp.proto";
+import "submission/v1/common.proto";
+
+// Evaluation represents a judge's evaluation of a submission
+message Evaluation {
+  string evaluation_id = 1;
+  string hackathon_id = 2;
+  string submission_id = 3;
+  string judge_user_id = 4;
+  
+  int32 score = 5; // 0-10
+  string comment = 6;
+  
+  google.protobuf.Timestamp evaluated_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+// Assignment represents a submission assigned to a judge for evaluation
+message Assignment {
+  string assignment_id = 1;
+  string hackathon_id = 2;
+  string submission_id = 3;
+  string judge_user_id = 4;
+  
+  bool is_evaluated = 5;
+  
+  google.protobuf.Timestamp assigned_at = 6;
+}
+
+// AssignmentWithSubmission includes submission details for convenience
+message AssignmentWithSubmission {
+  Assignment assignment = 1;
+  
+  // Submission details
+  string submission_title = 2;
+  submission.v1.OwnerKind submission_owner_kind = 3;
+  string submission_owner_id = 4;
+  google.protobuf.Timestamp submission_created_at = 5;
+}
+
+// EvaluationWithSubmission includes submission details for convenience
+message EvaluationWithSubmission {
+  Evaluation evaluation = 1;
+  
+  // Submission details
+  string submission_title = 2;
+  submission.v1.OwnerKind submission_owner_kind = 3;
+  string submission_owner_id = 4;
+}
+
+// LeaderboardEntry represents a submission's position in the leaderboard
+message LeaderboardEntry {
+  string submission_id = 1;
+  string title = 2;
+  
+  submission.v1.OwnerKind owner_kind = 3;
+  string owner_id = 4;
+  
+  double average_score = 5;
+  int32 evaluation_count = 6;
+  int32 rank = 7;
+  
+  google.protobuf.Timestamp created_at = 8;
+}
+
+// EvaluationResult represents a participant's evaluation result
+message EvaluationResult {
+  string submission_id = 1;
+  string title = 2;
+  
+  double average_score = 3;
+  int32 evaluation_count = 4;
+  int32 rank = 5;
+  
+  repeated string comments = 6;
+}

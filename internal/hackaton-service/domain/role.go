@@ -8,7 +8,7 @@ const (
 	RoleOwner     HackathonRole = "owner"
 	RoleOrganizer HackathonRole = "organizer"
 	RoleMentor    HackathonRole = "mentor"
-	RoleJury      HackathonRole = "jury"
+	RoleJudge     HackathonRole = "judge"
 )
 
 type ParticipationStatus string
@@ -30,7 +30,7 @@ func MapProtoRoleToDomain(protoRole participationrolesv1.HackathonRole) Hackatho
 	case participationrolesv1.HackathonRole_HX_ROLE_MENTOR:
 		return RoleMentor
 	case participationrolesv1.HackathonRole_HX_ROLE_JUDGE:
-		return RoleJury
+		return RoleJudge
 	default:
 		return ""
 	}
@@ -50,5 +50,37 @@ func MapProtoParticipationToDomain(protoStatus participationrolesv1.Participatio
 		return ParticipationTeamCaptain
 	default:
 		return ParticipationNone
+	}
+}
+
+func MapDomainRoleToProto(domainRole HackathonRole) participationrolesv1.HackathonRole {
+	switch domainRole {
+	case RoleOwner:
+		return participationrolesv1.HackathonRole_HX_ROLE_OWNER
+	case RoleOrganizer:
+		return participationrolesv1.HackathonRole_HX_ROLE_ORGANIZER
+	case RoleMentor:
+		return participationrolesv1.HackathonRole_HX_ROLE_MENTOR
+	case RoleJudge:
+		return participationrolesv1.HackathonRole_HX_ROLE_JUDGE
+	default:
+		return participationrolesv1.HackathonRole_HACKATHON_ROLE_UNSPECIFIED
+	}
+}
+
+func MapDomainParticipationToProto(domainStatus ParticipationStatus) participationrolesv1.ParticipationStatus {
+	switch domainStatus {
+	case ParticipationNone:
+		return participationrolesv1.ParticipationStatus_PART_NONE
+	case ParticipationIndividual:
+		return participationrolesv1.ParticipationStatus_PART_INDIVIDUAL
+	case ParticipationLookingForTeam:
+		return participationrolesv1.ParticipationStatus_PART_LOOKING_FOR_TEAM
+	case ParticipationTeamMember:
+		return participationrolesv1.ParticipationStatus_PART_TEAM_MEMBER
+	case ParticipationTeamCaptain:
+		return participationrolesv1.ParticipationStatus_PART_TEAM_CAPTAIN
+	default:
+		return participationrolesv1.ParticipationStatus_PARTICIPATION_STATUS_UNSPECIFIED
 	}
 }

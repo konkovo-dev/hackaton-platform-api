@@ -1,0 +1,137 @@
+@startuml hackathon-platform-containers
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+!define DEVICONS https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/devicons
+!define FONTAWESOME https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/font-awesome-5
+!include DEVICONS/react.puml
+!include DEVICONS/postgresql.puml
+!include FONTAWESOME/users.puml
+
+LAYOUT_WITH_LEGEND()
+
+title C4 Container Diagram - Hackathon Platform
+
+Person(user, "User", "Participant, Captain, Organizer, Mentor, Judge")
+
+System_Boundary(platform, "Hackathon Platform") {
+    
+    ' API Gateway
+    Container(gateway, "API Gateway", "Go, gRPC-Gateway", "REST API для клиентов, маршрутизация запросов к микросервисам", $sprite="react")
+    
+    ' Core Services
+    Container(auth_service, "Auth Service", "Go, gRPC", "Аутентификация, JWT токены, refresh tokens", $sprite="users")
+    Container(identity_service, "Identity Service", "Go, gRPC", "Управление профилями пользователей, навыки, роли")
+    Container(hackaton_service, "Hackathon Service", "Go, gRPC", "Управление хакатонами, стадии, анонсы")
+    Container(participation_service, "Participation & Roles Service", "Go, gRPC", "Регистрация участников, роли в хакатонах, приглашения")
+    Container(team_service, "Team Service", "Go, gRPC", "Управление командами, вакансии, заявки на вступление")
+    Container(matchmaking_service, "Matchmaking Service", "Go, gRPC", "Рекомендации команд и кандидатов на основе навыков и ролей")
+    Container(mentors_service, "Mentors Service", "Go, gRPC", "Система тикетов для менторской поддержки")
+    Container(submission_service, "Submission Service", "Go, gRPC", "Управление решениями команд, загрузка файлов")
+    Container(judging_service, "Judging Service", "Go, gRPC", "Оценка решений жюри, подсчет баллов, лидерборд")
+    
+    ' Infrastructure Components
+    ContainerDb(postgres, "PostgreSQL", "PostgreSQL 16", "Хранение данных всех сервисов (9 отдельных БД)", $sprite="postgresql")
+    Container(nats, "NATS", "Message Broker", "Асинхронная коммуникация между сервисами через события")
+    Container(centrifugo, "Centrifugo", "WebSocket Server", "Real-time уведомления для менторской системы")
+    ContainerDb(minio, "MinIO", "S3-compatible Storage", "Хранение файлов решений команд")
+}
+
+' User interactions
+Rel(user, gateway, "Uses", "HTTPS/REST")
+
+' Gateway to services
+Rel(gateway, auth_service, "Authenticates", "gRPC")
+Rel(gateway, identity_service, "Manages profiles", "gRPC")
+Rel(gateway, hackaton_service, "Manages hackathons", "gRPC")
+Rel(gateway, participation_service, "Registers participants", "gRPC")
+Rel(gateway, team_service, "Manages teams", "gRPC")
+Rel(gateway, matchmaking_service, "Gets recommendations", "gRPC")
+Rel(gateway, mentors_service, "Manages tickets", "gRPC")
+Rel(gateway, submission_service, "Uploads solutions", "gRPC")
+Rel(gateway, judging_service, "Submits scores", "gRPC")
+
+' Service to service interactions (synchronous gRPC)
+Rel(auth_service, identity_service, "Creates user profile", "gRPC")
+Rel(hackaton_service, participation_service, "Assigns owner role", "gRPC")
+Rel(participation_service, identity_service, "Gets user info", "gRPC")
+Rel(participation_service, hackaton_service, "Validates hackathon", "gRPC")
+Rel(team_service, participation_service, "Validates participants", "gRPC")
+Rel(team_service, hackaton_service, "Validates hackathon", "gRPC")
+Rel(matchmaking_service, hackaton_service, "Gets hackathon stage", "gRPC")
+Rel(matchmaking_service, participation_service, "Gets participant status", "gRPC")
+Rel(matchmaking_service, team_service, "Gets team info", "gRPC")
+Rel(mentors_service, hackaton_service, "Validates hackathon", "gRPC")
+Rel(mentors_service, participation_service, "Checks mentor role", "gRPC")
+Rel(mentors_service, team_service, "Gets team info", "gRPC")
+Rel(submission_service, hackaton_service, "Validates hackathon", "gRPC")
+Rel(submission_service, participation_service, "Validates team captain", "gRPC")
+Rel(submission_service, team_service, "Gets team info", "gRPC")
+Rel(judging_service, hackaton_service, "Validates hackathon", "gRPC")
+Rel(judging_service, participation_service, "Checks judge role", "gRPC")
+Rel(judging_service, submission_service, "Gets submissions", "gRPC")
+
+' Service to database
+Rel(auth_service, postgres, "Reads/Writes", "SQL/hackathon_auth")
+Rel(identity_service, postgres, "Reads/Writes", "SQL/hackathon_identity")
+Rel(hackaton_service, postgres, "Reads/Writes", "SQL/hackathon_hackaton")
+Rel(participation_service, postgres, "Reads/Writes", "SQL/hackathon_participation")
+Rel(team_service, postgres, "Reads/Writes", "SQL/hackathon_team")
+Rel(matchmaking_service, postgres, "Reads/Writes", "SQL/hackathon_matchmaking")
+Rel(mentors_service, postgres, "Reads/Writes", "SQL/hackathon_mentors")
+Rel(submission_service, postgres, "Reads/Writes", "SQL/hackathon_submission")
+Rel(judging_service, postgres, "Reads/Writes", "SQL/hackathon_judging")
+
+' Asynchronous communication via NATS (Event-driven)
+Rel(identity_service, nats, "Publishes events", "identity.user.skills.updated")
+Rel(participation_service, nats, "Publishes events", "participation.registered/updated")
+Rel(team_service, nats, "Publishes events", "team.created/updated/deleted, vacancy.*")
+Rel(mentors_service, nats, "Publishes events", "mentors.message.created/ticket.*")
+
+Rel(nats, matchmaking_service, "Subscribes to events", "Syncs read model")
+
+' Real-time communication
+Rel(mentors_service, centrifugo, "Publishes messages", "HTTP API")
+Rel(centrifugo, user, "Real-time updates", "WebSocket")
+
+' File storage
+Rel(submission_service, minio, "Stores/Retrieves files", "S3 API")
+
+' Notes
+note right of matchmaking_service
+  **Read Model Pattern**
+  Подписывается на события от других
+  сервисов через NATS и строит
+  оптимизированную read-модель
+  для быстрых рекомендаций
+end note
+
+note right of nats
+  **Event-Driven Architecture**
+  Асинхронная коммуникация
+  для слабой связанности сервисов
+  
+  События:
+  - user.skills.updated
+  - participation.registered/updated
+  - team.created/updated/deleted
+  - vacancy.created/updated
+  - mentors.message.created
+end note
+
+note right of postgres
+  **Database per Service**
+  Каждый сервис имеет свою БД:
+  - hackathon_auth
+  - hackathon_identity
+  - hackathon_hackaton
+  - hackathon_participation
+  - hackathon_team
+  - hackathon_matchmaking
+  - hackathon_mentors
+  - hackathon_submission
+  - hackathon_judging
+end note
+
+SHOW_LEGEND()
+
+@enduml

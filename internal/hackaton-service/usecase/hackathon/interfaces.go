@@ -13,7 +13,7 @@ type HackathonRepository interface {
 	Create(ctx context.Context, hackathon *entity.Hackathon) error
 	GetByID(ctx context.Context, id uuid.UUID) (*entity.Hackathon, error)
 	Update(ctx context.Context, hackathon *entity.Hackathon) error
-	List(ctx context.Context, limit, offset int32) ([]*entity.Hackathon, error)
+	List(ctx context.Context, params ListHackathonsRepoParams) ([]*entity.Hackathon, error)
 	CountPublished(ctx context.Context) (int64, error)
 }
 
@@ -38,4 +38,5 @@ type TxRepositories struct {
 
 type ParticipationAndRolesClient interface {
 	GetHackathonContext(ctx context.Context, hackathonID string) (userID, participationStatus, teamID string, roles []string, err error)
+	GetMyHackathonIDs(ctx context.Context, roleFilter, participationStatusFilter *string, participationFilter *bool) ([]uuid.UUID, error)
 }

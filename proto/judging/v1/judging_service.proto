@@ -1,0 +1,185 @@
+syntax = "proto3";
+
+package judging.v1;
+
+option go_package = "github.com/belikoooova/hackaton-platform-api/api/judging/v1;judgingv1";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "common/v1/idempotency.proto";
+import "common/v1/query.proto";
+import "judging/v1/evaluation.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+service JudgingService {
+  // Assign submissions to judges (manual trigger by organizer)
+  rpc AssignSubmissionsToJudges(AssignSubmissionsToJudgesRequest) returns (AssignSubmissionsToJudgesResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/judging/assign"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Assign submissions to judges"
+      description: "Manually assigns all final submissions to judges using round-robin algorithm. Each submission gets minimum 3 judges (or all judges if fewer than 3). Idempotent - returns success if already assigned. Only organizers can call this. Available only during JUDGING stage."
+      tags: "Judging"
+    };
+  }
+
+  // Get my assignments (for judges)
+  rpc GetMyAssignments(GetMyAssignmentsRequest) returns (GetMyAssignmentsResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/judging/my-assignments/list"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get my assignments"
+      description: "Returns submissions assigned to the authenticated judge. Available from JUDGING stage onwards."
+      tags: "Judging"
+    };
+  }
+
+  // Submit evaluation
+  rpc SubmitEvaluation(SubmitEvaluationRequest) returns (SubmitEvaluationResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/submissions/{submission_id}/evaluate"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Submit evaluation"
+      description: "Judge submits or updates their evaluation for an assigned submission. Score must be 0-10, comment is required. Idempotent - can update evaluation multiple times. Available only during JUDGING stage."
+      tags: "Judging"
+    };
+  }
+
+  // Get my evaluations (for judges)
+  rpc GetMyEvaluations(GetMyEvaluationsRequest) returns (GetMyEvaluationsResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/judging/my-evaluations/list"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get my evaluations"
+      description: "Returns evaluations submitted by the authenticated judge. Available from JUDGING stage onwards."
+      tags: "Judging"
+    };
+  }
+
+  // Get submission evaluations (for staff)
+  rpc GetSubmissionEvaluations(GetSubmissionEvaluationsRequest) returns (GetSubmissionEvaluationsResponse) {
+    option (google.api.http) = {
+      get: "/v1/hackathons/{hackathon_id}/submissions/{submission_id}/evaluations"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get submission evaluations"
+      description: "Returns all evaluations for a specific submission. Available to organizers and judges from JUDGING stage onwards."
+      tags: "Judging"
+    };
+  }
+
+  // Get leaderboard (for staff only)
+  rpc GetLeaderboard(GetLeaderboardRequest) returns (GetLeaderboardResponse) {
+    option (google.api.http) = {
+      post: "/v1/hackathons/{hackathon_id}/judging/leaderboard"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get leaderboard"
+      description: "Returns leaderboard with all submissions ranked by average score. Available to organizers and judges from JUDGING stage onwards. NEVER accessible to participants."
+      tags: "Judging"
+    };
+  }
+
+  // Get my evaluation result (for participants)
+  rpc GetMyEvaluationResult(GetMyEvaluationResultRequest) returns (GetMyEvaluationResultResponse) {
+    option (google.api.http) = {
+      get: "/v1/hackathons/{hackathon_id}/judging/my-result"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get my evaluation result"
+      description: "Returns evaluation result for the authenticated participant's submission. Shows average score, rank, and all judge comments. Available only after hackathon results are published."
+      tags: "Judging"
+    };
+  }
+}
+
+// === Request/Response messages ===
+
+message AssignSubmissionsToJudgesRequest {
+  string hackathon_id = 1;
+  
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message AssignSubmissionsToJudgesResponse {
+  int32 assignments_count = 1;
+  int32 judges_count = 2;
+  int32 submissions_count = 3;
+}
+
+message GetMyAssignmentsRequest {
+  string hackathon_id = 1;
+  
+  // Optional filter: show only evaluated or not evaluated assignments
+  optional bool evaluated = 2;
+  
+  common.v1.Query query = 10;
+}
+
+message GetMyAssignmentsResponse {
+  repeated AssignmentWithSubmission assignments = 1;
+  common.v1.PageResponse page = 2;
+}
+
+message SubmitEvaluationRequest {
+  string hackathon_id = 1;
+  string submission_id = 2;
+  
+  int32 score = 3; // 0-10
+  string comment = 4; // required, 1-5000 characters
+  
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message SubmitEvaluationResponse {
+  string evaluation_id = 1;
+  google.protobuf.Timestamp evaluated_at = 2;
+}
+
+message GetMyEvaluationsRequest {
+  string hackathon_id = 1;
+  
+  common.v1.Query query = 10;
+}
+
+message GetMyEvaluationsResponse {
+  repeated EvaluationWithSubmission evaluations = 1;
+  common.v1.PageResponse page = 2;
+}
+
+message GetSubmissionEvaluationsRequest {
+  string hackathon_id = 1;
+  string submission_id = 2;
+}
+
+message GetSubmissionEvaluationsResponse {
+  repeated Evaluation evaluations = 1;
+}
+
+message GetLeaderboardRequest {
+  string hackathon_id = 1;
+  
+  common.v1.Query query = 10;
+}
+
+message GetLeaderboardResponse {
+  repeated LeaderboardEntry entries = 1;
+  common.v1.PageResponse page = 2;
+}
+
+message GetMyEvaluationResultRequest {
+  string hackathon_id = 1;
+}
+
+message GetMyEvaluationResultResponse {
+  EvaluationResult result = 1;
+}
