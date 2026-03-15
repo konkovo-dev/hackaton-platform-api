@@ -1,0 +1,78 @@
+meta {
+  name: 15d. Filter Skills by Prefix
+  type: http
+  seq: 15.3
+}
+
+post {
+  url: {{baseUrl}}/v1/skills/list
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {
+    "query": {
+      "filter_groups": [
+        {
+          "filters": [
+            {
+              "field": "name",
+              "operation": "FILTER_OPERATION_PREFIX",
+              "string_value": "Ja"
+            }
+          ]
+        }
+      ],
+      "page": {
+        "page_size": 20
+      }
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const skills = res.body.skills || [];
+    
+    console.log(`✅ Found ${skills.length} skills starting with "Ja"`);
+    
+    skills.forEach(skill => {
+      console.log(`  - ${skill.name}`);
+    });
+  }
+}
+
+docs {
+  # Filter Skills by Prefix
+  
+  Демонстрация фильтрации с операцией PREFIX.
+  
+  ## Фильтр:
+  - **field**: "name" - фильтруем по названию
+  - **operation**: FILTER_OPERATION_PREFIX - начинается с
+  - **string_value**: "Ja" - значение для фильтра
+  
+  ## Результат:
+  - Java (начинается с "Ja")
+  - JavaScript (начинается с "Ja")
+  
+  ## Доступные операции:
+  - **FILTER_OPERATION_EQUAL** - точное совпадение
+  - **FILTER_OPERATION_PREFIX** - начинается с
+  - **FILTER_OPERATION_CONTAINS** - содержит
+  - **FILTER_OPERATION_GT** - больше (для чисел/дат)
+  - **FILTER_OPERATION_LT** - меньше (для чисел/дат)
+  - **FILTER_OPERATION_GTE** - больше или равно
+  - **FILTER_OPERATION_LTE** - меньше или равно
+  
+  ## Важно:
+  Фильтрация работает одинаково во ВСЕХ list эндпоинтах!
+  
+  ## Environment:
+  - Demo
+}

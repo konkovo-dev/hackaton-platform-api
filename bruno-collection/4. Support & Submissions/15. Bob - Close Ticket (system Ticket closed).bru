@@ -1,0 +1,54 @@
+meta {
+  name: 15. Bob - Close Ticket (system Ticket closed)
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/support/tickets/{{teamTicketId}}/close
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{bobAccessToken}}
+}
+
+body:json {
+  {}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Bob closed the ticket!');
+    console.log('Ticket status: assigned → closed');
+    console.log('\n📨 System message sent:');
+    console.log('"Ticket closed"');
+    console.log('\n✅ Issue resolved!');
+  }
+}
+
+docs {
+  # Bob - Close Ticket (System: Ticket Closed)
+  
+  Bob закрывает тикет после решения проблемы.
+  
+  ## Что происходит:
+  1. Ticket status: assigned → closed
+  2. Система автоматически создает **system message**:
+     - text: "Ticket closed"
+     - author_role: "system"
+     - author_user_id: "" (пустой)
+  3. closed_at timestamp устанавливается
+  
+  ## Зачем system message:
+  - Dave и Eve увидят что тикет закрыт
+  - Понятно что вопрос решен
+  - История чата полная
+  
+  ## Что дальше:
+  Если Dave или Eve напишут снова, создастся **НОВЫЙ тикет**!
+  
+  ## Environment:
+  - Demo (используем bobAccessToken)
+}

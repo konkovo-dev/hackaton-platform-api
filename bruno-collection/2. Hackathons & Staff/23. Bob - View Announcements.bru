@@ -1,0 +1,44 @@
+meta {
+  name: 23. Bob - View Announcements
+  type: http
+  seq: 23
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/announcements?page_size=10
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{bobAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    const announcements = data.announcements || [];
+    
+    console.log(`✅ Found ${announcements.length} announcements`);
+    
+    announcements.forEach(a => {
+      console.log(`\n  ${a.title}`);
+      console.log(`  ${a.content.substring(0, 100)}...`);
+    });
+    
+    console.log('\n✅ Staff can see announcements too!');
+  }
+}
+
+docs {
+  # Bob - View Announcements
+  
+  Bob (как staff) просматривает announcements.
+  
+  ## Доступ:
+  - Все staff видят announcements
+  - Участники тоже видят
+  
+  ## Environment:
+  - 🎓 Mentor (Bob)
+}

@@ -1,0 +1,55 @@
+meta {
+  name: 04. Frank - Register (LOOKING_FOR_TEAM)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/participations/register
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{frankAccessToken}}
+}
+
+body:json {
+  {
+    "desired_status": "PART_LOOKING_FOR_TEAM",
+    "wished_role_ids": ["{{roleIdDataScientist}}"],
+    "motivation_text": "I specialize in machine learning and data science with Python. Experience with neural networks, NLP, and computer vision. Ready to build AI solutions that make a real impact!"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const participation = res.body.participation;
+    
+    console.log('✅ Frank registered!');
+    console.log('Status:', participation.status);
+    console.log('Wished roles: Data Scientist');
+    console.log('\n🎉 All participants registered and looking for teams!');
+  }
+}
+
+docs {
+  # Frank - Register (LOOKING_FOR_TEAM)
+  
+  Frank регистрируется на хакатон со статусом LOOKING_FOR_TEAM.
+  
+  ## Параметры:
+  - **desired_status**: PART_LOOKING_FOR_TEAM
+  - **wished_role_ids**: Data Scientist
+  - **motivation_text**: ML-focused мотивация
+  
+  ## Ключевые слова:
+  - "Python", "machine learning", "data science"
+  - "neural networks", "NLP", "computer vision"
+  
+  ## Итог:
+  Теперь у нас 3 участника ищут команды с разными специализациями!
+  
+  ## Environment:
+  - Demo (используем frankAccessToken)
+}

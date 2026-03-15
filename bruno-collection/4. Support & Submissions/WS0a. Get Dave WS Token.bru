@@ -1,0 +1,60 @@
+meta {
+  name: WS0a. Get Dave WS Token
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/support/realtime-token
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const token = res.body.token;
+    
+    bru.setEnvVar('daveWsToken', token);
+    
+    console.log('✅ Dave WebSocket token saved!');
+    console.log('Token:', token.substring(0, 50) + '...');
+    console.log('\nReady to connect: WS1. Dave - Connect to Support Feed');
+  }
+}
+
+docs {
+  # Get Dave WebSocket Token
+  
+  Получение WebSocket токена для Dave.
+  
+  ## Response:
+  - **token**: JWT токен для WebSocket авторизации (скопируй!)
+  - Expires через несколько часов
+  - Привязан к Dave + hackathonId
+  
+  ## Как использовать с websocat:
+  
+  1. Выполни этот запрос → скопируй token из response
+  2. Открой терминал:
+  
+  ```bash
+  websocat 'ws://localhost:8000/connection/websocket?cf_ws_frame_ping_pong=true'
+  ```
+  
+  3. После подключения вставь (замени <TOKEN> и <USER_ID>):
+  
+  ```json
+  {"id":1,"connect":{"token":"<DAVE_WS_TOKEN>"}}
+  {"id":2,"subscribe":{"channel":"support:feed#<DAVE_USER_ID>"}}
+  ```
+  
+  4. Теперь Dave будет получать real-time события!
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+  - Сохраняет в daveWsToken (для удобства)
+}

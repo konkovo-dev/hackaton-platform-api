@@ -1,0 +1,65 @@
+meta {
+  name: 19. Eve - Add Contacts (PUBLIC)
+  type: http
+  seq: 19
+}
+
+put {
+  url: {{baseUrl}}/v1/users/me/contacts
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{eveAccessToken}}
+}
+
+body:json {
+  {
+    "contacts": [
+      {
+        "contact": {
+          "type": "CONTACT_TYPE_EMAIL",
+          "value": "{{eveEmail}}"
+        },
+        "visibility": "VISIBILITY_LEVEL_PUBLIC"
+      },
+      {
+        "contact": {
+          "type": "CONTACT_TYPE_TELEGRAM",
+          "value": "@eve_frontend"
+        },
+        "visibility": "VISIBILITY_LEVEL_PUBLIC"
+      },
+      {
+        "contact": {
+          "type": "CONTACT_TYPE_GITHUB",
+          "value": "github.com/eve-frontend"
+        },
+        "visibility": "VISIBILITY_LEVEL_PUBLIC"
+      }
+    ],
+    "contacts_visibility": "VISIBILITY_LEVEL_PUBLIC"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Eve contacts updated (PUBLIC)');
+    console.log('Added: Email, Telegram, GitHub');
+  }
+}
+
+docs {
+  # Eve - Add Contacts (PUBLIC)
+  
+  Eve добавляет контакты с PUBLIC видимостью.
+  
+  ## Visibility:
+  - PUBLIC - все пользователи увидят
+  
+  Это нужно для демонстрации разницы с PRIVATE контактами.
+  
+  ## Environment:
+  - Demo
+}

@@ -1,0 +1,47 @@
+meta {
+  name: 18. Carol - List My Invitations
+  type: http
+  seq: 18
+}
+
+post {
+  url: {{baseUrl}}/v1/users/me/staff-invitations/list
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{carolAccessToken}}
+}
+
+body:json {
+  {}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    const invitations = data.invitations || [];
+    
+    console.log(`✅ Found ${invitations.length} invitations`);
+    
+    invitations.forEach(inv => {
+      console.log(`\n  Invitation ID: ${inv.invitationId}`);
+      console.log(`  Role: ${inv.requestedRole}`);
+      console.log(`  Status: ${inv.status}`);
+      
+      if (inv.status === 'STAFF_INVITATION_PENDING') {
+        bru.setEnvVar('carolInvitationId', inv.invitationId);
+      }
+    });
+  }
+}
+
+docs {
+  # Carol - List My Invitations
+  
+  Carol просматривает свои приглашения.
+  
+  ## Environment:
+  - ⚖️ Judge (Carol)
+}

@@ -1,0 +1,41 @@
+meta {
+  name: 07. Register Dave
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/v1/auth/register
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "username": "{{daveUsername}}",
+    "email": "{{daveEmail}}",
+    "password": "{{davePassword}}",
+    "first_name": "{{daveFirstName}}",
+    "last_name": "{{daveLastName}}",
+    "timezone": "{{timezone}}"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    bru.setEnvVar('daveAccessToken', data.accessToken);
+    bru.setEnvVar('daveRefreshToken', data.refreshToken);
+    
+    console.log('✅ Dave registered!');
+  }
+}
+
+docs {
+  # Register Dave (Participant - Backend)
+  
+  Регистрируем Dave - backend разработчик.
+  
+  ## Environment:
+  - Demo
+}

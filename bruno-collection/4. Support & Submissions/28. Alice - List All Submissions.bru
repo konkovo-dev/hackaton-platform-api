@@ -1,0 +1,76 @@
+meta {
+  name: 28. Alice - List All Submissions
+  type: http
+  seq: 28
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/submissions/list
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {
+    "query": {
+      "page": {
+        "page_size": 20
+      }
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const submissions = res.body.submissions || [];
+    
+    console.log(`✅ Alice sees ${submissions.length} submissions`);
+    
+    submissions.forEach((sub, idx) => {
+      const files = sub.files || [];
+      console.log(`\n${idx + 1}. ${sub.title}`);
+      console.log(`   Owner: ${sub.ownerKind} (${sub.ownerId.substring(0, 8)}...)`);
+      console.log(`   Files: ${files.length}`);
+      console.log(`   Created: ${sub.createdAt}`);
+    });
+    
+    console.log('\n👑 Owner can see all submissions!');
+  }
+}
+
+docs {
+  # Alice - List All Submissions
+  
+  Alice (Owner) просматривает все submissions хакатона.
+  
+  ## Что видит Alice:
+  - Все submissions всех участников/команд
+  - Для каждого:
+    - submissionId
+    - title, description
+    - ownerKind (team/user), ownerId
+    - files (массив файлов)
+    - createdAt, updatedAt
+  
+  ## Результат:
+  - Submission команды "AI Innovators" (Dave + Eve)
+  - 1 файл: solution.zip
+  
+  ## Доступ Staff:
+  - **Owner** (Alice): видит все submissions ✅
+  - **Organizer**: видит все submissions ✅
+  - **Judge** (Carol): видит все submissions ✅
+  - **Mentor** (Bob): НЕ видит submissions ❌
+  
+  ## Зачем:
+  - Мониторинг прогресса участников
+  - Подготовка к judging
+  - Статистика (сколько команд отправили решения)
+  
+  ## Environment:
+  - Demo (используем aliceAccessToken)
+}

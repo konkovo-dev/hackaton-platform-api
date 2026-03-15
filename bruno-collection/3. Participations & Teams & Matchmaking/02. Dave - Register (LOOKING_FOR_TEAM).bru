@@ -1,0 +1,53 @@
+meta {
+  name: 02. Dave - Register (LOOKING_FOR_TEAM)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/participations/register
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+body:json {
+  {
+    "desired_status": "PART_LOOKING_FOR_TEAM",
+    "wished_role_ids": ["{{roleIdBackend}}", "{{roleIdDevOps}}"],
+    "motivation_text": "I have 5 years of experience building distributed systems with Go and Kubernetes. Passionate about microservices architecture and cloud-native technologies. Looking for a team working on backend infrastructure or DevOps challenges."
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const participation = res.body.participation;
+    
+    console.log('✅ Dave registered!');
+    console.log('Status:', participation.status);
+    console.log('Motivation saved for matchmaking!');
+  }
+}
+
+docs {
+  # Dave - Register (LOOKING_FOR_TEAM)
+  
+  Dave регистрируется на хакатон со статусом LOOKING_FOR_TEAM - ищет команду.
+  
+  ## Параметры:
+  - **desired_status**: PART_LOOKING_FOR_TEAM (ищу команду)
+  - **wished_role_ids**: Backend, DevOps (желаемые роли)
+  - **motivation_text**: Детальная мотивация с ключевыми словами
+  
+  ## Важно для matchmaking:
+  - Мотивация содержит ключевые слова: "Go", "Kubernetes", "distributed systems", "microservices"
+  - Эти слова будут использоваться в текстовом скоринге (10% веса)
+  - Роли используются в role matching (27% веса)
+  - Скиллы Dave (из профиля) используются в skill matching (63% веса)
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

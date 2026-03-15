@@ -1,0 +1,47 @@
+meta {
+  name: WS0b. Get Eve WS Token
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/support/realtime-token
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{eveAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const token = res.body.token;
+    
+    bru.setEnvVar('eveWsToken', token);
+    
+    console.log('✅ Eve WebSocket token saved!');
+    console.log('Token:', token.substring(0, 50) + '...');
+    console.log('\nReady to connect: WS2. Eve - Connect to Support Feed');
+  }
+}
+
+docs {
+  # Get Eve WebSocket Token
+  
+  Получение WebSocket токена для Eve.
+  
+  ## Response:
+  - **token**: JWT токен для WebSocket авторизации (скопируй!)
+  - Expires через несколько часов
+  - Привязан к Eve + hackathonId
+  
+  ## Как использовать с websocat:
+  
+  Открой второй терминал и повтори команды как для Dave,
+  но используй token Eve и eveUserId.
+  
+  ## Environment:
+  - Demo (используем eveAccessToken)
+  - Сохраняет в eveWsToken
+}

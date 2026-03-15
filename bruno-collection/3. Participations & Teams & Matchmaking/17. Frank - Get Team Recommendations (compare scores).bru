@@ -1,0 +1,76 @@
+meta {
+  name: 17. Frank - Get Team Recommendations (compare scores)
+  type: http
+  seq: 17
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/matchmaking/teams?limit=10
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{frankAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const recommendations = res.body.recommendations || [];
+    
+    console.log(`✅ Found ${recommendations.length} recommendations for Frank`);
+    
+    if (recommendations.length > 0) {
+      const top = recommendations[0];
+      const score = top.matchScore;
+      
+      console.log('\n🏆 TOP MATCH for Frank:');
+      console.log('Team ID:', top.teamId);
+      console.log('Total Score:', score.totalScore.toFixed(3));
+      
+      console.log('\n⚠️  Compare with Eve (запрос 08):');
+      console.log('Frank (ML) → Dave team (Frontend vacancy): LOW score');
+      console.log('Eve (Frontend) → Dave team (Frontend vacancy): HIGH score');
+      console.log('\n🎯 Matchmaking ranks by relevance!');
+    }
+  }
+}
+
+docs {
+  # Frank - Get Team Recommendations (Compare Scores)
+  
+  Frank тоже ищет команду. Сравниваем его результаты с Eve.
+  
+  ## Ожидаемый результат:
+  Команда "AI Innovators" (Dave) будет в списке, но с **НИЗКИМ score**!
+  
+  ## Почему низкий score:
+  
+  ### Skills (63% веса):
+  - Frank: Python, ML, Data Science
+  - Vacancy: React, TypeScript
+  - ❌ Нет совпадений! score ~0.0-0.1
+  
+  ### Roles (27% веса):
+  - Frank: Data Scientist
+  - Vacancy: Frontend, Designer
+  - ❌ Нет совпадений! score ~0.0
+  
+  ### Text (10% веса):
+  - Frank: "Python", "machine learning"
+  - Vacancy: "React", "TypeScript", "frontend"
+  - ❌ Минимальные совпадения, score ~0.1-0.2
+  
+  ## Total Score:
+  ~0.05-0.15 (очень низкий!)
+  
+  ## Сравнение:
+  - **Eve** → Dave's team: score ~0.85-0.90 (HIGH) ✅
+  - **Frank** → Dave's team: score ~0.05-0.15 (LOW) ❌
+  
+  ## Демонстрация:
+  Это показывает что matchmaking **не просто показывает все команды**, а **умно ранжирует по релевантности**! Eve - идеальный кандидат для frontend вакансии, Frank - нет.
+  
+  ## Environment:
+  - Demo (используем frankAccessToken)
+}

@@ -1,0 +1,50 @@
+meta {
+  name: 20. List Staff (full team)
+  type: http
+  seq: 20
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/staff
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    const staff = data.staff || [];
+    
+    console.log(`✅ Staff count: ${staff.length}`);
+    console.log('\nFull team:');
+    
+    staff.forEach(member => {
+      const roles = member.roles || [];
+      console.log(`  - User ${member.userId}:`);
+      roles.forEach(role => console.log(`      ${role}`));
+    });
+    
+    console.log('\n🎉 Team is complete!');
+    console.log('  👑 Owner (Alice)');
+    console.log('  🎓 Mentor (Bob)');
+    console.log('  ⚖️  Judge (Carol)');
+  }
+}
+
+docs {
+  # List Staff (Full Team)
+  
+  Проверка полной команды staff.
+  
+  ## Ожидаемый результат:
+  - Alice (HX_ROLE_OWNER)
+  - Bob (HX_ROLE_MENTOR)
+  - Carol (HX_ROLE_JUDGE)
+  
+  ## Environment:
+  - 👑 Owner (Alice)
+}

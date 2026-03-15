@@ -1,0 +1,80 @@
+meta {
+  name: 04. Update Hackathon (add description)
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {
+    "name": "AI Innovation Hackathon 2026",
+    "short_description": "Build the future with AI",
+    "description": "Join us for an exciting 48-hour hackathon focused on AI and machine learning innovations. Build solutions that solve real-world problems using cutting-edge AI technologies. Work with talented developers, designers, and ML engineers to create something amazing!",
+    "location": {
+      "online": false,
+      "country": "Russia",
+      "city": "Moscow",
+      "venue": "Digital October Center"
+    },
+    "dates": {
+      "registration_opens_at": "2026-03-20T10:00:00Z",
+      "registration_closes_at": "2026-04-05T23:59:59Z",
+      "starts_at": "2026-04-10T09:00:00Z",
+      "ends_at": "2026-04-12T18:00:00Z",
+      "judging_ends_at": "2026-04-15T23:59:59Z"
+    },
+    "registration_policy": {
+      "allow_individual": true,
+      "allow_team": true
+    },
+    "limits": {
+      "team_size_max": 5
+    },
+    "links": [
+      {
+        "title": "Official Website",
+        "url": "https://ai-hackathon.example.com"
+      },
+      {
+        "title": "Discord Community",
+        "url": "https://discord.gg/ai-hack"
+      }
+    ]
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Hackathon updated');
+    console.log('Added: full description + links');
+  }
+}
+
+docs {
+  # Update Hackathon (Add Description)
+  
+  Alice исправляет первую ошибку валидации - добавляет полное описание и ссылки.
+  
+  ## Что добавили:
+  - ✅ **description** - детальное описание хакатона (48 часов, AI/ML, командная работа)
+  - ✅ **links** - полезные ссылки:
+    - Official Website
+    - Discord Community
+  
+  ## Важно:
+  - Можно обновлять хакатон частями - не обязательно все поля сразу
+  - DRAFT остается DRAFT до публикации
+  - Обновление не требует повторной валидации (но рекомендуется)
+  
+  ## Environment:
+  - Demo (используем aliceAccessToken)
+}

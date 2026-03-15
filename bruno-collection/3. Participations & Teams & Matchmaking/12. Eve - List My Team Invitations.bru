@@ -1,0 +1,63 @@
+meta {
+  name: 12. Eve - List My Team Invitations
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/v1/users/me/team-invitations/list
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{eveAccessToken}}
+}
+
+body:json {
+  {
+    "query": {
+      "page": {
+        "page_size": 20
+      }
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const invitations = res.body.invitations || [];
+    
+    console.log(`✅ Found ${invitations.length} team invitations`);
+    
+    invitations.forEach(inv => {
+      console.log(`\n${inv.teamName}:`);
+      console.log('  Status:', inv.status);
+      console.log('  Message:', inv.message);
+      console.log('  Vacancy:', inv.vacancyDescription);
+    });
+  }
+}
+
+docs {
+  # Eve - List My Team Invitations
+  
+  Eve проверяет свои приглашения в команды.
+  
+  ## Что видно:
+  - **invitations** - массив всех приглашений
+  - Для каждого:
+    - invitationId
+    - teamId, teamName
+    - vacancyId, vacancyDescription
+    - status: TEAM_INVITATION_PENDING
+    - message: сообщение от Dave
+    - invitedBy: daveUserId
+    - hackathonId
+  
+  ## Зачем:
+  Eve видит кто и в какую команду её приглашает, на какую вакансию, с каким сообщением.
+  
+  ## Environment:
+  - Demo (используем eveAccessToken)
+}

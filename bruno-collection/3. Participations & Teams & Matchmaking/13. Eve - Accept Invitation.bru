@@ -1,0 +1,50 @@
+meta {
+  name: 13. Eve - Accept Invitation
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{baseUrl}}/v1/users/me/team-invitations/{{eveTeamInvitationId}}/accept
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{eveAccessToken}}
+}
+
+body:json {
+  {}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Eve accepted invitation!');
+    console.log('Eve joined AI Innovators team! 🎉');
+    console.log('Status: LOOKING_FOR_TEAM → TEAM_MEMBER');
+  }
+}
+
+docs {
+  # Eve - Accept Invitation
+  
+  Eve принимает приглашение присоединиться к команде "AI Innovators".
+  
+  ## Что происходит:
+  - **status**: TEAM_INVITATION_PENDING → TEAM_INVITATION_ACCEPTED
+  - Eve становится членом команды
+  - Её participation status: PART_LOOKING_FOR_TEAM → PART_TEAM_MEMBER
+  - Вакансия обновляется: slots_open уменьшается (2 → 1)
+  - Все другие pending приглашения/requests Eve автоматически отменяются
+  
+  ## Важно:
+  Принятие приглашения - это атомарная операция:
+  - Добавление в команду
+  - Обновление participation status
+  - Уменьшение slots_open
+  - Отмена конкурирующих invitations/requests
+  
+  ## Environment:
+  - Demo (используем eveAccessToken)
+}

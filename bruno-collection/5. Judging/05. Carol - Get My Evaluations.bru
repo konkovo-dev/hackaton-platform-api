@@ -1,0 +1,66 @@
+meta {
+  name: 05. Carol - Get My Evaluations
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/judging/my-evaluations/list
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{carolAccessToken}}
+}
+
+body:json {
+  {
+    "query": {
+      "page": {
+        "page_size": 20
+      }
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const evaluations = res.body.evaluations || [];
+    
+    console.log(`✅ Carol has ${evaluations.length} evaluations`);
+    
+    evaluations.forEach((evaluation, idx) => {
+      const submission = evaluation.submission;
+      console.log(`\n${idx + 1}. ${submission.title}`);
+      console.log(`   Score: ${evaluation.score}/10`);
+      console.log(`   Comment: ${evaluation.comment.substring(0, 50)}...`);
+      console.log(`   Evaluated at: ${evaluation.evaluatedAt}`);
+    });
+  }
+}
+
+docs {
+  # Carol - Get My Evaluations
+  
+  Carol просматривает все свои оценки.
+  
+  ## Response:
+  - **evaluations**: массив оценок
+  - Каждая оценка содержит:
+    - evaluationId
+    - **submission**: информация о submission
+      - submissionId, title, description
+      - ownerKind, ownerId
+    - **score**: 0-10
+    - **comment**: текст оценки
+    - evaluatedAt: когда оценил
+  
+  ## Зачем:
+  - Judge видит историю своих оценок
+  - Может пересмотреть что оценивал
+  - Проверить что все assignments оценены
+  
+  ## Environment:
+  - Demo (используем carolAccessToken)
+}

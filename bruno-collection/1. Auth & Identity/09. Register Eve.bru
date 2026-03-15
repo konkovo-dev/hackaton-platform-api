@@ -1,0 +1,41 @@
+meta {
+  name: 09. Register Eve
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/v1/auth/register
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "username": "{{eveUsername}}",
+    "email": "{{eveEmail}}",
+    "password": "{{evePassword}}",
+    "first_name": "{{eveFirstName}}",
+    "last_name": "{{eveLastName}}",
+    "timezone": "{{timezone}}"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    bru.setEnvVar('eveAccessToken', data.accessToken);
+    bru.setEnvVar('eveRefreshToken', data.refreshToken);
+    
+    console.log('✅ Eve registered!');
+  }
+}
+
+docs {
+  # Register Eve (Participant - Frontend)
+  
+  Регистрируем Eve - frontend разработчик.
+  
+  ## Environment:
+  - Demo
+}

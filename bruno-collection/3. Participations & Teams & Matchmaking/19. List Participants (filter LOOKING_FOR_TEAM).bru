@@ -1,0 +1,68 @@
+meta {
+  name: 19. List Participants (filter LOOKING_FOR_TEAM)
+  type: http
+  seq: 19
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/participations/list
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+body:json {
+  {
+    "status_filter": {
+      "statuses": ["PART_LOOKING_FOR_TEAM"]
+    },
+    "query": {
+      "page": {
+        "page_size": 20
+      }
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const participants = res.body.participants || [];
+    
+    console.log(`✅ Found ${participants.length} participants LOOKING_FOR_TEAM`);
+    
+    participants.forEach(part => {
+      console.log(`\n${part.userId}:`);
+      console.log('  Status:', part.status);
+      if (part.profile) {
+        console.log('  Motivation:', part.profile.motivationText?.substring(0, 50) + '...');
+      }
+    });
+  }
+}
+
+docs {
+  # List Participants (Filter LOOKING_FOR_TEAM)
+  
+  Просмотр участников которые ищут команду.
+  
+  ## Фильтр:
+  - **status_filter**: PART_LOOKING_FOR_TEAM
+  
+  ## Результат:
+  - Frank (ML Engineer) - все еще ищет команду
+  - Dave и Eve НЕ в списке (они уже в команде)
+  
+  ## Зачем:
+  - Капитаны могут видеть кто ищет команду
+  - Можно отправить им приглашения
+  - Альтернатива matchmaking (без скоринга)
+  
+  ## Доступ:
+  - Только зарегистрированные участники хакатона
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

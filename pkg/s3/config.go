@@ -8,6 +8,7 @@ import (
 
 type Config struct {
 	Endpoint        string
+	PublicEndpoint  string
 	Region          string
 	AccessKeyID     string
 	SecretAccessKey string
@@ -17,9 +18,12 @@ type Config struct {
 
 func NewConfig() *Config {
 	useSSL := env.GetEnv("S3_USE_SSL", "false") == "true"
+	endpoint := env.GetEnv("S3_ENDPOINT", "localhost:9000")
+	publicEndpoint := env.GetEnv("S3_PUBLIC_ENDPOINT", endpoint)
 
 	return &Config{
-		Endpoint:        env.GetEnv("S3_ENDPOINT", "localhost:9000"),
+		Endpoint:        endpoint,
+		PublicEndpoint:  publicEndpoint,
 		Region:          env.GetEnv("S3_REGION", "us-east-1"),
 		AccessKeyID:     env.GetEnv("S3_ACCESS_KEY_ID", "minioadmin"),
 		SecretAccessKey: env.GetEnv("S3_SECRET_ACCESS_KEY", "minioadmin"),

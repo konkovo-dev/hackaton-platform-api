@@ -1,0 +1,84 @@
+meta {
+  name: 10. Dave - Get Candidate Recommendations (MATCHMAKING!)
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/matchmaking/candidates?teamId={{daveTeamId}}&vacancyId={{daveVacancyId}}&limit=10
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const recommendations = res.body.recommendations || [];
+    
+    console.log(`✅ Found ${recommendations.length} candidate recommendations`);
+    
+    if (recommendations.length > 0) {
+      const top = recommendations[0];
+      const score = top.matchScore;
+      
+      console.log('\n🏆 TOP CANDIDATE:');
+      console.log('User ID:', top.userId);
+      console.log('Total Score:', score.totalScore.toFixed(3));
+      
+      console.log('\n📊 BREAKDOWN:');
+      console.log(`Skills: ${score.skills.score.toFixed(2)} × ${score.skills.weight.toFixed(2)}`);
+      console.log(`  Matched: ${score.skills.matchedSkills || []}`);
+      
+      console.log(`Roles: ${score.roles.score.toFixed(2)} × ${score.roles.weight.toFixed(2)}`);
+      console.log(`  Matched: ${score.roles.matchedRoles || []}`);
+      
+      console.log(`Text: ${score.text.score.toFixed(2)} × ${score.text.weight.toFixed(2)}`);
+      console.log(`  Keywords: ${score.text.matchedKeywords || []}`);
+      
+      console.log('\n🎯 This should be Eve - perfect match!');
+    }
+  }
+}
+
+docs {
+  # Dave - Get Candidate Recommendations (MATCHMAKING!)
+  
+  🔥 **ОБРАТНЫЙ MATCHMAKING!** Dave (капитан) ищет кандидатов для своей вакансии.
+  
+  ## Параметры:
+  - **teamId**: daveTeamId
+  - **vacancyId**: daveVacancyId (для какой вакансии ищем)
+  - **limit**: 10 (топ-10 кандидатов)
+  
+  ## Что происходит:
+  Система анализирует всех участников со статусом LOOKING_FOR_TEAM и ранжирует их по совместимости с вакансией.
+  
+  ## Match Score (тот же алгоритм):
+  
+  ### 1. Skills (63% веса)
+  - Сравнивает скиллы кандидата с desired_skill_ids вакансии
+  - Eve: React ✅, TypeScript ✅ = 2/2 matched!
+  - Frank: Python, ML (не подходят для frontend)
+  
+  ### 2. Roles (27% веса)
+  - Сравнивает wished_role_ids кандидата с desired_role_ids вакансии
+  - Eve: Frontend ✅, Designer ✅ = 2/2 matched!
+  
+  ### 3. Text (10% веса)
+  - Анализ мотивации кандидата vs описание вакансии
+  - Eve: "React", "TypeScript", "UI" совпадут!
+  
+  ## Результат:
+  Eve на первом месте с высоким score (~0.85-0.90)!
+  
+  ## Двусторонний matchmaking:
+  - Eve ищет команды (запрос 08) → находит Dave's team
+  - Dave ищет кандидатов (запрос 10) → находит Eve
+  - Взаимное совпадение!
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

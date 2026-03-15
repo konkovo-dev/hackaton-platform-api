@@ -1,0 +1,75 @@
+meta {
+  name: 03. Carol - Get My Assignments
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/judging/my-assignments/list
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{carolAccessToken}}
+}
+
+body:json {
+  {
+    "query": {
+      "page": {
+        "page_size": 20
+      }
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const assignments = res.body.assignments || [];
+    
+    console.log(`✅ Carol has ${assignments.length} assignments`);
+    
+    assignments.forEach((assignment, idx) => {
+      const submission = assignment.submission;
+      console.log(`\n${idx + 1}. ${submission.title}`);
+      console.log(`   Submission ID: ${submission.submissionId}`);
+      console.log(`   Owner: ${submission.ownerKind}`);
+      console.log(`   Evaluated: ${assignment.evaluated ? 'YES' : 'NO'}`);
+      
+      if (assignment.evaluated) {
+        console.log(`   Score: ${assignment.score}/10`);
+      }
+    });
+    
+    console.log('\n📋 Carol can now evaluate these submissions!');
+  }
+}
+
+docs {
+  # Carol - Get My Assignments
+  
+  Carol (Judge) просматривает submissions назначенные ей для оценки.
+  
+  ## Response:
+  - **assignments**: массив назначений
+  - Каждый assignment содержит:
+    - assignmentId
+    - **submission**: полная информация о submission
+      - submissionId, title, description
+      - ownerKind, ownerId
+      - files (массив файлов)
+    - **evaluated**: true/false (оценил ли уже)
+    - **score**: оценка (если evaluated = true)
+    - **comment**: комментарий (если evaluated = true)
+    - assignedAt: когда назначен
+  
+  ## Фильтр (опционально):
+  Можно добавить `"evaluated": false` в body чтобы видеть только неоцененные.
+  
+  ## Результат:
+  Carol видит submission команды "AI Innovators" (и возможно другие).
+  
+  ## Environment:
+  - Demo (используем carolAccessToken)
+}

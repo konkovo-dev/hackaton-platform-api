@@ -1,0 +1,65 @@
+meta {
+  name: 15c. Search Skills
+  type: http
+  seq: 15.2
+}
+
+post {
+  url: {{baseUrl}}/v1/skills/list
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {
+    "query": {
+      "q": "script",
+      "page": {
+        "page_size": 20
+      }
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const skills = res.body.skills || [];
+    
+    console.log(`✅ Found ${skills.length} skills matching "script"`);
+    
+    skills.forEach(skill => {
+      console.log(`  - ${skill.name}`);
+    });
+  }
+}
+
+docs {
+  # Search Skills (Text Search)
+  
+  Демонстрация текстового поиска по каталогу скиллов.
+  
+  ## Параметр:
+  - **q**: "script" - поисковый запрос
+  
+  ## Результат:
+  - JavaScript (содержит "script")
+  - TypeScript (содержит "script")
+  
+  ## Как работает:
+  - Поиск по частичному совпадению (CONTAINS)
+  - Case-insensitive (не важен регистр)
+  - Ищет в поле name
+  
+  ## Важно:
+  Текстовый поиск (q) работает во ВСЕХ list эндпоинтах:
+  - /v1/skills/list - поиск по названию скилла
+  - /v1/users/list - поиск по username, имени, фамилии
+  - /v1/hackathons/list - поиск по названию, описанию
+  
+  ## Environment:
+  - Demo
+}

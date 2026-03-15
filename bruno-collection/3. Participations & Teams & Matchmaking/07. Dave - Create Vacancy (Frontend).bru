@@ -1,0 +1,61 @@
+meta {
+  name: 07. Dave - Create Vacancy (Frontend)
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/teams/{{daveTeamId}}/vacancies/upsert
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+body:json {
+  {
+    "description": "We need a talented frontend developer with React and TypeScript experience to build our user interface for the healthcare AI platform. You will work on creating an intuitive dashboard for doctors.",
+    "desired_role_ids": ["{{roleIdFrontend}}", "{{roleIdDesigner}}"],
+    "desired_skill_ids": ["00000000-0000-0000-0000-000000000012", "00000000-0000-0000-0000-000000000011"],
+    "slots_total": 2
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const vacancyId = res.body.vacancyId;
+    bru.setEnvVar('daveVacancyId', vacancyId);
+    
+    console.log('✅ Vacancy created!');
+    console.log('Vacancy ID:', vacancyId);
+    console.log('Slots: 2 open');
+    console.log('Looking for: Frontend + Designer with React + TypeScript');
+  }
+}
+
+docs {
+  # Dave - Create Vacancy (Frontend)
+  
+  Dave создает вакансию для frontend разработчика в своей команде.
+  
+  ## Параметры:
+  - **description**: Детальное описание вакансии (используется в text matching!)
+  - **desired_role_ids**: Frontend, Designer (используется в role matching - 27% веса)
+  - **desired_skill_ids**: React, TypeScript (используется в skill matching - 63% веса)
+  - **slots_total**: 2 (можем принять 2 человека)
+  
+  ## Ключевые слова в описании:
+  - "React", "TypeScript" - совпадут с Eve!
+  - "frontend", "user interface", "dashboard"
+  - Эти слова используются в текстовом скоринге (10% веса)
+  
+  ## Важно:
+  - vacancy_id пустой = создание новой вакансии
+  - vacancy_id заполнен = обновление существующей (upsert semantics)
+  - vacancyId сохраняется в daveVacancyId
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

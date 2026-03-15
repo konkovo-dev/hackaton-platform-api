@@ -1,0 +1,57 @@
+meta {
+  name: 08. List Hackathons (public)
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/list
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "query": {
+      "page": {
+        "page_size": 10
+      }
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    const hackathons = data.hackathons || [];
+    
+    console.log(`✅ Found ${hackathons.length} hackathons`);
+    
+    const ourHackathon = hackathons.find(h => h.name && h.name.includes('AI Innovation'));
+    if (ourHackathon) {
+      console.log('✅ Our hackathon is visible!');
+      console.log('Name:', ourHackathon.name);
+      console.log('Stage:', ourHackathon.stage);
+    }
+  }
+}
+
+docs {
+  # List Hackathons (Public)
+  
+  Проверяем что хакатон теперь виден всем. Запрос БЕЗ авторизации - публичный доступ.
+  
+  ## Что видно:
+  - Все опубликованные хакатоны (state != DRAFT)
+  - Наш AI Innovation Hackathon 2026 теперь в списке!
+  - Базовая информация: название, short_description, даты, локация, stage
+  
+  ## Что НЕ видно:
+  - ❌ DRAFT хакатоны (они приватные)
+  
+  ## Зачем:
+  Демонстрирует что после публикации хакатон доступен всем пользователям платформы, даже неавторизованным. Это главная страница платформы.
+  
+  ## Environment:
+  - Demo (но токен НЕ используется - запрос публичный)
+}

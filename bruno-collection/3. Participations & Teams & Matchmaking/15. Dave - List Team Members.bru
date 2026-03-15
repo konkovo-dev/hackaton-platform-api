@@ -1,0 +1,57 @@
+meta {
+  name: 15. Dave - List Team Members
+  type: http
+  seq: 15
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/teams/{{daveTeamId}}/members
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const members = res.body.members || [];
+    
+    console.log(`✅ Team has ${members.length} members`);
+    
+    members.forEach(member => {
+      const role = member.isCaptain ? '👑 Captain' : '👥 Member';
+      console.log(`\n${role}:`);
+      console.log('  User ID:', member.userId);
+      console.log('  Joined:', member.joinedAt);
+      if (member.assignedVacancyId) {
+        console.log('  Vacancy:', member.assignedVacancyId);
+      }
+    });
+  }
+}
+
+docs {
+  # Dave - List Team Members
+  
+  Dave просматривает состав своей команды.
+  
+  ## Что видно:
+  - **members** - массив всех членов команды
+  - Для каждого:
+    - userId
+    - isCaptain (true для Dave, false для Eve)
+    - assignedVacancyId (для какой вакансии принят)
+    - joinedAt (дата присоединения)
+  
+  ## Результат:
+  - 👑 Dave (captain, создатель команды)
+  - 👥 Eve (member, принята на frontend вакансию)
+  
+  ## Зачем:
+  Капитан может видеть кто в команде и кто на какую вакансию принят.
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

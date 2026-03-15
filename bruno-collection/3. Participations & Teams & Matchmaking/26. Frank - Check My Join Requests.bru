@@ -1,0 +1,62 @@
+meta {
+  name: 26. Frank - Check My Join Requests
+  type: http
+  seq: 26
+}
+
+post {
+  url: {{baseUrl}}/v1/users/me/join-requests/list
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{frankAccessToken}}
+}
+
+body:json {
+  {
+    "query": {
+      "page": {
+        "page_size": 20
+      }
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const requests = res.body.requests || [];
+    
+    console.log(`✅ Found ${requests.length} my join requests`);
+    
+    requests.forEach(req => {
+      console.log(`\n${req.teamName}:`);
+      console.log('  Status:', req.status);
+      
+      if (req.status === 'JOIN_REQUEST_REJECTED') {
+        console.log('  ❌ Rejected (skills mismatch)');
+      }
+    });
+  }
+}
+
+docs {
+  # Frank - Check My Join Requests
+  
+  Frank проверяет статус своих заявок.
+  
+  ## Что видно:
+  - Заявка в "AI Innovators" со статусом REJECTED
+  - Видно что Dave отклонил (запрос 25)
+  
+  ## Зачем:
+  Участник может отслеживать статус своих заявок:
+  - PENDING - ожидает ответа
+  - ACCEPTED - принят в команду
+  - REJECTED - отклонен
+  - CANCELED - отменен самим участником
+  
+  ## Environment:
+  - Demo (используем frankAccessToken)
+}

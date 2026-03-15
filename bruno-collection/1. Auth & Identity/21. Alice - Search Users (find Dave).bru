@@ -1,0 +1,55 @@
+meta {
+  name: 21. Alice - Search Users (find Dave)
+  type: http
+  seq: 21
+}
+
+post {
+  url: {{baseUrl}}/v1/users/list
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {
+    "query": {
+      "q": "dave",
+      "page": {
+        "page_size": 10
+      }
+    },
+    "include_skills": true,
+    "include_contacts": false
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const users = res.body.users || [];
+    console.log(`✅ Found ${users.length} users`);
+    
+    users.forEach(userData => {
+      const user = userData.user;
+      const skills = userData.skills || [];
+      console.log(`\n${user.username} (${user.firstName} ${user.lastName})`);
+      console.log(`Skills: ${skills.length}`);
+    });
+  }
+}
+
+docs {
+  # Alice - Search Users
+  
+  Alice ищет пользователя Dave по имени.
+  
+  ## Зачем:
+  - Найти участников для команды
+  - Посмотреть их скиллы
+  
+  ## Environment:
+  - Demo (используем aliceAccessToken)
+}

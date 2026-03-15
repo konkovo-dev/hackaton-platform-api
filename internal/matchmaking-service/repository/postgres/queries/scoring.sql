@@ -4,7 +4,8 @@ WITH user_data AS (
         p.wished_role_ids,
         p.motivation_text,
         p.motivation_tsv,
-        u.catalog_skill_ids || u.custom_skill_names AS user_skills
+        u.catalog_skill_ids AS user_catalog_skills,
+        u.custom_skill_names AS user_custom_skills
     FROM matchmaking.participations p
     JOIN matchmaking.users u ON u.user_id = p.user_id
     WHERE p.user_id = $1 AND p.hackathon_id = $2
@@ -36,7 +37,7 @@ scored AS (
             ELSE (
                 SELECT COUNT(*)::float / cardinality(tv.desired_skill_ids)
                 FROM unnest(tv.desired_skill_ids) AS ds
-                WHERE ds = ANY(ud.user_skills)
+                WHERE ds = ANY(ud.user_catalog_skills)
             )
         END AS skills_score,
         CASE
@@ -89,7 +90,8 @@ candidates AS (
         p.wished_role_ids,
         p.motivation_text,
         p.motivation_tsv,
-        u.catalog_skill_ids || u.custom_skill_names AS user_skills
+        u.catalog_skill_ids AS user_catalog_skills,
+        u.custom_skill_names AS user_custom_skills
     FROM matchmaking.participations p
     JOIN matchmaking.users u ON u.user_id = p.user_id
     WHERE p.hackathon_id = $2
@@ -104,7 +106,7 @@ scored AS (
             ELSE (
                 SELECT COUNT(*)::float / cardinality(vd.desired_skill_ids)
                 FROM unnest(vd.desired_skill_ids) AS ds
-                WHERE ds = ANY(c.user_skills)
+                WHERE ds = ANY(c.user_catalog_skills)
             )
         END AS skills_score,
         CASE

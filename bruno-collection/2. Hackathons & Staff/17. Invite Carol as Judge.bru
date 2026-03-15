@@ -1,0 +1,47 @@
+meta {
+  name: 17. Invite Carol as Judge
+  type: http
+  seq: 17
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/staff-invitations
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {
+    "target_user_id": "{{carolUserId}}",
+    "requested_role": "HX_ROLE_JUDGE",
+    "message": "Hi Carol! We need your expertise to judge the AI hackathon submissions. Would you like to join us as a judge?"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    bru.setEnvVar('carolInvitationId', data.invitationId);
+    
+    console.log('✅ Invitation sent to Carol');
+    console.log('Invitation ID:', data.invitationId);
+  }
+}
+
+docs {
+  # Invite Carol as Judge
+  
+  Приглашение Carol стать судьей.
+  
+  ## Важно:
+  - `target_user_id` берется из environment Carol
+  - Нужно сначала получить userId Carol
+  
+  ## Environment:
+  - 👑 Owner (Alice)
+  - ⚠️  В body используем userId из Carol environment
+}

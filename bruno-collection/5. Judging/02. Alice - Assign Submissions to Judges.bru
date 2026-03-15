@@ -1,0 +1,77 @@
+meta {
+  name: 02. Alice - Assign Submissions to Judges
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/judging/assign
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {
+    "idempotency_key": {
+      "key": "assign-judges-demo-{{hackathonId}}"
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const assignmentsCount = res.body.assignmentsCount;
+    const judgesCount = res.body.judgesCount;
+    const submissionsCount = res.body.submissionsCount;
+    
+    console.log('✅ Submissions assigned to judges!');
+    console.log(`\n📊 Statistics:`);
+    console.log(`  Judges: ${judgesCount}`);
+    console.log(`  Submissions: ${submissionsCount}`);
+    console.log(`  Assignments: ${assignmentsCount}`);
+    console.log(`\n🎯 Algorithm: Round-robin`);
+    console.log(`Each submission gets ${judgesCount >= 3 ? '3' : judgesCount} judges`);
+  }
+}
+
+docs {
+  # Alice - Assign Submissions to Judges
+  
+  Alice (Owner) запускает автоматическое распределение submissions между судьями.
+  
+  ## Алгоритм:
+  - **Round-robin** - равномерное распределение
+  - Каждый submission получает минимум 3 судей
+  - Если судей меньше 3 - назначаются все
+  
+  ## Что происходит:
+  1. Система находит все final submissions
+  2. Находит всех judges хакатона
+  3. Создает assignments (submission → judge)
+  4. Каждый judge получает примерно равное количество работ
+  
+  ## Response:
+  - **assignmentsCount**: сколько assignments создано
+  - **judgesCount**: сколько судей участвует
+  - **submissionsCount**: сколько submissions на оценку
+  
+  ## Idempotency:
+  - Можно вызывать многократно
+  - Если assignments уже созданы - вернет success без изменений
+  
+  ## Доступ:
+  - **Owner** (Alice): может ✅
+  - **Organizer**: может ✅
+  - **Judge**: НЕ может ❌
+  - **Participant**: НЕ может ❌
+  
+  ## Результат:
+  Carol (Judge) теперь видит submission команды "AI Innovators" в своих assignments.
+  
+  ## Environment:
+  - Demo (используем aliceAccessToken)
+}

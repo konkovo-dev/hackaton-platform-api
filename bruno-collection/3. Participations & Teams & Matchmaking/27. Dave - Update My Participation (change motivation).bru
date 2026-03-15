@@ -1,0 +1,49 @@
+meta {
+  name: 27. Frank - Update My Participation (change motivation)
+  type: http
+  seq: 27
+}
+
+put {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/participations/me
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{frankAccessToken}}
+}
+
+body:json {
+  {
+    "wished_role_ids": ["{{roleIdDataScientist}}"],
+    "motivation_text": "Updated: Still looking for a team! I'm passionate about machine learning and data science. Experienced with Python, TensorFlow, and building ML pipelines. Ready to contribute to innovative AI projects!"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Participation updated!');
+    console.log('Frank updated motivation after rejection');
+  }
+}
+
+docs {
+  # Frank - Update My Participation
+  
+  Frank обновляет свою мотивацию после отклонения заявки.
+  
+  ## Что можно обновить:
+  - **wished_role_ids**: Желаемые роли
+  - **motivation_text**: Мотивация
+  
+  ## Зачем:
+  Frank все еще ищет команду, обновляет мотивацию чтобы привлечь другие команды.
+  
+  ## Важно:
+  - Можно обновлять в любом статусе
+  - Обновленная мотивация используется в matchmaking
+  
+  ## Environment:
+  - Demo (используем frankAccessToken)
+}

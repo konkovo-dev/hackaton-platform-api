@@ -1,0 +1,63 @@
+meta {
+  name: 04. Eve - Get My Chat Messages (sees Dave's message!)
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/support/my-messages?query.limit=50&query.offset=0
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{eveAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const messages = res.body.messages || [];
+    
+    console.log(`✅ Eve sees ${messages.length} messages`);
+    
+    if (messages.length > 0) {
+      console.log('\n🎉 TEAM CHAT WORKS!');
+      console.log('Eve sees the same messages as Dave!');
+      
+      messages.forEach(msg => {
+        const author = msg.authorUserId === bru.getEnvVar('daveUserId') ? 'Dave (teammate)' :
+                       msg.authorUserId === bru.getEnvVar('eveUserId') ? 'Eve (me)' :
+                       msg.authorRole === 'mentor' ? 'Mentor' : 'System';
+        console.log(`\n[${author}]: ${msg.text}`);
+      });
+    }
+  }
+}
+
+docs {
+  # Eve - Get My Chat Messages (Sees Dave's Message!)
+  
+  🔥 **КЛЮЧЕВОЙ ЗАПРОС!** Eve (член той же команды) просматривает чат.
+  
+  ## Что происходит:
+  Eve видит **ТО ЖЕ сообщение**, которое отправил Dave!
+  
+  ## Почему:
+  - Dave и Eve в одной команде ("AI Innovators")
+  - Тикет создан с owner_kind = "team"
+  - Все члены команды имеют доступ к одному чату
+  
+  ## Демонстрация:
+  Это показывает что команда имеет **общий чат с поддержкой**.
+  Не нужно дублировать вопросы - все видят всё.
+  
+  ## Response:
+  Eve увидит сообщение Dave: "Hi! Our team needs help with the API..."
+  
+  ## Сравнение:
+  - **До** (запрос 03): Dave видит 1 сообщение
+  - **После** (запрос 04): Eve видит ТО ЖЕ сообщение!
+  
+  ## Environment:
+  - Demo (используем eveAccessToken)
+}

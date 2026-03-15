@@ -1,0 +1,67 @@
+meta {
+  name: 22. Alice - Filter Users by Skills (find Go devs)
+  type: http
+  seq: 22
+}
+
+post {
+  url: {{baseUrl}}/v1/users/list
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {
+    "query": {
+      "filter_groups": [
+        {
+          "filters": [
+            {
+              "field": "skills",
+              "operation": "FILTER_OPERATION_CONTAINS",
+              "string_value": "go"
+            }
+          ]
+        }
+      ],
+      "page": {
+        "page_size": 20
+      }
+    },
+    "include_skills": true
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const users = res.body.users || [];
+    console.log(`✅ Found ${users.length} users with Go skill`);
+    
+    users.forEach(userData => {
+      const user = userData.user;
+      const skills = userData.skills || [];
+      console.log(`\n${user.username}:`);
+      skills.forEach(s => console.log(`  - ${s.name || s.userSkill}`));
+    });
+  }
+}
+
+docs {
+  # Alice - Filter Users by Skills
+  
+  Alice ищет разработчиков на Go.
+  
+  ## Зачем:
+  - Ключевая фича для формирования команд
+  - Найти backend разработчиков
+  
+  ## Результат:
+  - Найдет Dave (у него Go в catalog skills)
+  
+  ## Environment:
+  - Demo
+}

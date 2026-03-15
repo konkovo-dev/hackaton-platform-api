@@ -1,0 +1,59 @@
+meta {
+  name: 20. Frank - Add Contacts (PRIVATE)
+  type: http
+  seq: 20
+}
+
+put {
+  url: {{baseUrl}}/v1/users/me/contacts
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{frankAccessToken}}
+}
+
+body:json {
+  {
+    "contacts": [
+      {
+        "contact": {
+          "type": "CONTACT_TYPE_EMAIL",
+          "value": "{{frankEmail}}"
+        },
+        "visibility": "VISIBILITY_LEVEL_PUBLIC"
+      },
+      {
+        "contact": {
+          "type": "CONTACT_TYPE_TELEGRAM",
+          "value": "@frank_ml"
+        },
+        "visibility": "VISIBILITY_LEVEL_PRIVATE"
+      }
+    ],
+    "contacts_visibility": "VISIBILITY_LEVEL_PUBLIC"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Frank contacts updated (PRIVATE)');
+    console.log('⚠️  Contacts are private - only Frank can see them');
+  }
+}
+
+docs {
+  # Frank - Add Contacts (PRIVATE)
+  
+  Frank добавляет контакты с PRIVATE видимостью.
+  
+  ## Visibility:
+  - PRIVATE - только Frank видит
+  - Другие пользователи НЕ увидят при просмотре профиля
+  
+  Это для демонстрации privacy settings.
+  
+  ## Environment:
+  - Demo
+}

@@ -1,0 +1,60 @@
+meta {
+  name: 03. Dave - Get My Chat Messages
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/support/my-messages?query.limit=50&query.offset=0
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const messages = res.body.messages || [];
+    
+    console.log(`✅ Found ${messages.length} messages in chat`);
+    
+    messages.forEach(msg => {
+      const author = msg.authorRole === 'participant' ? 'Dave' : 
+                     msg.authorRole === 'mentor' ? 'Mentor' : 'System';
+      console.log(`\n[${author}]: ${msg.text}`);
+      console.log(`  Time: ${msg.createdAt}`);
+    });
+  }
+}
+
+docs {
+  # Dave - Get My Chat Messages
+  
+  Dave просматривает свой чат с поддержкой.
+  
+  ## Что видит Dave:
+  - Все сообщения из всех тикетов команды
+  - Для него это **единый чат**, не разделенный на тикеты
+  - Видит: свои сообщения, сообщения Eve (teammate), ответы менторов, системные сообщения
+  
+  ## Query параметры:
+  - **limit**: 50 (количество сообщений)
+  - **offset**: 0 (для пагинации)
+  
+  ## Response:
+  - **messages**: массив всех сообщений
+  - Каждое сообщение:
+    - messageId
+    - text
+    - authorRole: "participant" | "mentor" | "system"
+    - authorUserId (пустой для system messages)
+    - createdAt
+  
+  ## Результат:
+  Видит свое сообщение "Hi! Our team needs help..."
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

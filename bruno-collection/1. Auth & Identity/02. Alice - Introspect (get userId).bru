@@ -1,0 +1,45 @@
+meta {
+  name: 02. Alice - Introspect (get userId)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/v1/auth/introspect
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "access_token": "{{aliceAccessToken}}"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    
+    if (data.active) {
+      bru.setEnvVar('aliceUserId', data.userId);
+      
+      console.log('✅ Token is active');
+      console.log('Alice User ID:', data.userId);
+      console.log('Expires at:', data.expiresAt);
+    }
+  }
+}
+
+docs {
+  # Alice - Introspect (Get User ID)
+  
+  Получаем userId Alice через introspect.
+  
+  ## Зачем:
+  - Register НЕ возвращает userId
+  - Introspect возвращает userId из токена
+  - Сохраняем в `aliceUserId` для дальнейшего использования
+  
+  ## Environment:
+  - Demo
+}

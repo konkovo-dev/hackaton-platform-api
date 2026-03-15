@@ -1,0 +1,41 @@
+meta {
+  name: 05. Register Carol
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/v1/auth/register
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "username": "{{carolUsername}}",
+    "email": "{{carolEmail}}",
+    "password": "{{carolPassword}}",
+    "first_name": "{{carolFirstName}}",
+    "last_name": "{{carolLastName}}",
+    "timezone": "{{timezone}}"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    bru.setEnvVar('carolAccessToken', data.accessToken);
+    bru.setEnvVar('carolRefreshToken', data.refreshToken);
+    
+    console.log('✅ Carol registered!');
+  }
+}
+
+docs {
+  # Register Carol (Judge)
+  
+  Регистрируем Carol - она станет судьей.
+  
+  ## Environment:
+  - Demo
+}

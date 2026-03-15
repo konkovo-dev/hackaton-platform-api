@@ -1,0 +1,26 @@
+# Bruno Collection .gitignore
+
+# Environment variables with sensitive data
+# (Uncomment if you don't want to commit tokens)
+# environments/*.bru
+
+# Bruno cache
+.bruno/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.bak

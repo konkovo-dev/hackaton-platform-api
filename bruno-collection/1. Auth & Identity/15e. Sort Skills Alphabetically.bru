@@ -1,0 +1,76 @@
+meta {
+  name: 15e. Sort Skills Alphabetically
+  type: http
+  seq: 15.4
+}
+
+post {
+  url: {{baseUrl}}/v1/skills/list
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {
+    "query": {
+      "sort": [
+        {
+          "field": "name",
+          "direction": "SORT_DIRECTION_ASC"
+        }
+      ],
+      "page": {
+        "page_size": 20
+      }
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const skills = res.body.skills || [];
+    
+    console.log(`✅ ${skills.length} skills sorted A-Z`);
+    
+    console.log('\nFirst 10:');
+    skills.slice(0, 10).forEach(skill => {
+      console.log(`  - ${skill.name}`);
+    });
+  }
+}
+
+docs {
+  # Sort Skills Alphabetically
+  
+  Демонстрация сортировки результатов.
+  
+  ## Сортировка:
+  - **field**: "name" - сортируем по названию
+  - **direction**: SORT_DIRECTION_ASC - по возрастанию (A-Z)
+  
+  ## Результат:
+  - Скиллы отсортированы по алфавиту
+  - Angular, AWS, Azure, C++, CSS, Docker, Go, Java, JavaScript...
+  
+  ## Направления сортировки:
+  - **SORT_DIRECTION_ASC** - по возрастанию (A-Z, 0-9, старые→новые)
+  - **SORT_DIRECTION_DESC** - по убыванию (Z-A, 9-0, новые→старые)
+  
+  ## Можно сортировать по нескольким полям:
+  ```json
+  "sort": [
+    {"field": "category", "direction": "ASC"},
+    {"field": "name", "direction": "ASC"}
+  ]
+  ```
+  
+  ## Важно:
+  Сортировка работает во ВСЕХ list эндпоинтах!
+  
+  ## Environment:
+  - Demo
+}

@@ -1,0 +1,57 @@
+meta {
+  name: 05. Dave - Create Team
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/teams
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+body:json {
+  {
+    "name": "AI Innovators",
+    "description": "Building an AI-powered healthcare solution to help doctors diagnose diseases faster using machine learning and computer vision",
+    "is_joinable": true
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const teamId = res.body.teamId;
+    bru.setEnvVar('daveTeamId', teamId);
+    
+    console.log('✅ Team created!');
+    console.log('Team ID:', teamId);
+    console.log('Dave is now TEAM_CAPTAIN! 👑');
+  }
+}
+
+docs {
+  # Dave - Create Team
+  
+  Dave создает команду "AI Innovators".
+  
+  ## Что происходит:
+  - Создается команда с названием и описанием
+  - Dave автоматически становится **капитаном** команды
+  - Его статус меняется: PART_LOOKING_FOR_TEAM → PART_TEAM_CAPTAIN
+  - teamId сохраняется в daveTeamId
+  
+  ## Параметры:
+  - **name**: "AI Innovators" (уникальное в рамках хакатона)
+  - **description**: Детальное описание проекта (используется в matchmaking!)
+  - **is_joinable**: true (другие могут подавать join requests)
+  
+  ## Важно:
+  Описание команды содержит ключевые слова для matchmaking: "AI", "healthcare", "machine learning", "computer vision"
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

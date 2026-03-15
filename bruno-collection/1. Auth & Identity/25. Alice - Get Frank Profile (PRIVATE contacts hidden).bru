@@ -1,0 +1,50 @@
+meta {
+  name: 25. Alice - Get Frank Profile (PRIVATE contacts hidden)
+  type: http
+  seq: 25
+}
+
+get {
+  url: {{baseUrl}}/v1/users/{{frankUserId}}?include_skills=true&include_contacts=true
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    const user = data.user;
+    const skills = data.skills || [];
+    const contacts = data.contacts || [];
+    
+    console.log('✅ Frank profile loaded');
+    console.log('Skills:', skills.length);
+    console.log('Contacts:', contacts.length);
+    
+    if (contacts.length === 0) {
+      console.log('\n❌ PRIVATE contacts NOT visible to Alice!');
+      console.log('Privacy settings work correctly! 🔒');
+    }
+  }
+}
+
+docs {
+  # Alice - Get Frank Profile (PRIVATE Contacts Hidden)
+  
+  Alice просматривает профиль Frank.
+  
+  ## Что видно:
+  - ✅ Скиллы (PUBLIC)
+  - ❌ Контакты (PRIVATE) - НЕ видны Alice!
+  
+  ## Демонстрация:
+  Это показывает что privacy settings работают корректно.
+  Frank установил PRIVATE для контактов, поэтому Alice их не видит.
+  
+  ## Environment:
+  - Demo
+}

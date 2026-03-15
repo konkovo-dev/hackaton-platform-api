@@ -1,0 +1,52 @@
+meta {
+  name: 07. Publish Hackathon
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/publish
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Hackathon published!');
+    console.log('DRAFT → UPCOMING');
+    console.log('Now visible to everyone! 🎉');
+  }
+}
+
+docs {
+  # Publish Hackathon
+  
+  Alice публикует хакатон! Это ключевой момент - хакатон переходит из приватного черновика в публичный режим.
+  
+  ## Что происходит:
+  - **state**: DRAFT → UPCOMING (опубликован)
+  - **Видимость**: только owner → все пользователи
+  - Хакатон появляется в публичном списке
+  - Пользователи могут регистрироваться (когда откроется регистрация)
+  
+  ## Требования для публикации:
+  - ✅ Валидация пройдена (validationErrors пустой)
+  - ✅ Task установлен
+  - ✅ Description заполнен
+  - ✅ Все обязательные поля заполнены
+  
+  ## Важно:
+  - После публикации некоторые поля нельзя изменить (например, dates)
+  - Можно обновлять description, links, announcements
+  
+  ## Environment:
+  - Demo (используем aliceAccessToken)
+}

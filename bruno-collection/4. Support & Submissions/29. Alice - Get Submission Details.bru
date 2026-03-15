@@ -1,0 +1,64 @@
+meta {
+  name: 29. Alice - Get Submission Details
+  type: http
+  seq: 29
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/submissions/{{submissionId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const submission = res.body.submission;
+    const files = submission.files || [];
+    
+    console.log('✅ Alice views submission details');
+    console.log('Title:', submission.title);
+    console.log('Team:', submission.ownerId);
+    console.log('Description:', submission.description);
+    console.log('\n📁 Files:');
+    
+    files.forEach(file => {
+      console.log(`\n  ${file.filename}:`);
+      console.log(`    Size: ${(file.sizeBytes / 1024).toFixed(2)} KB`);
+      console.log(`    Type: ${file.contentType}`);
+      console.log(`    Uploaded: ${file.uploadedAt}`);
+    });
+    
+    console.log('\n👑 Owner can review all submission details');
+    console.log('Ready for judging stage!');
+  }
+}
+
+docs {
+  # Alice - Get Submission Details
+  
+  Alice просматривает детали submission команды "AI Innovators".
+  
+  ## Что видит Alice:
+  - Полная информация о submission
+  - Все файлы с metadata
+  - Описание проекта
+  - Когда создан/обновлен
+  
+  ## Зачем:
+  - Оценка качества решений
+  - Подготовка к judging
+  - Проверка что все команды загрузили файлы
+  
+  ## Следующий шаг:
+  Alice может:
+  - Запросить download URL для файла (как Dave в запросе 24)
+  - Скачать и проверить решение
+  - Передать судьям для оценки
+  
+  ## Environment:
+  - Demo (используем aliceAccessToken)
+}

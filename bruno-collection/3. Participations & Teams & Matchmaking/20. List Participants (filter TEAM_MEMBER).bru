@@ -1,0 +1,64 @@
+meta {
+  name: 20. List Participants (filter TEAM_MEMBER)
+  type: http
+  seq: 20
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/participations/list
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+body:json {
+  {
+    "status_filter": {
+      "statuses": ["PART_TEAM_MEMBER", "PART_TEAM_CAPTAIN"]
+    },
+    "query": {
+      "page": {
+        "page_size": 20
+      }
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const participants = res.body.participants || [];
+    
+    console.log(`✅ Found ${participants.length} participants in teams`);
+    
+    participants.forEach(part => {
+      const role = part.status === 'PART_TEAM_CAPTAIN' ? '👑' : '👥';
+      console.log(`\n${role} ${part.userId}:`);
+      console.log('  Status:', part.status);
+      console.log('  Team:', part.teamId);
+    });
+  }
+}
+
+docs {
+  # List Participants (Filter TEAM_MEMBER)
+  
+  Просмотр участников которые уже в командах.
+  
+  ## Фильтр:
+  - **status_filter**: PART_TEAM_MEMBER, PART_TEAM_CAPTAIN
+  
+  ## Результат:
+  - 👑 Dave (TEAM_CAPTAIN) - капитан "AI Innovators"
+  - 👥 Eve (TEAM_MEMBER) - член "AI Innovators"
+  
+  ## Зачем:
+  - Статистика для организаторов
+  - Сколько участников уже в командах
+  - Кто еще ищет команду
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

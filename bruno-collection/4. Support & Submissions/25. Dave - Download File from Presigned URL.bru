@@ -1,0 +1,72 @@
+meta {
+  name: 25. Dave - Download File from Presigned URL
+  type: http
+  seq: 25
+}
+
+get {
+  url: {{downloadUrl}}
+  body: none
+  auth: none
+}
+
+script:pre-request {
+  const downloadUrl = bru.getEnvVar('downloadUrl');
+  if (!downloadUrl) {
+    throw new Error('❌ downloadUrl not found! Run "Get Download URL" first (запрос 24)');
+  }
+  
+  console.log('⬇️  Downloading file from MinIO...');
+  console.log('URL:', downloadUrl.substring(0, 80) + '...');
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ File downloaded successfully!');
+    console.log('Content-Type:', res.headers['content-type']);
+    console.log('Content-Length:', res.headers['content-length'], 'bytes');
+    console.log('\n🎯 IMPORTANT:');
+    console.log('File was downloaded DIRECTLY from MinIO!');
+    console.log('Our backend did NOT handle the file transfer.');
+    console.log('\n💡 This is how frontend downloads files in production.');
+  }
+}
+
+docs {
+  # Dave - Download File from Presigned URL
+  
+  🔥 **КЛЮЧЕВОЙ ЗАПРОС!** Dave скачивает файл **напрямую из MinIO**.
+  
+  ## ⚠️ ВАЖНО: Это НЕ запрос к нашему API!
+  
+  Этот GET запрос идет на presigned URL, который указывает на MinIO.
+  Наш backend НЕ участвует в передаче файла!
+  
+  ## Как использовать в Bruno:
+  1. Сначала выполни "Get Download URL" (запрос 24)
+  2. downloadUrl автоматически сохранится
+  3. Выполни этот запрос
+  4. Bruno покажет содержимое файла (или сохранит его)
+  
+  ## Что происходит:
+  1. Bruno/curl отправляет GET на presigned URL
+  2. MinIO проверяет signature в URL
+  3. MinIO возвращает файл из bucket
+  4. Response: binary data (файл)
+  
+  ## Production Flow:
+  Именно так работает скачивание на фронте:
+  - Фронт запрашивает presigned URL у бэкенда
+  - Фронт скачивает файл напрямую из S3/MinIO
+  - Бэкенд не тратит ресурсы на передачу файла
+  - Масштабируемость!
+  
+  ## Response:
+  - Status: 200 OK
+  - Headers: Content-Type, Content-Length
+  - Body: Binary file data
+  
+  ## Environment:
+  - Demo (downloadUrl из предыдущего запроса)
+  - ⚠️ НЕ используем токен! (presigned URL уже содержит авторизацию)
+}

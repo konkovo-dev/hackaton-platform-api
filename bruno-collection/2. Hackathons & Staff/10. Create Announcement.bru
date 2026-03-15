@@ -1,0 +1,49 @@
+meta {
+  name: 10. Create Announcement
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/announcements
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {
+    "title": "Registration Opening Soon!",
+    "content": "We are excited to announce that registration will open on March 20th, 2026. Get ready to join the most innovative AI hackathon of the year! Stay tuned for more updates."
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    bru.setEnvVar('announcementId', data.announcementId);
+    
+    console.log('✅ Announcement created');
+    console.log('Announcement ID:', data.announcementId);
+  }
+}
+
+docs {
+  # Create Announcement
+  
+  Создание объявления для участников.
+  
+  ## Кто может создавать:
+  - Owner
+  - Organizer
+  
+  ## Видимость:
+  - Все участники видят сразу
+  - Staff тоже видит
+  
+  ## Environment:
+  - 👑 Owner (Alice)
+}

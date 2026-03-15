@@ -1,0 +1,54 @@
+meta {
+  name: WS0c. Get Bob WS Token
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/support/realtime-token
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{bobAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const token = res.body.token;
+    
+    bru.setEnvVar('bobWsToken', token);
+    
+    console.log('✅ Bob WebSocket token saved!');
+    console.log('Token:', token.substring(0, 50) + '...');
+    console.log('\nReady to connect: WS3. Bob - Connect to Support Feed');
+  }
+}
+
+docs {
+  # Get Bob WebSocket Token
+  
+  Получение WebSocket токена для Bob (mentor).
+  
+  ## Response:
+  - **token**: JWT токен для WebSocket авторизации (скопируй!)
+  - Expires через несколько часов
+  - Привязан к Bob + hackathonId
+  
+  ## Как использовать с websocat:
+  
+  Открой третий терминал и повтори команды как для Dave,
+  но используй token Bob и bobUserId.
+  
+  ## Типы событий для ментора:
+  Bob получает уведомления о:
+  - ticket.created - новые тикеты
+  - message.created - новые сообщения
+  - ticket.claimed - кто-то взял тикет
+  - ticket.closed - тикет закрыт
+  
+  ## Environment:
+  - Demo (используем bobAccessToken)
+  - Сохраняет в bobWsToken
+}

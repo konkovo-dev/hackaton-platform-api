@@ -1,0 +1,59 @@
+meta {
+  name: 06. Dave - Get My Chat (sees Eve's message!)
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/support/my-messages?query.limit=50&query.offset=0
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const messages = res.body.messages || [];
+    
+    console.log(`✅ Dave now sees ${messages.length} messages`);
+    
+    if (messages.length >= 2) {
+      console.log('\n🎉 TEAM CHAT CONFIRMED!');
+      console.log('Dave sees Eve\'s message!');
+      
+      messages.forEach((msg, idx) => {
+        const author = msg.authorUserId === bru.getEnvVar('daveUserId') ? 'Dave (me)' :
+                       msg.authorUserId === bru.getEnvVar('eveUserId') ? 'Eve (teammate)' :
+                       msg.authorRole === 'mentor' ? 'Mentor' : 'System';
+        console.log(`\n${idx + 1}. [${author}]: ${msg.text}`);
+      });
+    }
+  }
+}
+
+docs {
+  # Dave - Get My Chat (Sees Eve's Message!)
+  
+  Dave снова проверяет чат и видит сообщение Eve.
+  
+  ## Что видит Dave:
+  1. Свое сообщение: "Hi! Our team needs help..."
+  2. Сообщение Eve: "Yes, specifically we need help with JWT..."
+  
+  ## Демонстрация "до и после":
+  - **До** (запрос 03): Dave видел 1 сообщение (свое)
+  - **После** (запрос 06): Dave видит 2 сообщения (свое + Eve)
+  
+  ## Ключевая фича:
+  Команда ведет **единый диалог** с поддержкой.
+  Все члены команды видят все сообщения команды.
+  
+  ## Real-time:
+  В production с WebSockets Dave получил бы уведомление о новом сообщении Eve мгновенно!
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

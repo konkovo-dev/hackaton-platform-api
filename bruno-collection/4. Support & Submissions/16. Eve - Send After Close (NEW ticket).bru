@@ -1,0 +1,68 @@
+meta {
+  name: 16. Eve - Send After Close (NEW ticket)
+  type: http
+  seq: 16
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/support/messages
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{eveAccessToken}}
+}
+
+body:json {
+  {
+    "text": "Hi! We have a new question about file uploads. What's the maximum file size for submissions?"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const ticketId = res.body.ticketId;
+    const messageId = res.body.messageId;
+    
+    bru.setEnvVar('newTeamTicketId', ticketId);
+    
+    console.log('✅ Eve sent message after close!');
+    console.log('New Ticket ID:', ticketId);
+    console.log('Message ID:', messageId);
+    
+    const oldTicketId = bru.getEnvVar('teamTicketId');
+    if (ticketId !== oldTicketId) {
+      console.log('\n🎫 NEW TICKET CREATED!');
+      console.log('Old ticket:', oldTicketId);
+      console.log('New ticket:', ticketId);
+      console.log('\nSystem automatically creates new ticket when messaging after close!');
+    }
+  }
+}
+
+docs {
+  # Eve - Send After Close (NEW Ticket)
+  
+  Eve отправляет сообщение после того как Bob закрыл тикет.
+  
+  ## Что происходит:
+  Система автоматически создает **НОВЫЙ тикет**!
+  
+  ## Логика:
+  - Система ищет OPEN или ASSIGNED тикеты команды
+  - Не находит (предыдущий тикет CLOSED)
+  - Создает новый тикет автоматически
+  - Status: open, assignee: null
+  
+  ## Зачем:
+  Участники могут обращаться в поддержку многократно.
+  Каждое новое обращение после закрытия = новый тикет.
+  
+  ## Для участника:
+  Eve просто "отправляет сообщение" - не знает что создался новый тикет.
+  Для неё это один непрерывный чат.
+  
+  ## Environment:
+  - Demo (используем eveAccessToken)
+}

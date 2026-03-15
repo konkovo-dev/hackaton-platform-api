@@ -1,0 +1,54 @@
+meta {
+  name: 26. Dave - Update Submission
+  type: http
+  seq: 26
+}
+
+put {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/submissions/{{submissionId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+body:json {
+  {
+    "title": "AI Healthcare Platform",
+    "description": "Our solution is an AI-powered healthcare diagnostic system that helps doctors identify diseases faster using machine learning and computer vision. Built with Go microservices backend, React frontend, and Python ML models. UPDATE: Added real-time prediction dashboard and integrated with hospital databases."
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Submission updated!');
+    console.log('Description expanded with new features');
+  }
+}
+
+docs {
+  # Dave - Update Submission
+  
+  Dave обновляет описание submission.
+  
+  ## Что можно обновить:
+  - **title**: Название проекта
+  - **description**: Описание (можно дополнять по мере разработки)
+  
+  ## Что НЕЛЬЗЯ обновить:
+  - submissionId (неизменяемый)
+  - ownerKind, ownerId (неизменяемые)
+  - files (управляются отдельно через upload/delete)
+  
+  ## Зачем:
+  Команда может дополнять описание по мере разработки проекта.
+  
+  ## Доступ:
+  - Только owner submission (Dave, Eve)
+  - Staff НЕ может редактировать чужие submissions
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

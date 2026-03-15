@@ -1,0 +1,65 @@
+meta {
+  name: 19. Dave - Create Submission
+  type: http
+  seq: 19
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/submissions
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+body:json {
+  {
+    "title": "AI Healthcare Platform",
+    "description": "Our solution is an AI-powered healthcare diagnostic system that helps doctors identify diseases faster using machine learning and computer vision. Built with Go microservices backend, React frontend, and Python ML models."
+  }
+}
+
+body:file {
+  file: @file(solution.zip) @contentType(application/zip)
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const submissionId = res.body.submissionId;
+    
+    bru.setEnvVar('submissionId', submissionId);
+    
+    console.log('✅ Submission created!');
+    console.log('Submission ID:', submissionId);
+    console.log('\n📦 Next: Upload files using presigned URLs');
+  }
+}
+
+docs {
+  # Dave - Create Submission
+  
+  Dave создает submission для команды "AI Innovators".
+  
+  ## Параметры:
+  - **title**: Название проекта
+  - **description**: Детальное описание решения
+  
+  ## Что происходит:
+  - Создается submission со статусом "draft"
+  - owner_kind: "team" (потому что Dave в команде)
+  - owner_id: daveTeamId
+  - Все члены команды (Dave + Eve) имеют доступ
+  
+  ## Response:
+  - **submissionId** - сохраняется в environment
+  
+  ## Важно:
+  - Только участники могут создавать submissions
+  - Доступно на стадиях: RUNNING, JUDGING
+  - Один submission на команду/участника
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

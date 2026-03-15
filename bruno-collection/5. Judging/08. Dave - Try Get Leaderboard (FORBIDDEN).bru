@@ -1,0 +1,60 @@
+meta {
+  name: 08. Dave - Try Get Leaderboard (FORBIDDEN)
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/judging/leaderboard
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+body:json {
+  {
+    "query": {
+      "page": {
+        "page_size": 50
+      }
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 403) {
+    console.log('✅ Access denied (expected)!');
+    console.log('Participants CANNOT see leaderboard');
+    console.log('Leaderboard is staff-only until results are published');
+  } else {
+    console.log('❌ Unexpected status:', res.status);
+  }
+}
+
+docs {
+  # Dave - Try Get Leaderboard (FORBIDDEN)
+  
+  Dave (Participant) пытается посмотреть leaderboard.
+  
+  ## Результат:
+  **403 Forbidden** - доступ запрещен!
+  
+  ## Почему:
+  - Leaderboard доступен ТОЛЬКО staff (owner, organizer, judge)
+  - Participants НЕ видят рейтинг до публикации результатов
+  - Это предотвращает spoilers и конфликты
+  
+  ## Демонстрация access control:
+  - **До** (запрос 07): Alice видит leaderboard ✅
+  - **После** (запрос 08): Dave НЕ видит ❌
+  
+  ## Когда Dave сможет увидеть результаты:
+  После публикации результатов через endpoint:
+  `GET /v1/hackathons/{id}/judging/my-result`
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

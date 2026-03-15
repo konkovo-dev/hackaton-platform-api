@@ -1,0 +1,68 @@
+meta {
+  name: 09. Bob - Get Ticket Messages (Dave + Eve history)
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/support/tickets/{{teamTicketId}}/messages?query.limit=50&query.offset=0
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{bobAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const messages = res.body.messages || [];
+    
+    console.log(`✅ Bob sees ${messages.length} messages in ticket`);
+    
+    messages.forEach((msg, idx) => {
+      const author = msg.authorRole === 'participant' ? 
+                     `Participant (${msg.authorUserId.substring(0, 8)}...)` :
+                     msg.authorRole === 'mentor' ? 'Mentor' :
+                     'System';
+      
+      console.log(`\n${idx + 1}. [${author}]: ${msg.text}`);
+      console.log(`   Time: ${msg.createdAt}`);
+    });
+    
+    console.log('\n📝 Bob can see full conversation:');
+    console.log('- Dave\'s message');
+    console.log('- Eve\'s message');
+    console.log('- System message (Mentor joined)');
+  }
+}
+
+docs {
+  # Bob - Get Ticket Messages (Dave + Eve History)
+  
+  Bob просматривает историю сообщений в тикете.
+  
+  ## Что видит Bob:
+  1. Dave: "Hi! Our team needs help with the API..."
+  2. Eve: "Yes, specifically we need help with JWT..."
+  3. System: "Mentor Bob joined the chat"
+  
+  ## Для менторов:
+  Это интерфейс "просмотра тикета" - видят всю историю общения команды.
+  
+  ## Query параметры:
+  - **limit**: 50
+  - **offset**: 0 (для пагинации)
+  
+  ## Response:
+  - **messages**: массив сообщений в хронологическом порядке
+  - Каждое сообщение содержит:
+    - messageId
+    - text
+    - authorRole: "participant" | "mentor" | "system"
+    - authorUserId (пустой для system)
+    - createdAt
+  
+  ## Environment:
+  - Demo (используем bobAccessToken)
+}

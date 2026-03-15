@@ -1,0 +1,99 @@
+meta {
+  name: 15f. Complex Query (filter + sort + pagination)
+  type: http
+  seq: 15.5
+}
+
+post {
+  url: {{baseUrl}}/v1/skills/list
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {
+    "query": {
+      "q": "a",
+      "filter_groups": [
+        {
+          "filters": [
+            {
+              "field": "name",
+              "operation": "FILTER_OPERATION_CONTAINS",
+              "string_value": "Script"
+            }
+          ]
+        }
+      ],
+      "sort": [
+        {
+          "field": "name",
+          "direction": "SORT_DIRECTION_DESC"
+        }
+      ],
+      "page": {
+        "page_size": 5
+      }
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const skills = res.body.skills || [];
+    const nextToken = res.body.nextPageToken;
+    
+    console.log('✅ Complex query executed!');
+    console.log(`Found ${skills.length} skills`);
+    
+    console.log('\nResults:');
+    skills.forEach(skill => {
+      console.log(`  - ${skill.name}`);
+    });
+    
+    if (nextToken) {
+      console.log('\n📄 More results available');
+    }
+  }
+}
+
+docs {
+  # Complex Query (Filter + Sort + Pagination)
+  
+  Демонстрация комбинации всех возможностей query: поиск + фильтр + сортировка + пагинация.
+  
+  ## Что используем:
+  1. **q**: "a" - текстовый поиск (содержит "a")
+  2. **filter_groups**: фильтр по name CONTAINS "Script"
+  3. **sort**: сортировка по name DESC (Z-A)
+  4. **page**: page_size = 5 (только 5 результатов)
+  
+  ## Результат:
+  - TypeScript (содержит "a" и "Script", сортировка Z-A)
+  - JavaScript (содержит "a" и "Script")
+  
+  ## Логика комбинирования:
+  1. Сначала применяется текстовый поиск (q)
+  2. Затем фильтры (filter_groups)
+  3. Затем сортировка (sort)
+  4. Затем пагинация (page)
+  
+  ## Важно:
+  Эта же логика работает во ВСЕХ list эндпоинтах:
+  - /v1/skills/list
+  - /v1/users/list
+  - /v1/hackathons/list
+  - /v1/teams/list
+  - /v1/submissions/list
+  - и т.д.
+  
+  ## Зачем показывать:
+  Демонстрирует мощь query системы - можно комбинировать поиск, фильтры, сортировку и пагинацию для точного поиска нужных данных.
+  
+  ## Environment:
+  - Demo
+}

@@ -1,0 +1,49 @@
+meta {
+  name: 14. Eve - Check My Participation (now TEAM_MEMBER)
+  type: http
+  seq: 14
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/participations/me
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{eveAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const participation = res.body.participation;
+    
+    console.log('✅ Eve participation loaded');
+    console.log('Status:', participation.status);
+    console.log('Team ID:', participation.teamId);
+    
+    if (participation.status === 'PART_TEAM_MEMBER') {
+      console.log('\n👥 Eve is now TEAM_MEMBER!');
+      console.log('Status changed: LOOKING_FOR_TEAM → TEAM_MEMBER');
+      console.log('Joined team:', participation.teamId);
+    }
+  }
+}
+
+docs {
+  # Eve - Check My Participation (Now TEAM_MEMBER)
+  
+  Eve проверяет свой статус после принятия приглашения.
+  
+  ## Что видим:
+  - **status**: PART_TEAM_MEMBER (было PART_LOOKING_FOR_TEAM)
+  - **teamId**: daveTeamId (привязана к команде Dave)
+  - **assignedVacancyId**: ID вакансии на которую приняли
+  
+  ## Демонстрация "до и после":
+  - **До** (запрос 03): PART_LOOKING_FOR_TEAM, нет teamId
+  - **После** (запрос 14): PART_TEAM_MEMBER, есть teamId
+  
+  ## Environment:
+  - Demo (используем eveAccessToken)
+}

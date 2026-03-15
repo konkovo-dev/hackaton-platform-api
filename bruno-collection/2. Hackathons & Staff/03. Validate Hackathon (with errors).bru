@@ -1,0 +1,54 @@
+meta {
+  name: 03. Validate Hackathon (with errors)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/validate
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    const errors = data.validationErrors || [];
+    
+    if (errors.length > 0) {
+      console.log('❌ Validation failed!');
+      console.log('Errors:', errors.length);
+      errors.forEach(err => {
+        console.log(`  - ${err.field}: ${err.message}`);
+      });
+    } else {
+      console.log('✅ Validation passed!');
+    }
+  }
+}
+
+docs {
+  # Validate Hackathon (With Errors)
+  
+  Alice запускает валидацию черновика перед публикацией.
+  
+  ## Ожидаемый результат:
+  - ❌ validationErrors содержит 2 ошибки:
+    - `description` required - нужно полное описание
+    - `task` required - нужно задание для участников
+  
+  ## Зачем нужна валидация:
+  - Проверить готовность хакатона к публикации
+  - Убедиться что все обязательные поля заполнены
+  - Избежать публикации неполного хакатона
+  
+  ## Использование:
+  Всегда проверяй перед публикацией! Система не даст опубликовать хакатон с ошибками.
+  
+  ## Environment:
+  - Demo (используем aliceAccessToken)
+}

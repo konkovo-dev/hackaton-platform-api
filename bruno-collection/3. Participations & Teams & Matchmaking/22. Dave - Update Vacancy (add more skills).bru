@@ -1,0 +1,55 @@
+meta {
+  name: 22. Dave - Update Vacancy (add more skills)
+  type: http
+  seq: 22
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/teams/{{daveTeamId}}/vacancies/upsert
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+body:json {
+  {
+    "vacancy_id": "{{daveVacancyId}}",
+    "description": "We need a talented frontend developer with React and TypeScript experience to build our user interface for the healthcare AI platform. You will work on creating an intuitive dashboard for doctors. Bonus: Node.js and UI/UX Design experience!",
+    "desired_role_ids": ["{{roleIdFrontend}}", "{{roleIdDesigner}}"],
+    "desired_skill_ids": ["00000000-0000-0000-0000-000000000012", "00000000-0000-0000-0000-000000000011", "00000000-0000-0000-0000-000000000004", "00000000-0000-0000-0000-000000000046"],
+    "slots_total": 2
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Vacancy updated!');
+    console.log('Added: Node.js, UI/UX Design to desired skills');
+    console.log('Slots remain: 1/2 open');
+  }
+}
+
+docs {
+  # Dave - Update Vacancy (Add More Skills)
+  
+  Dave обновляет вакансию - добавляет дополнительные желаемые скиллы.
+  
+  ## Что обновили:
+  - **desired_skill_ids**: Добавили Node.js и UI/UX Design (было только React, TypeScript)
+  - **description**: Упомянули бонусные скиллы
+  
+  ## Upsert semantics:
+  - **vacancy_id заполнен** = обновление существующей вакансии
+  - **vacancy_id пустой** = создание новой вакансии
+  
+  ## Важно:
+  - slots_total и slots_open пересчитываются автоматически
+  - Нельзя уменьшить slots_total ниже занятых слотов
+  - Обновление вакансии влияет на matchmaking scores
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

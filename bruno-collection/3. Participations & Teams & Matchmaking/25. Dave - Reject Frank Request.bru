@@ -1,0 +1,52 @@
+meta {
+  name: 25. Dave - Reject Frank Request
+  type: http
+  seq: 25
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/teams/{{daveTeamId}}/join-requests/{{frankJoinRequestId}}/reject
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+body:json {
+  {}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Join request rejected');
+    console.log('Frank request: PENDING → REJECTED');
+    console.log('Reason: Skills mismatch (ML vs Frontend)');
+  }
+}
+
+docs {
+  # Dave - Reject Frank Request
+  
+  Dave отклоняет заявку Frank.
+  
+  ## Почему отклонил:
+  - Frank - Data Scientist (Python, ML, Data Science)
+  - Вакансия - Frontend (React, TypeScript)
+  - Несовпадение скиллов и ролей
+  
+  ## Что происходит:
+  - status: JOIN_REQUEST_PENDING → JOIN_REQUEST_REJECTED
+  - Frank не может повторно подать заявку на эту вакансию
+  - Вакансия остается открытой (slots не меняются)
+  
+  ## Демонстрация:
+  Показывает что matchmaking был прав - Frank не подходит для frontend вакансии. Капитан может отклонить неподходящих кандидатов.
+  
+  ## Альтернатива:
+  - Можно было бы принять через /accept endpoint
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

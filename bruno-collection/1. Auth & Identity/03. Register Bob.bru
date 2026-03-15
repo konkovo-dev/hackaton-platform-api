@@ -1,0 +1,41 @@
+meta {
+  name: 03. Register Bob
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/v1/auth/register
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "username": "{{bobUsername}}",
+    "email": "{{bobEmail}}",
+    "password": "{{bobPassword}}",
+    "first_name": "{{bobFirstName}}",
+    "last_name": "{{bobLastName}}",
+    "timezone": "{{timezone}}"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    bru.setEnvVar('bobAccessToken', data.accessToken);
+    bru.setEnvVar('bobRefreshToken', data.refreshToken);
+    
+    console.log('✅ Bob registered!');
+  }
+}
+
+docs {
+  # Register Bob (Mentor)
+  
+  Регистрируем Bob - он станет ментором.
+  
+  ## Environment:
+  - Demo
+}

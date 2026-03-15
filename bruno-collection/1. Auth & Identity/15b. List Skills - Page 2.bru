@@ -1,0 +1,73 @@
+meta {
+  name: 15b. List Skills - Page 2
+  type: http
+  seq: 15.1
+}
+
+post {
+  url: {{baseUrl}}/v1/skills/list
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {
+    "query": {
+      "page": {
+        "page_size": 10,
+        "page_token": "PASTE_TOKEN_FROM_PREVIOUS_RESPONSE"
+      }
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const skills = res.body.skills || [];
+    const nextToken = res.body.nextPageToken;
+    
+    console.log(`✅ Page 2: ${skills.length} skills`);
+    
+    skills.forEach(skill => {
+      console.log(`  - ${skill.name}`);
+    });
+    
+    if (nextToken) {
+      console.log('\n📄 Has more pages!');
+    } else {
+      console.log('\n✅ Last page reached');
+    }
+  }
+}
+
+docs {
+  # List Skills - Page 2 (Pagination Demo)
+  
+  Демонстрация пагинации - получаем вторую страницу.
+  
+  ## Как использовать:
+  1. Выполни запрос 15 (List Skills Catalog)
+  2. Скопируй `nextPageToken` из ответа
+  3. Вставь в `page_token` этого запроса
+  4. Выполни запрос
+  
+  ## Что показать:
+  - Следующие 10 скиллов (page_size: 10)
+  - Если есть nextPageToken - есть еще страницы
+  - Если нет nextPageToken - это последняя страница
+  
+  ## Важно:
+  Pagination работает одинаково во ВСЕХ list эндпоинтах:
+  - /v1/skills/list
+  - /v1/users/list
+  - /v1/hackathons/list
+  - /v1/teams/list
+  - и т.д.
+  
+  ## Environment:
+  - Demo
+}

@@ -1,0 +1,35 @@
+meta {
+  name: 19. Carol - Accept Invitation
+  type: http
+  seq: 19
+}
+
+post {
+  url: {{baseUrl}}/v1/users/me/staff-invitations/{{carolInvitationId}}/accept
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{carolAccessToken}}
+}
+
+body:json {
+  {}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Invitation accepted!');
+    console.log('Carol is now a JUDGE! ⚖️');
+  }
+}
+
+docs {
+  # Carol - Accept Invitation
+  
+  Carol принимает приглашение стать судьей.
+  
+  ## Environment:
+  - ⚖️ Judge (Carol)
+}

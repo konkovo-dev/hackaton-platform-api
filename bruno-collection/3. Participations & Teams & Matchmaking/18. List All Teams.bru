@@ -1,0 +1,72 @@
+meta {
+  name: 18. List All Teams
+  type: http
+  seq: 18
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/teams/list
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+body:json {
+  {
+    "include_vacancies": true,
+    "query": {
+      "page": {
+        "page_size": 20
+      }
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const teams = res.body.teams || [];
+    
+    console.log(`✅ Found ${teams.length} teams`);
+    
+    teams.forEach(teamData => {
+      const team = teamData.team;
+      const vacancies = teamData.vacancies || [];
+      
+      console.log(`\n${team.name}:`);
+      console.log('  Joinable:', team.isJoinable);
+      console.log('  Vacancies:', vacancies.length);
+      
+      vacancies.forEach(vac => {
+        console.log(`    - ${vac.slotsOpen}/${vac.slotsTotal} slots open`);
+      });
+    });
+  }
+}
+
+docs {
+  # List All Teams
+  
+  Просмотр всех команд хакатона с вакансиями.
+  
+  ## Параметры:
+  - **include_vacancies**: true (включить вакансии в ответ)
+  
+  ## Что видно:
+  - Все команды хакатона
+  - Для каждой команды:
+    - team (name, description, is_joinable)
+    - vacancies (список вакансий с slots)
+  
+  ## Результат:
+  - "AI Innovators" (Dave) - 1 вакансия, 1/2 слота открыто
+  
+  ## Доступ:
+  - Только зарегистрированные участники хакатона
+  - Staff тоже может видеть
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

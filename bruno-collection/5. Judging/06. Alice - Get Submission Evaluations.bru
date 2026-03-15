@@ -1,0 +1,65 @@
+meta {
+  name: 06. Alice - Get Submission Evaluations
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/submissions/{{submissionId}}/evaluations
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const evaluations = res.body.evaluations || [];
+    
+    console.log(`✅ Submission has ${evaluations.length} evaluations`);
+    
+    let totalScore = 0;
+    evaluations.forEach((evaluation, idx) => {
+      console.log(`\n${idx + 1}. Judge ${evaluation.judgeUserId.substring(0, 8)}...`);
+      console.log(`   Score: ${evaluation.score}/10`);
+      console.log(`   Comment: ${evaluation.comment.substring(0, 50)}...`);
+      totalScore += evaluation.score;
+    });
+    
+    if (evaluations.length > 0) {
+      const avgScore = (totalScore / evaluations.length).toFixed(2);
+      console.log(`\n📊 Average Score: ${avgScore}/10`);
+    }
+  }
+}
+
+docs {
+  # Alice - Get Submission Evaluations
+  
+  Alice (Owner) просматривает все оценки для submission команды "AI Innovators".
+  
+  ## Response:
+  - **evaluations**: массив всех оценок
+  - Каждая оценка:
+    - evaluationId
+    - judgeUserId (кто оценил)
+    - score: 0-10
+    - comment: текст оценки
+    - evaluatedAt: когда оценил
+  
+  ## Доступ:
+  - **Owner** (Alice): видит все оценки ✅
+  - **Organizer**: видит все оценки ✅
+  - **Judge**: видит только свою оценку ✅
+  - **Participant**: НЕ видит (до публикации результатов) ❌
+  
+  ## Зачем:
+  - Мониторинг прогресса оценивания
+  - Проверка что все judges оценили
+  - Подготовка к публикации результатов
+  
+  ## Environment:
+  - Demo (используем aliceAccessToken, submissionId)
+}

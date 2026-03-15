@@ -1,0 +1,66 @@
+meta {
+  name: 18. Alice - List All Tickets (Owner, read-only)
+  type: http
+  seq: 18
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/support/tickets/all/list
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {
+    "limit": 10,
+    "offset": 0
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const tickets = res.body.tickets || [];
+    
+    console.log(`✅ Alice (Owner) sees ${tickets.length} tickets`);
+    
+    tickets.forEach((ticket, idx) => {
+      console.log(`\n${idx + 1}. ${ticket.ownerName} (${ticket.status})`);
+      console.log(`   Assignee: ${ticket.assignedMentorName || 'Unassigned'}`);
+      console.log(`   Messages: ${ticket.messageCount}`);
+    });
+    
+    console.log('\n📊 Owner can monitor support activity');
+    console.log('But CANNOT reply or close tickets (read-only)');
+  }
+}
+
+docs {
+  # Alice - List All Tickets (Owner, Read-Only)
+  
+  Alice (Owner хакатона) просматривает все тикеты.
+  
+  ## Доступ Owner/Organizer:
+  - ✅ ListAllTickets - видят все тикеты
+  - ✅ GetTicketMessages - читают историю
+  - ✅ AssignTicket - могут назначить ментора
+  - ❌ ReplyInTicket - НЕ могут отвечать
+  - ❌ CloseTicket - НЕ могут закрывать
+  
+  ## Зачем:
+  - Мониторинг активности поддержки
+  - Контроль качества ответов менторов
+  - Статистика (сколько тикетов, как быстро отвечают)
+  - Назначение менторов на тикеты
+  
+  ## Что видит Alice:
+  - 2 тикета от команды "AI Innovators"
+  - Ticket 1: CLOSED, assigned to Bob, 5 messages
+  - Ticket 2: OPEN, unassigned, 1 message
+  
+  ## Environment:
+  - Demo (используем aliceAccessToken)
+}

@@ -1,0 +1,61 @@
+meta {
+  name: 02. Dave - Send First Message (creates TEAM ticket)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/support/messages
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+body:json {
+  {
+    "text": "Hi! Our team needs help with the API. We're having trouble with authentication endpoints."
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const ticketId = res.body.ticketId;
+    const messageId = res.body.messageId;
+    
+    bru.setEnvVar('teamTicketId', ticketId);
+    bru.setEnvVar('firstMessageId', messageId);
+    
+    console.log('✅ Message sent!');
+    console.log('Ticket ID:', ticketId);
+    console.log('Message ID:', messageId);
+    console.log('\n🎫 TEAM ticket created automatically!');
+    console.log('Owner: team (AI Innovators)');
+  }
+}
+
+docs {
+  # Dave - Send First Message (Creates TEAM Ticket)
+  
+  Dave (член команды "AI Innovators") отправляет первое сообщение в поддержку.
+  
+  ## Что происходит:
+  - Система автоматически создает **TEAM ticket**
+  - Owner: team (не user!) - потому что Dave в команде
+  - Все члены команды (Dave + Eve) будут видеть этот чат
+  - Ticket status: OPEN
+  - Ticket assignee: null (unassigned)
+  
+  ## Response:
+  - **ticketId** - ID созданного тикета (сохраняется в teamTicketId)
+  - **messageId** - ID сообщения
+  
+  ## Ключевая фича:
+  Для участника это просто "отправить сообщение" - он не видит концепцию "тикетов".
+  Тикет создается автоматически при первом сообщении.
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

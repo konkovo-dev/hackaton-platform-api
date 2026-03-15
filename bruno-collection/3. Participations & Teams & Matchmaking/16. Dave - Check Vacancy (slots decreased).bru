@@ -1,0 +1,54 @@
+meta {
+  name: 16. Dave - Check Vacancy (slots decreased)
+  type: http
+  seq: 16
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/teams/{{daveTeamId}}?include_vacancies=true
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const teamData = res.body.team;
+    const vacancies = teamData.vacancies || [];
+    
+    if (vacancies.length > 0) {
+      const vac = vacancies[0];
+      
+      console.log('✅ Vacancy updated');
+      console.log('Slots:', vac.slotsOpen, '/', vac.slotsTotal);
+      
+      if (vac.slotsOpen === '1' && vac.slotsTotal === '2') {
+        console.log('\n✅ Slots decreased: 2 → 1');
+        console.log('Eve took 1 slot, 1 slot still open!');
+      }
+    }
+  }
+}
+
+docs {
+  # Dave - Check Vacancy (Slots Decreased)
+  
+  Dave проверяет вакансию после принятия Eve.
+  
+  ## Что видим:
+  - **slots_total**: 2 (не изменилось)
+  - **slots_open**: 1 (было 2, стало 1)
+  
+  ## Демонстрация:
+  Показывает что система автоматически обновляет вакансию при принятии участника:
+  - Eve приняла приглашение (запрос 13)
+  - Занят 1 слот
+  - Остался 1 свободный слот
+  - Можно пригласить еще одного frontend разработчика
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

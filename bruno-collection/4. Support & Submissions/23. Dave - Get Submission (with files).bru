@@ -1,0 +1,68 @@
+meta {
+  name: 23. Dave - Get Submission (with files)
+  type: http
+  seq: 23
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/submissions/{{submissionId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const submission = res.body.submission;
+    const files = submission.files || [];
+    
+    console.log('✅ Submission loaded!');
+    console.log('Title:', submission.title);
+    console.log('Description:', submission.description.substring(0, 50) + '...');
+    console.log('Owner:', submission.ownerKind, submission.ownerId);
+    console.log('\n📁 Files:', files.length);
+    
+    files.forEach(file => {
+      console.log(`\n  - ${file.filename}`);
+      console.log(`    Size: ${file.sizeBytes} bytes`);
+      console.log(`    Status: ${file.status}`);
+      console.log(`    Uploaded: ${file.uploadedAt}`);
+    });
+  }
+}
+
+docs {
+  # Dave - Get Submission (With Files)
+  
+  Dave просматривает свой submission с загруженными файлами.
+  
+  ## Response:
+  - **submission**:
+    - submissionId
+    - hackathonId
+    - title, description
+    - ownerKind: "team"
+    - ownerId: daveTeamId
+    - createdAt, updatedAt
+    - **files**: массив файлов
+  
+  ## Files array:
+  Каждый файл содержит:
+  - fileId
+  - filename: "solution.zip"
+  - sizeBytes: 1024000
+  - contentType: "application/zip"
+  - status: "uploaded"
+  - uploadedAt: timestamp
+  
+  ## Доступ:
+  - Owner submission (Dave, Eve) - видят
+  - Staff (owner, organizer, judge) - видят
+  - Другие участники - НЕ видят
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

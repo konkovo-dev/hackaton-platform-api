@@ -1,0 +1,54 @@
+meta {
+  name: 02. Get Hackathon Draft
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}?include_description=true&include_links=true
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    const hackathon = data.hackathon;
+    
+    console.log('✅ Hackathon loaded');
+    console.log('Name:', hackathon.name);
+    console.log('Stage:', hackathon.stage);
+    console.log('State:', hackathon.state);
+    console.log('Description:', hackathon.description || '(empty)');
+  }
+}
+
+docs {
+  # Get Hackathon Draft
+  
+  Alice просматривает созданный черновик хакатона.
+  
+  ## Что видно:
+  - state: DRAFT (черновик, не опубликован)
+  - stage: UPCOMING (предстоящий)
+  - Все заполненные поля (name, location, dates, policy, limits)
+  - Пустые поля: description (пусто), task (не запрашивали)
+  
+  ## Query параметры:
+  - `include_description=true` - включить полное описание (сейчас пусто)
+  - `include_links=true` - включить ссылки (пока нет)
+  
+  ## Доступ:
+  - ✅ Owner (Alice) видит DRAFT
+  - ❌ Другие пользователи получат 403 Forbidden
+  
+  ## Важно:
+  DRAFT хакатоны приватные - видны только владельцу!
+  
+  ## Environment:
+  - Demo (используем aliceAccessToken)
+}

@@ -1,0 +1,47 @@
+meta {
+  name: 29. Frank - Get My Participation (still LOOKING_FOR_TEAM)
+  type: http
+  seq: 29
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/participations/me
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{frankAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const participation = res.body.participation;
+    
+    console.log('✅ Frank participation loaded');
+    console.log('Status:', participation.status);
+    console.log('Team ID:', participation.teamId || 'none');
+    
+    if (participation.status === 'PART_LOOKING_FOR_TEAM') {
+      console.log('\n🔍 Frank is still LOOKING_FOR_TEAM');
+      console.log('He was rejected, but can try other teams!');
+    }
+  }
+}
+
+docs {
+  # Frank - Get My Participation (Still LOOKING_FOR_TEAM)
+  
+  Frank проверяет свой статус после отклонения заявки.
+  
+  ## Что видим:
+  - **status**: PART_LOOKING_FOR_TEAM (не изменился)
+  - **teamId**: null (не в команде)
+  - **profile**: обновленная мотивация
+  
+  ## Зачем:
+  Показывает что отклонение заявки не меняет статус участника - он может продолжать искать другие команды.
+  
+  ## Environment:
+  - Demo (используем frankAccessToken)
+}

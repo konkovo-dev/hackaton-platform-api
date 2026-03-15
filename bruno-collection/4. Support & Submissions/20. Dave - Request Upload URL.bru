@@ -1,0 +1,74 @@
+meta {
+  name: 20. Dave - Request Upload URL
+  type: http
+  seq: 20
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/submissions/{{submissionId}}/files
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+body:json {
+  {
+    "filename": "solution.zip",
+    "content_type": "application/zip",
+    "size_bytes": 1024000
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const uploadUrl = res.body.uploadUrl;
+    const fileId = res.body.fileId;
+    const expiresAt = res.body.expiresAt;
+    
+    bru.setEnvVar('uploadUrl', uploadUrl);
+    bru.setEnvVar('fileId', fileId);
+    
+    console.log('✅ Upload URL generated!');
+    console.log('File ID:', fileId);
+    console.log('Expires at:', expiresAt);
+    console.log('\n🔗 Presigned URL (15 min validity):');
+    console.log(uploadUrl.substring(0, 100) + '...');
+    console.log('\n📤 Next: Upload file to this URL (запрос 21)');
+  }
+}
+
+docs {
+  # Dave - Request Upload URL
+  
+  Dave запрашивает presigned URL для загрузки файла.
+  
+  ## Параметры:
+  - **filename**: "solution.zip" (имя файла)
+  - **content_type**: "application/zip" (MIME type)
+  - **size_bytes**: 1024000 (~1MB, размер файла)
+  
+  ## Что происходит:
+  Backend генерирует **presigned URL** для прямой загрузки в MinIO/S3.
+  
+  ## Response:
+  - **uploadUrl**: Временный URL для PUT запроса (expires in 15 min)
+  - **fileId**: UUID файла в нашей системе
+  - **expiresAt**: Когда истечет URL
+  
+  ## Presigned URL содержит:
+  - Bucket path: submissions/{hackathonId}/{submissionId}/{fileId}/
+  - AWS signature: X-Amz-Signature=...
+  - Expiration: X-Amz-Expires=900
+  
+  ## Безопасность:
+  - URL временный (15 минут)
+  - Signature проверяется MinIO
+  - Нельзя подделать или переиспользовать
+  - Можно загрузить только один файл на этот URL
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}
