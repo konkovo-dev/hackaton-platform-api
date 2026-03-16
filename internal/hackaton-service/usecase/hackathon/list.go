@@ -222,6 +222,10 @@ func (s *Service) parseListHackathonsFilters(ctx context.Context, query *commonv
 		fg := &sqlbuilder.FilterGroup{Filters: []*sqlbuilder.Filter{}}
 
 		for _, f := range group.Filters {
+			// Normalize field name: convert dot notation to underscore
+			// e.g., "location.online" -> "location_online"
+			normalizedField := strings.ReplaceAll(f.Field, ".", "_")
+			f.Field = normalizedField
 			if !allowedFields[f.Field] {
 				return nil, nil, fmt.Errorf("%w: unsupported filter field: %s", ErrInvalidInput, f.Field)
 			}

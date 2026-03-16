@@ -8,4 +8,6 @@ var (
 	ErrUserNotFound      = pkgerrors.ErrUserNotFound
 	ErrUserAlreadyExists = pkgerrors.ErrUserAlreadyExists
 	ErrInvalidInput      = pkgerrors.ErrInvalidInput
+	ErrUnauthorized      = pkgerrors.ErrUnauthorized
+	ErrForbidden         = pkgerrors.ErrForbidden
 )

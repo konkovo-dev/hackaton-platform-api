@@ -26,3 +26,9 @@ SELECT id, username, first_name, last_name, avatar_url, timezone, created_at, up
 FROM identity.users
 WHERE id = ANY($1::uuid[]);
 
+-- name: UserUpdateAvatarURL :exec
+UPDATE identity.users
+SET avatar_url = $2,
+    updated_at = NOW()
+WHERE id = $1;
+

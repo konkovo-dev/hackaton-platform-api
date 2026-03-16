@@ -22,6 +22,7 @@ var Module = fx.Module("postgres",
 		NewSkillRepository,
 		NewContactRepository,
 		NewVisibilityRepository,
+		NewAvatarUploadRepository,
 		func(pool *pgxpool.Pool) *OutboxRepository {
 			return NewOutboxRepository(pool)
 		},

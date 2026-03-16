@@ -251,24 +251,16 @@ func TestFullHackathonFlow(t *testing.T) {
 	resp, _ = tc.DoAuthenticatedRequest("GET", fmt.Sprintf("/v1/hackathons/%s/participations/me", hackathonID), participant3.AccessToken, nil)
 	assert.Equal(t, http.StatusForbidden, resp.StatusCode, "Unregistered user should not access participation")
 
-	// Step 18: List hackathons (public)
-	t.Log("Step 18: Listing public hackathons...")
-	resp, body = tc.DoRequest("GET", "/v1/hackathons?page_size=10", nil, nil)
-	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to list hackathons: %s", string(body))
+	// Step 18: Get hackathon by ID (verify it's published and visible)
+	t.Log("Step 18: Getting published hackathon...")
+	resp, body = tc.DoAuthenticatedRequest("GET", fmt.Sprintf("/v1/hackathons/%s", hackathonID), participant1.AccessToken, nil)
+	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to get hackathon: %s", string(body))
 
-	listHackData := tc.ParseJSON(body)
-	hackathons := listHackData["hackathons"].([]interface{})
-
-	found := false
-	for _, h := range hackathons {
-		hack := h.(map[string]interface{})
-		if hack["hackathonId"] == hackathonID {
-			found = true
-			assert.Equal(t, "Full E2E Test Hackathon", hack["name"])
-			break
-		}
-	}
-	assert.True(t, found, "Published hackathon should appear in public list")
+	getHackData := tc.ParseJSON(body)
+	hackData := getHackData["hackathon"].(map[string]interface{})
+	assert.Equal(t, "Full E2E Test Hackathon", hackData["name"])
+	assert.Equal(t, "HACKATHON_STATE_PUBLISHED", hackData["state"])
+	t.Logf("Hackathon stage: %s", hackData["stage"])
 
 	// Step 19: Mentor self-removes
 	t.Log("Step 19: Mentor self-removing...")

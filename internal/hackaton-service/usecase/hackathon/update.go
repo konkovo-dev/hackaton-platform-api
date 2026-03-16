@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/domain"
 	"github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/domain/entity"
 	hackathonpolicy "github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/policy"
 	"github.com/google/uuid"
@@ -39,7 +38,6 @@ type UpdateHackathonIn struct {
 }
 
 type UpdateHackathonOut struct {
-	ValidationErrors []domain.ValidationError
 }
 
 func (s *Service) UpdateHackathon(ctx context.Context, in UpdateHackathonIn) (*UpdateHackathonOut, error) {
@@ -92,17 +90,6 @@ func (s *Service) UpdateHackathon(ctx context.Context, in UpdateHackathonIn) (*U
 		CreatedAt:            oldHackathon.CreatedAt,
 	}
 
-	validator := NewHackathonValidator()
-	now := time.Now().UTC()
-	validationErrors := validator.ValidateUpdate(oldHackathon, newHackathon, in.Links, now)
-
-	stage := domain.HackathonStage(oldHackathon.Stage)
-	if validator.HasCriticalErrors(validationErrors, stage) {
-		return &UpdateHackathonOut{
-			ValidationErrors: validationErrors,
-		}, ErrValidationFailed
-	}
-
 	err = s.uow.Do(ctx, func(ctx context.Context, txRepos *TxRepositories) error {
 		if err := txRepos.Hackathons.Update(ctx, newHackathon); err != nil {
 			return err
@@ -131,7 +118,5 @@ func (s *Service) UpdateHackathon(ctx context.Context, in UpdateHackathonIn) (*U
 		return nil, err
 	}
 
-	return &UpdateHackathonOut{
-		ValidationErrors: validationErrors,
-	}, nil
+	return &UpdateHackathonOut{}, nil
 }

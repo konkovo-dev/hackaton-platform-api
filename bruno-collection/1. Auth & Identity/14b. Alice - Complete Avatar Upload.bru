@@ -1,0 +1,59 @@
+meta {
+  name: 14b. Alice - Complete Avatar Upload
+  type: http
+  seq: 14.2
+}
+
+post {
+  url: {{baseUrl}}/v1/users/me/avatar/complete
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {
+    "uploadId": "{{aliceAvatarUploadId}}",
+    "idempotencyKey": {
+      "key": "alice-avatar-complete-1"
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    bru.setVar("aliceAvatarUrl", data.avatarUrl);
+    console.log('✅ Alice avatar upload completed');
+    console.log('Avatar URL:', data.avatarUrl);
+    console.log('');
+    console.log('Avatar автоматически установлен в профиль Alice');
+  }
+}
+
+docs {
+  # Alice - Complete Avatar Upload
+  
+  Alice подтверждает загрузку аватарки после того, как файл был загружен по presigned URL.
+  
+  ## Что происходит:
+  1. Проверяется, что файл существует в S3
+  2. Проверяется размер файла
+  3. Статус загрузки меняется на "completed"
+  4. **avatar_url автоматически обновляется в профиле пользователя**
+  
+  ## Ошибки:
+  - 404 - upload не найден
+  - 400 - файл не найден в S3 (не загружен или неправильный uploadId)
+  - 400 - размер файла не совпадает
+  - 403 - попытка завершить чужую загрузку
+  
+  ## Environment:
+  - Demo
+  
+  ## Переменные (сохраняются автоматически):
+  - `aliceAvatarUrl` - URL загруженной аватарки
+}

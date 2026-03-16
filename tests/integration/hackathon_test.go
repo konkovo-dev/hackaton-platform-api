@@ -434,8 +434,8 @@ func TestCreateHackathonAnnouncement(t *testing.T) {
 	hackathonID := createAndPublishHackathon(tc, owner)
 
 	announcementBody := map[string]interface{}{
-		"title":   "Registration Opening Soon!",
-		"content": "We are excited to announce that registration will open on March 1st, 2026.",
+		"title": "Registration Opening Soon!",
+		"body":  "We are excited to announce that registration will open on March 1st, 2026.",
 	}
 
 	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/announcements", hackathonID), owner.AccessToken, announcementBody)
@@ -454,8 +454,8 @@ func TestListHackathonAnnouncements(t *testing.T) {
 	hackathonID := createAndPublishHackathon(tc, owner)
 
 	announcementBody := map[string]interface{}{
-		"title":   "Test Announcement",
-		"content": "Test content",
+		"title": "Test Announcement",
+		"body":  "Test content",
 	}
 	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/announcements", hackathonID), owner.AccessToken, announcementBody)
 
@@ -482,8 +482,8 @@ func TestUpdateHackathonAnnouncement(t *testing.T) {
 	hackathonID := createAndPublishHackathon(tc, owner)
 
 	announcementBody := map[string]interface{}{
-		"title":   "Original Title",
-		"content": "Original content",
+		"title": "Original Title",
+		"body":  "Original content",
 	}
 	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/announcements", hackathonID), owner.AccessToken, announcementBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
@@ -492,8 +492,8 @@ func TestUpdateHackathonAnnouncement(t *testing.T) {
 	announcementID := data["announcementId"].(string)
 
 	updateBody := map[string]interface{}{
-		"title":   "Updated Title",
-		"content": "Updated content",
+		"title": "Updated Title",
+		"body":  "Updated content",
 	}
 	resp, body = tc.DoAuthenticatedRequest("PUT", fmt.Sprintf("/v1/hackathons/%s/announcements/%s", hackathonID, announcementID), owner.AccessToken, updateBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to update announcement: %s", string(body))
@@ -505,6 +505,7 @@ func TestUpdateHackathonAnnouncement(t *testing.T) {
 	announcements := listData["announcements"].([]interface{})
 	updated := announcements[0].(map[string]interface{})
 	assert.Equal(t, "Updated Title", updated["title"])
+	assert.Equal(t, "Updated content", updated["body"], "Body should be returned in list announcements")
 }
 
 func TestDeleteHackathonAnnouncement(t *testing.T) {
@@ -514,8 +515,8 @@ func TestDeleteHackathonAnnouncement(t *testing.T) {
 	hackathonID := createAndPublishHackathon(tc, owner)
 
 	announcementBody := map[string]interface{}{
-		"title":   "To Be Deleted",
-		"content": "Test",
+		"title": "To Be Deleted",
+		"body":  "Test",
 	}
 	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/announcements", hackathonID), owner.AccessToken, announcementBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
@@ -639,6 +640,46 @@ func TestListHackathonsWithFilters(t *testing.T) {
 		assert.True(t, foundRunning, "Running hackathon should be in results")
 	})
 
+	t.Run("filter by stage upcoming", func(t *testing.T) {
+		listBody := map[string]interface{}{
+			"query": map[string]interface{}{
+				"filter_groups": []map[string]interface{}{
+					{
+						"filters": []map[string]interface{}{
+							{
+								"field":        "stage",
+								"operation":    "FILTER_OPERATION_EQUAL",
+								"string_value": "upcoming",
+							},
+						},
+					},
+				},
+				"page": map[string]interface{}{
+					"page_size": 50,
+				},
+			},
+		}
+
+		resp, body := tc.DoRequest("POST", "/v1/hackathons/list", listBody, nil)
+		require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to list hackathons: %s", string(body))
+
+		data := tc.ParseJSON(body)
+		hackathons := data["hackathons"].([]interface{})
+
+		foundUpcoming := false
+		for _, h := range hackathons {
+			hackathon := h.(map[string]interface{})
+			if hackathon["hackathonId"].(string) == hackathon2 {
+				foundUpcoming = true
+				assert.Equal(t, "HACKATHON_STAGE_UPCOMING", hackathon["stage"])
+			}
+			if hackathon["hackathonId"].(string) == hackathon1 {
+				t.Errorf("Found running hackathon in upcoming filter")
+			}
+		}
+		assert.True(t, foundUpcoming, "Upcoming hackathon should be in results")
+	})
+
 	t.Run("filter by location_city", func(t *testing.T) {
 		listBody := map[string]interface{}{
 			"query": map[string]interface{}{
@@ -678,6 +719,85 @@ func TestListHackathonsWithFilters(t *testing.T) {
 			}
 		}
 		assert.True(t, foundNY, "New York hackathon should be in results")
+	})
+
+	t.Run("filter by location.online (dot notation)", func(t *testing.T) {
+		listBody := map[string]interface{}{
+			"query": map[string]interface{}{
+				"filter_groups": []map[string]interface{}{
+					{
+						"filters": []map[string]interface{}{
+							{
+								"field":      "location.online",
+								"operation":  "FILTER_OPERATION_EQUAL",
+								"bool_value": true,
+							},
+						},
+					},
+				},
+				"page": map[string]interface{}{
+					"page_size": 50,
+				},
+			},
+		}
+
+		resp, body := tc.DoRequest("POST", "/v1/hackathons/list", listBody, nil)
+		require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to list hackathons: %s", string(body))
+
+		data := tc.ParseJSON(body)
+		hackathons := data["hackathons"].([]interface{})
+
+		foundOnline := false
+		for _, h := range hackathons {
+			hackathon := h.(map[string]interface{})
+			if hackathon["hackathonId"].(string) == hackathon1 {
+				foundOnline = true
+				location := hackathon["location"].(map[string]interface{})
+				assert.Equal(t, true, location["online"])
+			}
+			if hackathon["hackathonId"].(string) == hackathon2 {
+				t.Errorf("Found offline hackathon in online filter")
+			}
+		}
+		assert.True(t, foundOnline, "Online hackathon should be in results")
+	})
+
+	t.Run("filter by location.city (dot notation)", func(t *testing.T) {
+		listBody := map[string]interface{}{
+			"query": map[string]interface{}{
+				"filter_groups": []map[string]interface{}{
+					{
+						"filters": []map[string]interface{}{
+							{
+								"field":        "location.city",
+								"operation":    "FILTER_OPERATION_EQUAL",
+								"string_value": "Moscow",
+							},
+						},
+					},
+				},
+				"page": map[string]interface{}{
+					"page_size": 50,
+				},
+			},
+		}
+
+		resp, body := tc.DoRequest("POST", "/v1/hackathons/list", listBody, nil)
+		require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to list hackathons: %s", string(body))
+
+		data := tc.ParseJSON(body)
+		hackathons := data["hackathons"].([]interface{})
+
+		foundMoscow := false
+		for _, h := range hackathons {
+			hackathon := h.(map[string]interface{})
+			if hackathon["hackathonId"].(string) == hackathon1 {
+				foundMoscow = true
+				location := hackathon["location"].(map[string]interface{})
+				assert.Equal(t, "Moscow", location["city"])
+			}
+		}
+		assert.True(t, foundMoscow, "Moscow hackathon should be in results")
 	})
 
 	t.Run("text search by name", func(t *testing.T) {

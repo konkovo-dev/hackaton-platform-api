@@ -2,7 +2,6 @@ package hackathonservice
 
 import (
 	"context"
-	"errors"
 
 	hackathonv1 "github.com/belikoooova/hackaton-platform-api/api/hackathon/v1"
 	"github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/usecase/hackathon"
@@ -22,36 +21,10 @@ func (s *HackathonService) UpdateHackathonTask(ctx context.Context, req *hackath
 		Task:        req.Task,
 	}
 
-	out, err := s.hackathonService.UpdateTask(ctx, in)
+	_, err = s.hackathonService.UpdateTask(ctx, in)
 	if err != nil {
-		if errors.Is(err, hackathon.ErrValidationFailed) && out != nil {
-			validationErrors := make([]*hackathonv1.ValidationError, 0, len(out.ValidationErrors))
-			for _, ve := range out.ValidationErrors {
-				validationErrors = append(validationErrors, &hackathonv1.ValidationError{
-					Code:    ve.Code,
-					Field:   ve.Field,
-					Message: ve.Message,
-					Meta:    ve.Meta,
-				})
-			}
-			return &hackathonv1.UpdateHackathonTaskResponse{
-				ValidationErrors: validationErrors,
-			}, nil
-		}
 		return nil, s.handleError(ctx, err, "UpdateHackathonTask")
 	}
 
-	validationErrors := make([]*hackathonv1.ValidationError, 0, len(out.ValidationErrors))
-	for _, ve := range out.ValidationErrors {
-		validationErrors = append(validationErrors, &hackathonv1.ValidationError{
-			Code:    ve.Code,
-			Field:   ve.Field,
-			Message: ve.Message,
-			Meta:    ve.Meta,
-		})
-	}
-
-	return &hackathonv1.UpdateHackathonTaskResponse{
-		ValidationErrors: validationErrors,
-	}, nil
+	return &hackathonv1.UpdateHackathonTaskResponse{}, nil
 }

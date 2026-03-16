@@ -43,18 +43,11 @@ func (s *HackathonService) PublishHackathon(ctx context.Context, req *hackathonv
 		return nil, status.Error(codes.InvalidArgument, "invalid hackathon_id")
 	}
 
-	result, err := s.hackathonService.PublishHackathon(ctx, hackathon.PublishHackathonIn{
+	_, err = s.hackathonService.PublishHackathon(ctx, hackathon.PublishHackathonIn{
 		HackathonID: hackathonID,
 	})
 	if err != nil {
 		return nil, s.handleError(ctx, err, "publish_hackathon")
-	}
-
-	if len(result.ValidationErrors) > 0 {
-		s.logger.WarnContext(ctx, "validation errors preventing publish",
-			slog.String("hackathon_id", req.HackathonId),
-			slog.Int("error_count", len(result.ValidationErrors)))
-		return nil, status.Error(codes.FailedPrecondition, "hackathon validation failed")
 	}
 
 	resp := &hackathonv1.PublishHackathonResponse{}

@@ -43,7 +43,7 @@ service HackathonService {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Create a hackathon"
-      description: "Creates a new hackathon in DRAFT state. The caller becomes the OWNER. If `validationErrors` is non-empty the hackathon was still created but contains invalid data — fix the fields before publishing."
+      description: "Creates a new hackathon in DRAFT state. The caller becomes the OWNER."
       tags: "Hackathons"
     };
   }
@@ -55,7 +55,7 @@ service HackathonService {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Update a hackathon"
-      description: "Updates hackathon fields. If `validationErrors` is non-empty the update was rejected — fix the listed fields and retry."
+      description: "Updates hackathon fields."
       tags: "Hackathons"
     };
   }
@@ -101,7 +101,7 @@ service HackathonService {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Update hackathon task"
-      description: "Replaces the task description. Requires OWNER or MANAGER role. If `validationErrors` is non-empty the update was rejected."
+      description: "Replaces the task description. Requires OWNER or MANAGER role."
       tags: "Hackathons"
     };
   }
@@ -124,7 +124,7 @@ service HackathonService {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Update result draft"
-      description: "Saves a draft of the result announcement. Does NOT publish it. If `validationErrors` is non-empty the update was rejected."
+      description: "Saves a draft of the result announcement. Does NOT publish it."
       tags: "Hackathons"
     };
   }
@@ -229,7 +229,6 @@ message CreateHackathonRequest {
 
 message CreateHackathonResponse {
   string hackathon_id = 1;
-  repeated ValidationError validation_errors = 2;
 }
 
 message UpdateHackathonRequest {
@@ -245,9 +244,7 @@ message UpdateHackathonRequest {
   common.v1.IdempotencyKey idempotency_key = 20;
 }
 
-message UpdateHackathonResponse {
-  repeated ValidationError validation_errors = 1;
-}
+message UpdateHackathonResponse {}
 
 message ValidateHackathonRequest {
   string hackathon_id = 1;
@@ -279,9 +276,7 @@ message UpdateHackathonTaskRequest {
   string task = 2;
 }
 
-message UpdateHackathonTaskResponse {
-  repeated ValidationError validation_errors = 1;
-}
+message UpdateHackathonTaskResponse {}
 
 // ─── Result ───────────────────────────────────────────────────────────────────
 
@@ -298,9 +293,7 @@ message UpdateHackathonResultDraftRequest {
   string result = 2;
 }
 
-message UpdateHackathonResultDraftResponse {
-  repeated ValidationError validation_errors = 1;
-}
+message UpdateHackathonResultDraftResponse {}
 
 message PublishHackathonResultRequest {
   string hackathon_id = 1;

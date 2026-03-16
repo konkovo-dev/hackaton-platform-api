@@ -21,13 +21,20 @@ func NewConfig() *Config {
 	endpoint := env.GetEnv("S3_ENDPOINT", "localhost:9000")
 	publicEndpoint := env.GetEnv("S3_PUBLIC_ENDPOINT", endpoint)
 
+	// Support both S3_AVATARS_BUCKET and S3_SUBMISSIONS_BUCKET
+	// Try avatars first, then submissions, then default
+	bucketName := env.GetEnv("S3_AVATARS_BUCKET", "")
+	if bucketName == "" {
+		bucketName = env.GetEnv("S3_SUBMISSIONS_BUCKET", "submissions")
+	}
+
 	return &Config{
 		Endpoint:        endpoint,
 		PublicEndpoint:  publicEndpoint,
 		Region:          env.GetEnv("S3_REGION", "us-east-1"),
 		AccessKeyID:     env.GetEnv("S3_ACCESS_KEY_ID", "minioadmin"),
 		SecretAccessKey: env.GetEnv("S3_SECRET_ACCESS_KEY", "minioadmin"),
-		BucketName:      env.GetEnv("S3_SUBMISSIONS_BUCKET", "submissions"),
+		BucketName:      bucketName,
 		UseSSL:          useSSL,
 	}
 }
@@ -45,7 +52,7 @@ func MustNewConfig() *Config {
 		panic(fmt.Errorf("S3_SECRET_ACCESS_KEY is required"))
 	}
 	if cfg.BucketName == "" {
-		panic(fmt.Errorf("S3_SUBMISSIONS_BUCKET is required"))
+		panic(fmt.Errorf("S3_AVATARS_BUCKET or S3_SUBMISSIONS_BUCKET is required"))
 	}
 
 	return cfg

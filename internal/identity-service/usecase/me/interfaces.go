@@ -14,6 +14,7 @@ type UserRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*entity.User, error)
 	GetByUsername(ctx context.Context, username string) (*entity.User, error)
 	Update(ctx context.Context, user *entity.User) error
+	UpdateAvatarURL(ctx context.Context, userID uuid.UUID, avatarURL string) error
 }
 
 type SkillRepository interface {
@@ -32,6 +33,22 @@ type VisibilityRepository interface {
 	Create(ctx context.Context, visibility *entity.Visibility) error
 	GetByUserID(ctx context.Context, userID uuid.UUID) (*entity.Visibility, error)
 	Upsert(ctx context.Context, visibility *entity.Visibility) error
+}
+
+type AvatarUpload struct {
+	UploadID    uuid.UUID
+	UserID      uuid.UUID
+	Filename    string
+	SizeBytes   int64
+	ContentType string
+	StorageKey  string
+	Status      string
+}
+
+type AvatarUploadRepository interface {
+	CreateAvatarUpload(ctx context.Context, uploadID, userID uuid.UUID, filename string, sizeBytes int64, contentType, storageKey string) error
+	GetAvatarUploadByID(ctx context.Context, uploadID uuid.UUID) (*AvatarUpload, error)
+	CompleteAvatarUpload(ctx context.Context, uploadID uuid.UUID) error
 }
 
 type UnitOfWork = pgxutil.UnitOfWork[*TxRepositories]
