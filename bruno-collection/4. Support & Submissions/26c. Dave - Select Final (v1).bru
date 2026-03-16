@@ -1,0 +1,57 @@
+meta {
+  name: 26c. Dave - Select Final (v1)
+  type: http
+  seq: 26
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/submissions/{{submissionId}}/select-final
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+body:json {
+  {}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Selected v1 as final!');
+    console.log('\n📌 What changed:');
+    console.log('- Submission v1: is_final = true');
+    console.log('- Submission v2: is_final = false');
+    console.log('\nTeam decided v1 is better!');
+  }
+}
+
+docs {
+  # Dave - Select Final (v1)
+  
+  Dave выбирает первый submission (v1) как финальный.
+  
+  ## Что происходит:
+  1. Submission v1: **is_final = true**
+  2. Submission v2: **is_final = false** (автоматически)
+  3. Только один submission может быть final
+  
+  ## Зачем:
+  - Команда создала v2, но решила что v1 лучше
+  - Можно вернуться к предыдущей версии
+  - Судьи будут оценивать только final submission
+  
+  ## Доступ:
+  - **Team captain** (Dave): может выбирать ✅
+  - **Team member** (Eve): НЕ может выбирать ❌
+  - **Staff**: НЕ может выбирать ❌
+  
+  ## Важно:
+  Доступно только на стадии **RUNNING**.
+  На стадии JUDGING нельзя менять final submission.
+  
+  ## Environment:
+  - Demo (используем daveAccessToken, submissionId = v1)
+}

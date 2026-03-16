@@ -1,0 +1,58 @@
+meta {
+  name: 22. Dave - Complete Upload
+  type: http
+  seq: 22
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/submissions/{{submissionId}}/files/{{fileId}}/complete
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+body:json {
+  {}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Upload completed!');
+    console.log('File status: pending → completed');
+    console.log('\n📦 File is now part of submission');
+    console.log('Backend verified file in MinIO');
+  }
+}
+
+docs {
+  # Dave - Complete Upload
+  
+  Dave уведомляет backend что файл успешно загружен в MinIO.
+  
+  ## Зачем нужен complete:
+  1. Backend проверяет что файл действительно есть в MinIO
+  2. Обновляет статус файла: pending → completed
+  3. Записывает metadata (completed_at timestamp)
+  4. Файл становится частью submission
+  
+  ## Что происходит:
+  - Backend делает HEAD запрос в MinIO чтобы проверить файл
+  - Если файл существует → статус "completed"
+  - Если файла нет → ошибка
+  
+  ## Production Flow:
+  На фронте:
+  1. Запросить presigned URL (POST /files)
+  2. Загрузить файл на presigned URL (PUT)
+  3. **Если успешно** → вызвать /complete
+  4. **Если ошибка** → показать пользователю
+  
+  ## Без complete:
+  Файл будет в MinIO, но backend не будет знать о нём.
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

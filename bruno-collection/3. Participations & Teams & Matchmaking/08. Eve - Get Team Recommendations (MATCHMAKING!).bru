@@ -1,0 +1,82 @@
+meta {
+  name: 08. Eve - Get Team Recommendations (MATCHMAKING!)
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/matchmaking/teams?limit=10
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{eveAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const recommendations = res.body.recommendations || [];
+    
+    console.log(`✅ Found ${recommendations.length} team recommendations`);
+    
+    if (recommendations.length > 0) {
+      const top = recommendations[0];
+      const score = top.matchScore;
+      
+      console.log('\n🏆 TOP MATCH:');
+      console.log('Team ID:', top.teamId);
+      console.log('Total Score:', score.totalScore.toFixed(3));
+      
+      console.log('\n📊 BREAKDOWN:');
+      console.log(`Skills: ${score.skills.score.toFixed(2)} × ${score.skills.weight.toFixed(2)} = ${(score.skills.score * score.skills.weight).toFixed(3)}`);
+      console.log(`  Matched: ${score.skills.matchedSkills || []}`);
+      console.log(`  Count: ${score.skills.matchedCount}/${score.skills.requiredCount}`);
+      
+      console.log(`Roles: ${score.roles.score.toFixed(2)} × ${score.roles.weight.toFixed(2)} = ${(score.roles.score * score.roles.weight).toFixed(3)}`);
+      console.log(`  Matched: ${score.roles.matchedRoles || []}`);
+      console.log(`  Count: ${score.roles.matchedCount}/${score.roles.requiredCount}`);
+      
+      console.log(`Text: ${score.text.score.toFixed(2)} × ${score.text.weight.toFixed(2)} = ${(score.text.score * score.text.weight).toFixed(3)}`);
+      console.log(`  Keywords: ${score.text.matchedKeywords || []}`);
+      
+      console.log('\n🎯 This is AI Innovators team - perfect match!');
+    }
+  }
+}
+
+docs {
+  # Eve - Get Team Recommendations (MATCHMAKING!)
+  
+  🔥 **КЛЮЧЕВОЙ ЗАПРОС!** Eve ищет команду через matchmaking.
+  
+  ## Что происходит:
+  Система анализирует все команды с открытыми вакансиями и возвращает ранжированный список на основе умного алгоритма скоринга.
+  
+  ## Match Score Components:
+  
+  ### 1. Skills (63% веса) - ГЛАВНОЕ!
+  - Сравнивает скиллы Eve (React, TypeScript, Node.js, UI/UX) с desired_skill_ids вакансии
+  - Eve имеет React и TypeScript - ТОЧНО то, что нужно!
+  - Ожидаем: score ~0.9, matched: 2/2
+  
+  ### 2. Roles (27% веса)
+  - Сравнивает wished_role_ids Eve (Frontend, Designer) с desired_role_ids вакансии
+  - Полное совпадение!
+  - Ожидаем: score ~0.95, matched: 2/2
+  
+  ### 3. Text (10% веса)
+  - Семантический анализ мотивации Eve и описания вакансии
+  - Ключевые слова: "React", "TypeScript", "user interface"
+  - Ожидаем: score ~0.6, keywords: ["react", "typescript", "frontend"]
+  
+  ## Total Score:
+  - Formula: skills.score × 0.63 + roles.score × 0.27 + text.score × 0.10
+  - Ожидаем: ~0.85-0.90 (очень высокий!)
+  
+  ## Результат:
+  Команда "AI Innovators" (Dave) на первом месте с высоким score!
+  
+  ## Environment:
+  - Demo (используем eveAccessToken)
+}

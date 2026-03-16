@@ -1,0 +1,54 @@
+meta {
+  name: 13. Eve - Get My Chat (also sees mentor reply!)
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/support/my-messages?query.limit=50&query.offset=0
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{eveAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const messages = res.body.messages || [];
+    
+    console.log(`✅ Eve also sees ${messages.length} messages`);
+    
+    const mentorMessages = messages.filter(m => m.authorRole === 'mentor');
+    
+    if (mentorMessages.length > 0) {
+      console.log('\n🎉 TEAM CHAT CONFIRMED AGAIN!');
+      console.log('Eve sees the same mentor reply as Dave!');
+      console.log('\nBoth team members get support responses!');
+    }
+  }
+}
+
+docs {
+  # Eve - Get My Chat (Also Sees Mentor Reply!)
+  
+  Eve тоже проверяет чат и видит ответ ментора.
+  
+  ## Что видит Eve:
+  **Точно те же сообщения**, что и Dave!
+  - Все сообщения команды
+  - System message о присоединении ментора
+  - Ответ ментора Bob
+  
+  ## Ключевая фича:
+  Оба члена команды (Dave и Eve) видят **одинаковую историю чата**.
+  Ментор отвечает команде, не конкретному человеку.
+  
+  ## Сравнение:
+  - **Dave** (запрос 12): видит 4 сообщения
+  - **Eve** (запрос 13): видит те же 4 сообщения!
+  
+  ## Environment:
+  - Demo (используем eveAccessToken)
+}

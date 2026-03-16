@@ -1,0 +1,41 @@
+meta {
+  name: 24. Alice - Get Eve Profile (PUBLIC contacts visible)
+  type: http
+  seq: 24
+}
+
+get {
+  url: {{baseUrl}}/v1/users/{{eveUserId}}?include_skills=true&include_contacts=true
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    const user = data.user;
+    const skills = data.skills || [];
+    const contacts = data.contacts || [];
+    
+    console.log('✅ Eve profile loaded');
+    console.log('Skills:', skills.length);
+    console.log('Contacts:', contacts.length);
+  }
+}
+
+docs {
+  # Alice - Get Eve Profile (PUBLIC Contacts)
+  
+  Alice просматривает профиль Eve.
+  
+  ## Что видно:
+  - ✅ Скиллы (PUBLIC)
+  - ✅ Контакты (PUBLIC) - Email, Telegram, GitHub
+  
+  ## Environment:
+  - Demo
+}

@@ -1,0 +1,54 @@
+meta {
+  name: 08. Bob - Claim Ticket (system Mentor joined)
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/support/tickets/{{teamTicketId}}/claim
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{bobAccessToken}}
+}
+
+body:json {
+  {}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Bob claimed the ticket!');
+    console.log('Ticket status: open → assigned');
+    console.log('Assigned to: Bob');
+    console.log('\n📨 System message sent:');
+    console.log('"Mentor Bob joined the chat"');
+  }
+}
+
+docs {
+  # Bob - Claim Ticket (System: Mentor Joined)
+  
+  Bob назначает себя на тикет команды "AI Innovators".
+  
+  ## Что происходит:
+  1. Ticket status: open → assigned
+  2. assigned_mentor_id = Bob's user ID
+  3. Система автоматически создает **system message**:
+     - text: "Mentor Bob joined the chat"
+     - author_role: "system"
+     - author_user_id: "" (пустой)
+  
+  ## Зачем system message:
+  - Dave и Eve увидят что ментор присоединился к чату
+  - Понятно кто им помогает
+  - История чата полная
+  
+  ## Альтернатива:
+  Owner/Organizer может использовать `/assign` endpoint чтобы назначить конкретного ментора.
+  
+  ## Environment:
+  - Demo (используем bobAccessToken)
+}

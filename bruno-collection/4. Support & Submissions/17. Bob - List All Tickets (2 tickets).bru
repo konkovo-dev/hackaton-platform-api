@@ -1,0 +1,86 @@
+meta {
+  name: 17. Bob - List All Tickets (2 tickets)
+  type: http
+  seq: 17
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/support/tickets/all/list
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{bobAccessToken}}
+}
+
+body:json {
+  {
+    "limit": 10,
+    "offset": 0
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const tickets = res.body.tickets || [];
+    
+    console.log(`✅ Bob sees ${tickets.length} tickets total`);
+    
+    const openTickets = tickets.filter(t => t.status === 'open');
+    const closedTickets = tickets.filter(t => t.status === 'closed');
+    
+    console.log(`\n📊 Breakdown:`);
+    console.log(`  OPEN: ${openTickets.length}`);
+    console.log(`  CLOSED: ${closedTickets.length}`);
+    
+    tickets.forEach((ticket, idx) => {
+      console.log(`\n${idx + 1}. Ticket ${ticket.ticketId.substring(0, 8)}...`);
+      console.log(`   Owner: ${ticket.ownerKind} "${ticket.ownerName}"`);
+      console.log(`   Status: ${ticket.status}`);
+      console.log(`   Messages: ${ticket.messageCount}`);
+    });
+    
+    if (tickets.length >= 2) {
+      console.log('\n🎫 Multiple tickets from same team!');
+      console.log('Old ticket: CLOSED (resolved)');
+      console.log('New ticket: OPEN (needs attention)');
+    }
+  }
+}
+
+docs {
+  # Bob - List All Tickets (2 Tickets)
+  
+  Bob снова просматривает все тикеты и видит 2 тикета от команды "AI Innovators".
+  
+  ## Что видит Bob:
+  
+  ### Ticket 1 (старый):
+  - Owner: team "AI Innovators"
+  - Status: **closed**
+  - Assignee: Bob
+  - Messages: 5 (Dave, Eve, System, Bob, Dave)
+  - Вопрос: JWT authentication
+  
+  ### Ticket 2 (новый):
+  - Owner: team "AI Innovators"
+  - Status: **open**
+  - Assignee: Unassigned
+  - Messages: 1 (Eve)
+  - Вопрос: File uploads
+  
+  ## Демонстрация:
+  Показывает lifecycle тикетов:
+  1. Создание при первом сообщении
+  2. Claim/Assign ментором
+  3. Диалог
+  4. Close
+  5. Новый тикет при следующем обращении
+  
+  ## Для менторов:
+  Видят историю всех обращений команды, могут отслеживать resolved vs active issues.
+  
+  ## Environment:
+  - Demo (используем bobAccessToken)
+}

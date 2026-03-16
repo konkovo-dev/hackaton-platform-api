@@ -1,0 +1,62 @@
+meta {
+  name: 26d. Dave - Get Final Submission
+  type: http
+  seq: 26
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/participants/team/{{daveTeamId}}/final-submission
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const submission = res.body.submission;
+    
+    console.log('✅ Final submission loaded!');
+    console.log('Submission ID:', submission.submissionId);
+    console.log('Title:', submission.title);
+    console.log('Is Final:', submission.isFinal);
+    
+    const expectedId = bru.getEnvVar('submissionId');
+    if (submission.submissionId === expectedId) {
+      console.log('\n🎯 CORRECT!');
+      console.log('v1 is marked as final (not v2)');
+    }
+  }
+}
+
+docs {
+  # Dave - Get Final Submission
+  
+  Dave получает финальный submission команды.
+  
+  ## Endpoint:
+  ```
+  GET /v1/hackathons/{id}/participants/{owner_kind}/{owner_id}/final-submission
+  ```
+  
+  ## Параметры:
+  - **owner_kind**: "team" (для команды) или "user" (для individual)
+  - **owner_id**: daveTeamId (ID команды)
+  
+  ## Response:
+  - **submission**: финальный submission
+  - **isFinal**: true
+  
+  ## Результат:
+  Возвращается submission v1 (не v2!), потому что мы выбрали v1 в запросе 26c.
+  
+  ## Зачем:
+  - Судьи используют этот endpoint для получения submission на оценку
+  - Гарантирует что оценивается правильная версия
+  - Участники могут проверить какая версия выбрана
+  
+  ## Environment:
+  - Demo (используем daveAccessToken, daveTeamId)
+}

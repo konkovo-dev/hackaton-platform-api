@@ -1,0 +1,61 @@
+meta {
+  name: 05. Eve - Send Message (same ticket)
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/support/messages
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{eveAccessToken}}
+}
+
+body:json {
+  {
+    "text": "Yes, specifically we need help with JWT token validation. The documentation is unclear."
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const ticketId = res.body.ticketId;
+    const messageId = res.body.messageId;
+    
+    console.log('✅ Eve sent message!');
+    console.log('Ticket ID:', ticketId);
+    console.log('Message ID:', messageId);
+    
+    const savedTicketId = bru.getEnvVar('teamTicketId');
+    if (ticketId === savedTicketId) {
+      console.log('\n✅ SAME TICKET!');
+      console.log('Eve wrote to the same team ticket as Dave');
+    }
+  }
+}
+
+docs {
+  # Eve - Send Message (Same Ticket)
+  
+  Eve отправляет сообщение в поддержку.
+  
+  ## Что происходит:
+  - Eve пишет в **тот же тикет**, что и Dave
+  - Система понимает что Eve в команде "AI Innovators"
+  - Находит существующий OPEN тикет команды
+  - Добавляет сообщение Eve в этот тикет
+  
+  ## Response:
+  - **ticketId** - тот же самый, что был у Dave!
+  - **messageId** - новый ID для сообщения Eve
+  
+  ## Демонстрация:
+  Показывает что команда пишет в **один общий тикет**.
+  Не создается новый тикет для каждого члена команды.
+  
+  ## Environment:
+  - Demo (используем eveAccessToken)
+}

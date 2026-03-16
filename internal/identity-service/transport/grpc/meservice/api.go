@@ -44,6 +44,12 @@ func (s *MeService) handleError(ctx context.Context, err error, operation string
 	case errors.Is(err, me.ErrInvalidInput):
 		s.logger.WarnContext(ctx, operation, slog.String("error", err.Error()))
 		return status.Error(codes.InvalidArgument, err.Error())
+	case errors.Is(err, me.ErrUnauthorized):
+		s.logger.WarnContext(ctx, operation, slog.String("error", err.Error()))
+		return status.Error(codes.Unauthenticated, err.Error())
+	case errors.Is(err, me.ErrForbidden):
+		s.logger.WarnContext(ctx, operation, slog.String("error", err.Error()))
+		return status.Error(codes.PermissionDenied, err.Error())
 	default:
 		s.logger.ErrorContext(ctx, operation, slog.String("error", err.Error()))
 		return status.Error(codes.Internal, "internal error")

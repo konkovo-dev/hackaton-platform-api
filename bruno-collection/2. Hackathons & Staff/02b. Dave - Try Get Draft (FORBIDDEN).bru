@@ -1,0 +1,41 @@
+meta {
+  name: 02b. Dave - Try Get Draft (FORBIDDEN)
+  type: http
+  seq: 2.5
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 401 || res.status === 403) {
+    console.log('❌ Access denied! (Expected)');
+    console.log('DRAFT hackathons are only visible to owner');
+    console.log('Dave cannot see it! 🔒');
+  } else if (res.status === 200) {
+    console.error('⚠️  Unexpected: Dave should NOT see DRAFT hackathon!');
+  }
+}
+
+docs {
+  # Dave - Try Get Draft (FORBIDDEN)
+  
+  Dave пытается посмотреть DRAFT хакатон.
+  
+  ## Ожидаемый результат:
+  - ❌ 401/403 Forbidden
+  - DRAFT хакатоны видны только owner
+  
+  ## Демонстрация:
+  Это показывает что privacy работает - черновики приватные!
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

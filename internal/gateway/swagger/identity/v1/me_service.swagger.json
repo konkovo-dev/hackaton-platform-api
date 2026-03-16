@@ -72,6 +72,74 @@
         ]
       }
     },
+    "/v1/users/me/avatar/complete": {
+      "post": {
+        "summary": "Complete avatar upload",
+        "description": "Marks the avatar upload as completed and updates the user's avatar_url after successful upload to S3.",
+        "operationId": "MeService_CompleteAvatarUpload",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CompleteAvatarUploadResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CompleteAvatarUploadRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/v1/users/me/avatar/upload": {
+      "post": {
+        "summary": "Create avatar upload",
+        "description": "Initiates an avatar upload and returns a pre-signed PUT URL. Validates file type (images only) and size limits.",
+        "operationId": "MeService_CreateAvatarUpload",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateAvatarUploadResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateAvatarUploadRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Users"
+        ]
+      }
+    },
     "/v1/users/me/contacts": {
       "put": {
         "summary": "Replace my contacts",
@@ -195,6 +263,25 @@
         }
       }
     },
+    "v1CompleteAvatarUploadRequest": {
+      "type": "object",
+      "properties": {
+        "uploadId": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "v1CompleteAvatarUploadResponse": {
+      "type": "object",
+      "properties": {
+        "avatarUrl": {
+          "type": "string"
+        }
+      }
+    },
     "v1ContactType": {
       "type": "string",
       "enum": [
@@ -205,6 +292,40 @@
         "CONTACT_TYPE_LINKEDIN"
       ],
       "default": "CONTACT_TYPE_UNSPECIFIED"
+    },
+    "v1CreateAvatarUploadRequest": {
+      "type": "object",
+      "properties": {
+        "filename": {
+          "type": "string"
+        },
+        "sizeBytes": {
+          "type": "string",
+          "format": "int64"
+        },
+        "contentType": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "$ref": "#/definitions/v1IdempotencyKey"
+        }
+      }
+    },
+    "v1CreateAvatarUploadResponse": {
+      "type": "object",
+      "properties": {
+        "uploadId": {
+          "type": "string"
+        },
+        "uploadUrl": {
+          "type": "string",
+          "title": "Pre-signed PUT URL"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
     },
     "v1CustomSkill": {
       "type": "object",

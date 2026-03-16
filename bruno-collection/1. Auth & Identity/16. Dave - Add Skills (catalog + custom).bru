@@ -1,0 +1,47 @@
+meta {
+  name: 16. Dave - Add Skills (catalog + custom)
+  type: http
+  seq: 16
+}
+
+put {
+  url: {{baseUrl}}/v1/users/me/skills
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+body:json {
+  {
+    "catalog_skill_ids": {{daveCatalogSkillIds}},
+    "user_skills": {{daveUserSkills}},
+    "skills_visibility": "VISIBILITY_LEVEL_PUBLIC"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Dave skills updated');
+    console.log('Catalog: Go, PostgreSQL, Docker, Kubernetes, gRPC');
+    console.log('Custom: Distributed Systems');
+  }
+}
+
+docs {
+  # Dave - Add Skills
+  
+  Dave добавляет свои скиллы.
+  
+  ## Логика:
+  - **Catalog skills** (5): Go, PostgreSQL, Docker, Kubernetes, gRPC
+  - **Custom skill** (1): "Distributed Systems" (его нет в каталоге)
+  
+  ## Visibility:
+  - PUBLIC - все пользователи увидят при поиске
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

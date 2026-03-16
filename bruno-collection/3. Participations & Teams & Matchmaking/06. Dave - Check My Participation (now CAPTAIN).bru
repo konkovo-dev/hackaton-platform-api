@@ -1,0 +1,53 @@
+meta {
+  name: 06. Dave - Check My Participation (now CAPTAIN)
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/participations/me
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const participation = res.body.participation;
+    
+    console.log('✅ Dave participation loaded');
+    console.log('Status:', participation.status);
+    console.log('Team ID:', participation.teamId);
+    
+    if (participation.status === 'PART_TEAM_CAPTAIN') {
+      console.log('\n👑 Dave is now TEAM_CAPTAIN!');
+      console.log('Status changed: LOOKING_FOR_TEAM → TEAM_CAPTAIN');
+    }
+  }
+}
+
+docs {
+  # Dave - Check My Participation (Now CAPTAIN)
+  
+  Dave проверяет свой статус участия после создания команды.
+  
+  ## Что видим:
+  - **status**: PART_TEAM_CAPTAIN (было PART_LOOKING_FOR_TEAM)
+  - **teamId**: daveTeamId (привязан к команде)
+  - **profile**: мотивация и желаемые роли
+  
+  ## Демонстрация:
+  Показывает автоматическое изменение статуса при создании команды.
+  
+  ## Возможные статусы:
+  - PART_INDIVIDUAL - участвует один
+  - PART_LOOKING_FOR_TEAM - ищет команду
+  - PART_TEAM_CAPTAIN - капитан команды
+  - PART_TEAM_MEMBER - член команды
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

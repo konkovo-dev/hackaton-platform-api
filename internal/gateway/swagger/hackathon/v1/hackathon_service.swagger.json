@@ -19,7 +19,7 @@
     "/v1/hackathons": {
       "post": {
         "summary": "Create a hackathon",
-        "description": "Creates a new hackathon in DRAFT state. The caller becomes the OWNER. If `validationErrors` is non-empty the hackathon was still created but contains invalid data — fix the fields before publishing.",
+        "description": "Creates a new hackathon in DRAFT state. The caller becomes the OWNER.",
         "operationId": "HackathonService_CreateHackathon",
         "responses": {
           "200": {
@@ -147,7 +147,7 @@
       },
       "put": {
         "summary": "Update a hackathon",
-        "description": "Updates hackathon fields. If `validationErrors` is non-empty the update was rejected — fix the listed fields and retry.",
+        "description": "Updates hackathon fields.",
         "operationId": "HackathonService_UpdateHackathon",
         "responses": {
           "200": {
@@ -415,7 +415,7 @@
       },
       "put": {
         "summary": "Update result draft",
-        "description": "Saves a draft of the result announcement. Does NOT publish it. If `validationErrors` is non-empty the update was rejected.",
+        "description": "Saves a draft of the result announcement. Does NOT publish it.",
         "operationId": "HackathonService_UpdateHackathonResultDraft",
         "responses": {
           "200": {
@@ -525,7 +525,7 @@
       },
       "put": {
         "summary": "Update hackathon task",
-        "description": "Replaces the task description. Requires OWNER or MANAGER role. If `validationErrors` is non-empty the update was rejected.",
+        "description": "Replaces the task description. Requires OWNER or MANAGER role.",
         "operationId": "HackathonService_UpdateHackathonTask",
         "responses": {
           "200": {
@@ -764,13 +764,6 @@
       "properties": {
         "hackathonId": {
           "type": "string"
-        },
-        "validationErrors": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1ValidationError"
-          }
         }
       }
     },
@@ -1189,40 +1182,13 @@
       "type": "object"
     },
     "v1UpdateHackathonResponse": {
-      "type": "object",
-      "properties": {
-        "validationErrors": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1ValidationError"
-          }
-        }
-      }
+      "type": "object"
     },
     "v1UpdateHackathonResultDraftResponse": {
-      "type": "object",
-      "properties": {
-        "validationErrors": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1ValidationError"
-          }
-        }
-      }
+      "type": "object"
     },
     "v1UpdateHackathonTaskResponse": {
-      "type": "object",
-      "properties": {
-        "validationErrors": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1ValidationError"
-          }
-        }
-      }
+      "type": "object"
     },
     "v1ValidateHackathonResponse": {
       "type": "object",

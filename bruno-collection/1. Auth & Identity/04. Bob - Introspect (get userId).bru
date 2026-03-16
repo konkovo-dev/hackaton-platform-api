@@ -1,0 +1,37 @@
+meta {
+  name: 04. Bob - Introspect (get userId)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/v1/auth/introspect
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "access_token": "{{bobAccessToken}}"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    
+    if (data.active) {
+      bru.setEnvVar('bobUserId', data.userId);
+      console.log('✅ Bob User ID:', data.userId);
+    }
+  }
+}
+
+docs {
+  # Bob - Introspect
+  
+  Получаем userId Bob.
+  
+  ## Environment:
+  - Demo
+}

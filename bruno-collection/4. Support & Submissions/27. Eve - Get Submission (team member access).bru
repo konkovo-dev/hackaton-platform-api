@@ -1,0 +1,53 @@
+meta {
+  name: 27. Eve - Get Submission (team member access)
+  type: http
+  seq: 27
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/submissions/{{submissionId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{eveAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const submission = res.body.submission;
+    const files = submission.files || [];
+    
+    console.log('✅ Eve sees team submission!');
+    console.log('Title:', submission.title);
+    console.log('Files:', files.length);
+    
+    console.log('\n🎉 TEAM ACCESS CONFIRMED!');
+    console.log('Both Dave and Eve can view/edit submission');
+  }
+}
+
+docs {
+  # Eve - Get Submission (Team Member Access)
+  
+  Eve (член команды) просматривает submission команды.
+  
+  ## Что видит Eve:
+  - Тот же submission, что создал Dave
+  - Все файлы команды
+  - Может обновить description (PUT /submissions/{id})
+  - Может загрузить дополнительные файлы
+  
+  ## Демонстрация:
+  Показывает что submission принадлежит **команде**, не конкретному человеку.
+  Все члены команды имеют полный доступ.
+  
+  ## Доступ к submission:
+  - **Team owner** (Dave, Eve): full access (read, update, upload)
+  - **Staff** (owner, organizer, judge): read-only
+  - **Other participants**: NO access
+  
+  ## Environment:
+  - Demo (используем eveAccessToken)
+}

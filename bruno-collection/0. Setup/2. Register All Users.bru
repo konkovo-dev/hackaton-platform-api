@@ -1,0 +1,43 @@
+meta {
+  name: 2. Register All Users
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/v1/auth/register
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "username": "batch_user",
+    "email": "batch@example.com",
+    "password": "SecurePass123!",
+    "first_name": "Batch",
+    "last_name": "User",
+    "timezone": "Europe/Moscow"
+  }
+}
+
+docs {
+  # Register All Users (Batch Setup)
+  
+  ⚠️ **Этот запрос НЕ используется в основном сценарии!**
+  
+  ## Зачем:
+  Это вспомогательный запрос для быстрой регистрации всех пользователей перед демонстрацией.
+  
+  ## Как использовать:
+  1. Вместо этого запроса используй последовательность из Части 1:
+     - 01-12: Register + Introspect для каждого пользователя
+  
+  ## Почему не batch:
+  - Нужно получить userId через Introspect для каждого
+  - Нужно сохранить токены отдельно для Alice, Bob, Carol, Dave, Eve, Frank
+  - Последовательная регистрация нагляднее для демонстрации
+  
+  ## Environment:
+  - Demo
+}

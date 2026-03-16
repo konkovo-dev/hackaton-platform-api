@@ -1,0 +1,41 @@
+meta {
+  name: 11. Register Frank
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrl}}/v1/auth/register
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "username": "{{frankUsername}}",
+    "email": "{{frankEmail}}",
+    "password": "{{frankPassword}}",
+    "first_name": "{{frankFirstName}}",
+    "last_name": "{{frankLastName}}",
+    "timezone": "{{timezone}}"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    bru.setEnvVar('frankAccessToken', data.accessToken);
+    bru.setEnvVar('frankRefreshToken', data.refreshToken);
+    
+    console.log('✅ Frank registered!');
+  }
+}
+
+docs {
+  # Register Frank (Participant - ML)
+  
+  Регистрируем Frank - ML инженер.
+  
+  ## Environment:
+  - Demo
+}

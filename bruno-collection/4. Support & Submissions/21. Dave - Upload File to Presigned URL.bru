@@ -1,0 +1,91 @@
+meta {
+  name: 21. Dave - Upload File to Presigned URL
+  type: http
+  seq: 21
+}
+
+put {
+  url: {{uploadUrl}}
+  body: multipartForm
+  auth: none
+}
+
+headers {
+  Content-Type: application/zip
+}
+
+body:multipart-form {
+  file: @file(solution.zip)
+}
+
+script:pre-request {
+  const uploadUrl = bru.getEnvVar('uploadUrl');
+  if (!uploadUrl) {
+    throw new Error('❌ uploadUrl not found! Run "Request Upload URL" first (запрос 20)');
+  }
+  
+  console.log('📤 Uploading file to MinIO...');
+  console.log('URL:', uploadUrl.substring(0, 80) + '...');
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ File uploaded to MinIO successfully!');
+    console.log('\n🎯 IMPORTANT:');
+    console.log('File was uploaded DIRECTLY to MinIO, not through our API!');
+    console.log('Our backend did NOT handle the file transfer.');
+    console.log('\n📝 Next: Confirm upload with backend (запрос 22)');
+  } else {
+    console.log('❌ Upload failed:', res.status);
+    console.log('Response:', res.body);
+  }
+}
+
+docs {
+  # Dave - Upload File to Presigned URL
+  
+  🔥 **КЛЮЧЕВОЙ ЗАПРОС!** Dave загружает файл **напрямую в MinIO**.
+  
+  ## ⚠️ ВАЖНО: Это НЕ запрос к нашему API!
+  
+  Этот PUT запрос идет на presigned URL, который указывает на MinIO.
+  Наш backend НЕ участвует в передаче файла!
+  
+  ## Как использовать в Bruno:
+  
+  ### Вариант 1: Multipart Form (если Bruno поддерживает)
+  1. Body → Multipart Form
+  2. Добавь поле с типом "file"
+  3. Выбери файл solution.zip
+  
+  ### Вариант 2: Binary
+  1. Body → Binary
+  2. Select File → выбери solution.zip
+  3. Headers → Content-Type: application/zip
+  
+  ### Вариант 3: Через curl (если Bruno не работает)
+  ```bash
+  curl -X PUT "{uploadUrl}" \
+    -H "Content-Type: application/zip" \
+    --data-binary @solution.zip
+  ```
+  
+  ## Что происходит:
+  1. Bruno/curl отправляет PUT с файлом на presigned URL
+  2. MinIO проверяет signature в URL
+  3. Файл сохраняется в bucket: `submissions/{hackathonId}/{submissionId}/{fileId}/solution.zip`
+  4. MinIO возвращает 200 OK
+  
+  ## Production Flow:
+  Именно так работает загрузка на фронте:
+  - Фронт запрашивает presigned URL у бэкенда
+  - Фронт загружает файл напрямую в S3/MinIO
+  - Бэкенд не тратит ресурсы на передачу файла
+  
+  ## Тестовый файл:
+  Создай файл `solution.zip` (любой zip архив) или используй текстовый файл.
+  
+  ## Environment:
+  - Demo (uploadUrl из предыдущего запроса)
+  - ⚠️ НЕ используем токен! (presigned URL уже содержит авторизацию)
+}

@@ -817,3 +817,208 @@ func TestMatchmakingScoring_CandidateCustomSkills_ShouldMatchInText(t *testing.T
 		assert.True(t, found, "Should match 'kubernetes' or 'microservices' in keywords")
 	}
 }
+
+// TestMatchmakingScoring_CatalogSkillsMatch_ShouldScoreCorrectly tests the bug fix:
+// Previously, catalog_skill_ids (UUID[]) was concatenated with custom_skill_names (TEXT[])
+// creating a TEXT[] array, which failed to match with desired_skill_ids (UUID[]).
+// This test verifies that catalog skills now correctly match with vacancy requirements.
+func TestMatchmakingScoring_CatalogSkillsMatch_ShouldScoreCorrectly(t *testing.T) {
+	tc := NewTestContext(t)
+	owner := tc.RegisterUser()
+	captain := tc.RegisterUser()
+	participantWithCatalogSkills := tc.RegisterUser()
+	participantWithoutSkills := tc.RegisterUser()
+
+	hackathonID := createHackathonInRegistration(tc, owner)
+	registerParticipant(tc, hackathonID, captain, "PART_LOOKING_FOR_TEAM")
+	registerParticipant(tc, hackathonID, participantWithCatalogSkills, "PART_LOOKING_FOR_TEAM")
+	registerParticipant(tc, hackathonID, participantWithoutSkills, "PART_LOOKING_FOR_TEAM")
+	tc.WaitForMatchmakingParticipationSync(hackathonID, captain.UserID)
+	tc.WaitForMatchmakingParticipationSync(hackathonID, participantWithCatalogSkills.UserID)
+	tc.WaitForMatchmakingParticipationSync(hackathonID, participantWithoutSkills.UserID)
+
+	// Create specific skill IDs (simulating React and TypeScript from catalog)
+	reactSkillID := uuid.MustParse("00000000-0000-0000-0000-000000000012")
+	typescriptSkillID := uuid.MustParse("00000000-0000-0000-0000-000000000011")
+
+	// Participant 1 has catalog skills (React, TypeScript)
+	_, err := tc.MatchmakingDB.Exec(context.Background(),
+		fmt.Sprintf("UPDATE %s.users SET catalog_skill_ids = $1 WHERE user_id = $2", tc.MatchmakingDBName),
+		[]uuid.UUID{reactSkillID, typescriptSkillID}, participantWithCatalogSkills.UserID,
+	)
+	require.NoError(t, err)
+
+	// Participant 2 has no skills
+	_, err = tc.MatchmakingDB.Exec(context.Background(),
+		fmt.Sprintf("UPDATE %s.users SET catalog_skill_ids = $1 WHERE user_id = $2", tc.MatchmakingDBName),
+		[]uuid.UUID{}, participantWithoutSkills.UserID,
+	)
+	require.NoError(t, err)
+
+	// Create team and vacancy requiring React and TypeScript
+	teamID := createTeam(tc, hackathonID, captain, "Frontend Team")
+	tc.WaitForMatchmakingTeamSync(teamID)
+
+	vacancyID := createVacancy(tc, hackathonID, teamID, captain, 2)
+	tc.WaitForMatchmakingVacancySync(vacancyID)
+
+	_, err = tc.MatchmakingDB.Exec(context.Background(),
+		fmt.Sprintf("UPDATE %s.vacancies SET desired_skill_ids = $1, description = $2 WHERE vacancy_id = $3", tc.MatchmakingDBName),
+		[]uuid.UUID{reactSkillID, typescriptSkillID},
+		"We need a frontend developer with React and TypeScript",
+		vacancyID,
+	)
+	require.NoError(t, err)
+
+	// Get recommendations for participant with matching catalog skills
+	resp, body := tc.DoAuthenticatedRequest("GET", fmt.Sprintf("/v1/hackathons/%s/matchmaking/teams?limit=10", hackathonID), participantWithCatalogSkills.AccessToken, nil)
+	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to get recommendations: %s", string(body))
+
+	data := tc.ParseJSON(body)
+	recommendations, ok := data["recommendations"].([]interface{})
+	require.True(t, ok && len(recommendations) > 0, "Should have at least 1 recommendation")
+
+	rec := recommendations[0].(map[string]interface{})
+	matchScore := rec["matchScore"].(map[string]interface{})
+	skillsBreakdown := matchScore["skills"].(map[string]interface{})
+
+	skillsScore := skillsBreakdown["score"].(float64)
+	matchedCount := int(skillsBreakdown["matchedCount"].(float64))
+	requiredCount := int(skillsBreakdown["requiredCount"].(float64))
+
+	// CRITICAL: Skills score should be 1.0 (perfect match: 2/2 skills)
+	assert.Equal(t, 1.0, skillsScore, "Skills score should be 1.0 for perfect match")
+	assert.Equal(t, 2, matchedCount, "Should match 2 skills")
+	assert.Equal(t, 2, requiredCount, "Should require 2 skills")
+
+	// Verify matched skills are the correct UUIDs
+	matchedSkills, ok := skillsBreakdown["matchedSkills"].([]interface{})
+	require.True(t, ok, "Should have matchedSkills array")
+	assert.Len(t, matchedSkills, 2, "Should have 2 matched skills")
+
+	// Total score should be high (skills contribute 63% weight)
+	totalScore := matchScore["totalScore"].(float64)
+	assert.Greater(t, totalScore, 0.6, "Total score should be > 0.6 with perfect skill match")
+
+	// Now check participant without skills - should have low score
+	resp2, body2 := tc.DoAuthenticatedRequest("GET", fmt.Sprintf("/v1/hackathons/%s/matchmaking/teams?limit=10", hackathonID), participantWithoutSkills.AccessToken, nil)
+	require.Equal(t, http.StatusOK, resp2.StatusCode, "Failed to get recommendations: %s", string(body2))
+
+	data2 := tc.ParseJSON(body2)
+	recommendations2, ok2 := data2["recommendations"].([]interface{})
+	require.True(t, ok2 && len(recommendations2) > 0, "Should have at least 1 recommendation")
+
+	rec2 := recommendations2[0].(map[string]interface{})
+	matchScore2 := rec2["matchScore"].(map[string]interface{})
+	skillsBreakdown2 := matchScore2["skills"].(map[string]interface{})
+
+	skillsScore2 := skillsBreakdown2["score"].(float64)
+	matchedCount2 := int(skillsBreakdown2["matchedCount"].(float64))
+
+	// Participant without skills should have 0 skill score
+	assert.Equal(t, 0.0, skillsScore2, "Skills score should be 0.0 for no match")
+	assert.Equal(t, 0, matchedCount2, "Should match 0 skills")
+
+	totalScore2 := matchScore2["totalScore"].(float64)
+	assert.Less(t, totalScore2, totalScore, "Participant without skills should have lower total score")
+}
+
+// TestMatchmakingScoring_CandidateCatalogSkillsMatch_ShouldScoreCorrectly tests catalog skills matching
+// for candidate recommendations (reverse direction: captain looking for candidates).
+func TestMatchmakingScoring_CandidateCatalogSkillsMatch_ShouldScoreCorrectly(t *testing.T) {
+	tc := NewTestContext(t)
+	owner := tc.RegisterUser()
+	captain := tc.RegisterUser()
+	candidateWithSkills := tc.RegisterUser()
+	candidateWithoutSkills := tc.RegisterUser()
+
+	hackathonID := createHackathonInRegistration(tc, owner)
+	registerParticipant(tc, hackathonID, captain, "PART_LOOKING_FOR_TEAM")
+	registerParticipant(tc, hackathonID, candidateWithSkills, "PART_LOOKING_FOR_TEAM")
+	registerParticipant(tc, hackathonID, candidateWithoutSkills, "PART_LOOKING_FOR_TEAM")
+	tc.WaitForMatchmakingParticipationSync(hackathonID, captain.UserID)
+	tc.WaitForMatchmakingParticipationSync(hackathonID, candidateWithSkills.UserID)
+	tc.WaitForMatchmakingParticipationSync(hackathonID, candidateWithoutSkills.UserID)
+
+	// Create specific skill IDs (simulating Go and PostgreSQL from catalog)
+	goSkillID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
+	postgresSkillID := uuid.MustParse("00000000-0000-0000-0000-000000000020")
+
+	// Candidate 1 has matching catalog skills
+	_, err := tc.MatchmakingDB.Exec(context.Background(),
+		fmt.Sprintf("UPDATE %s.users SET catalog_skill_ids = $1 WHERE user_id = $2", tc.MatchmakingDBName),
+		[]uuid.UUID{goSkillID, postgresSkillID}, candidateWithSkills.UserID,
+	)
+	require.NoError(t, err)
+
+	// Candidate 2 has no skills
+	_, err = tc.MatchmakingDB.Exec(context.Background(),
+		fmt.Sprintf("UPDATE %s.users SET catalog_skill_ids = $1 WHERE user_id = $2", tc.MatchmakingDBName),
+		[]uuid.UUID{}, candidateWithoutSkills.UserID,
+	)
+	require.NoError(t, err)
+
+	// Create team and vacancy requiring Go and PostgreSQL
+	teamID := createTeam(tc, hackathonID, captain, "Backend Team")
+	tc.WaitForMatchmakingTeamSync(teamID)
+
+	vacancyID := createVacancy(tc, hackathonID, teamID, captain, 2)
+	tc.WaitForMatchmakingVacancySync(vacancyID)
+
+	_, err = tc.MatchmakingDB.Exec(context.Background(),
+		fmt.Sprintf("UPDATE %s.vacancies SET desired_skill_ids = $1, description = $2 WHERE vacancy_id = $3", tc.MatchmakingDBName),
+		[]uuid.UUID{goSkillID, postgresSkillID},
+		"We need a backend developer with Go and PostgreSQL",
+		vacancyID,
+	)
+	require.NoError(t, err)
+
+	// Get candidate recommendations
+	resp, body := tc.DoAuthenticatedRequest("GET", fmt.Sprintf("/v1/hackathons/%s/matchmaking/candidates?teamId=%s&vacancyId=%s&limit=10", hackathonID, teamID, vacancyID), captain.AccessToken, nil)
+	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to get recommendations: %s", string(body))
+
+	data := tc.ParseJSON(body)
+	recommendations, ok := data["recommendations"].([]interface{})
+	require.True(t, ok && len(recommendations) >= 2, "Should have at least 2 recommendations")
+
+	// Find the candidate with skills (should be ranked higher)
+	var recWithSkills, recWithoutSkills map[string]interface{}
+	for _, r := range recommendations {
+		rec := r.(map[string]interface{})
+		if rec["userId"].(string) == candidateWithSkills.UserID {
+			recWithSkills = rec
+		} else if rec["userId"].(string) == candidateWithoutSkills.UserID {
+			recWithoutSkills = rec
+		}
+	}
+
+	require.NotNil(t, recWithSkills, "Should find candidate with skills")
+	require.NotNil(t, recWithoutSkills, "Should find candidate without skills")
+
+	// Check candidate with skills
+	matchScore := recWithSkills["matchScore"].(map[string]interface{})
+	skillsBreakdown := matchScore["skills"].(map[string]interface{})
+	skillsScore := skillsBreakdown["score"].(float64)
+	matchedCount := int(skillsBreakdown["matchedCount"].(float64))
+
+	assert.Equal(t, 1.0, skillsScore, "Candidate with matching skills should have score 1.0")
+	assert.Equal(t, 2, matchedCount, "Should match 2 skills")
+
+	// Check candidate without skills
+	matchScore2 := recWithoutSkills["matchScore"].(map[string]interface{})
+	skillsBreakdown2 := matchScore2["skills"].(map[string]interface{})
+	skillsScore2 := skillsBreakdown2["score"].(float64)
+	matchedCount2 := int(skillsBreakdown2["matchedCount"].(float64))
+
+	assert.Equal(t, 0.0, skillsScore2, "Candidate without skills should have score 0.0")
+	assert.Equal(t, 0, matchedCount2, "Should match 0 skills")
+
+	// Verify ranking: candidate with skills should be ranked higher
+	totalScore1 := matchScore["totalScore"].(float64)
+	totalScore2 := matchScore2["totalScore"].(float64)
+	assert.Greater(t, totalScore1, totalScore2, "Candidate with matching skills should rank higher")
+
+	// First recommendation should be the candidate with skills
+	firstRec := recommendations[0].(map[string]interface{})
+	assert.Equal(t, candidateWithSkills.UserID, firstRec["userId"], "Candidate with skills should be ranked first")
+}

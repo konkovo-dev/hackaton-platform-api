@@ -1,0 +1,59 @@
+meta {
+  name: 23. Frank - Create Join Request
+  type: http
+  seq: 23
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/teams/{{daveTeamId}}/join-requests
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{frankAccessToken}}
+}
+
+body:json {
+  {
+    "vacancy_id": "{{daveVacancyId}}",
+    "message": "Hi! I know my ML skills don't perfectly match your frontend vacancy, but I'm eager to learn React and contribute to the AI/ML backend of your healthcare solution!"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const requestId = res.body.requestId;
+    bru.setEnvVar('frankJoinRequestId', requestId);
+    
+    console.log('✅ Join request created!');
+    console.log('Request ID:', requestId);
+    console.log('Frank applied to AI Innovators team');
+  }
+}
+
+docs {
+  # Frank - Create Join Request
+  
+  Frank подает заявку (join request) на вступление в команду Dave.
+  
+  ## Параметры:
+  - **vacancy_id**: daveVacancyId (на какую вакансию)
+  - **message**: Сообщение для капитана
+  
+  ## Что происходит:
+  - Создается join request со статусом PENDING
+  - Dave (капитан) увидит этот request
+  - Dave может принять или отклонить
+  
+  ## Разница: Invitation vs Join Request:
+  - **Invitation**: Капитан приглашает участника (Dave → Eve)
+  - **Join Request**: Участник просит вступить (Frank → Dave)
+  
+  ## Важно:
+  - Можно подать request только если is_joinable=true
+  - Только участники со статусом LOOKING_FOR_TEAM
+  
+  ## Environment:
+  - Demo (используем frankAccessToken)
+}

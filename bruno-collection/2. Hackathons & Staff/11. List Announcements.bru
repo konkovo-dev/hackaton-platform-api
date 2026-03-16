@@ -1,0 +1,44 @@
+meta {
+  name: 11. List Announcements
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/announcements?page_size=10
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    const announcements = data.announcements || [];
+    
+    console.log(`✅ Found ${announcements.length} announcements`);
+    
+    announcements.forEach(a => {
+      console.log(`  - ${a.title}`);
+    });
+  }
+}
+
+docs {
+  # List Announcements
+  
+  Список всех объявлений хакатона.
+  
+  ## Сортировка:
+  - Reverse chronological (новые сверху)
+  
+  ## Доступ:
+  - Участники
+  - Staff
+  
+  ## Environment:
+  - 👑 Owner (Alice)
+}

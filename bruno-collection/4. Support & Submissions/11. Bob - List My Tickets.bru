@@ -1,0 +1,65 @@
+meta {
+  name: 11. Bob - List My Tickets
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/support/tickets/assigned/list
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{bobAccessToken}}
+}
+
+body:json {
+  {
+    "query": {
+      "page": {
+        "page_size": 10
+      }
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const tickets = res.body.tickets || [];
+    
+    console.log(`✅ Bob has ${tickets.length} assigned tickets`);
+    
+    tickets.forEach(ticket => {
+      console.log(`\n📋 Ticket ${ticket.ticketId.substring(0, 8)}...`);
+      console.log(`  Owner: ${ticket.ownerKind} "${ticket.ownerName}"`);
+      console.log(`  Status: ${ticket.status}`);
+      console.log(`  Messages: ${ticket.messageCount}`);
+      console.log(`  Last message: ${ticket.lastMessageAt}`);
+    });
+  }
+}
+
+docs {
+  # Bob - List My Tickets
+  
+  Bob просматривает тикеты, назначенные на него.
+  
+  ## Что видит Bob:
+  Только тикеты где `assigned_mentor_id = Bob's ID`
+  
+  ## Результат:
+  - Тикет команды "AI Innovators" (claimed в запросе 08)
+  - Status: assigned
+  - Messages: 4 (Dave, Eve, System, Bob)
+  
+  ## Зачем:
+  Ментор видит свою "рабочую очередь" - тикеты за которые он отвечает.
+  
+  ## Разница с "List All Tickets":
+  - **List All** (запрос 07): все тикеты хакатона
+  - **List My** (запрос 11): только мои assigned тикеты
+  
+  ## Environment:
+  - Demo (используем bobAccessToken)
+}

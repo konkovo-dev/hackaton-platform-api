@@ -1,0 +1,79 @@
+meta {
+  name: 07. Alice - Get Leaderboard
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/judging/leaderboard
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {
+    "query": {
+      "page": {
+        "page_size": 50
+      }
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const entries = res.body.entries || [];
+    
+    console.log(`✅ Leaderboard has ${entries.length} entries`);
+    console.log('\n🏆 TOP SUBMISSIONS:\n');
+    
+    entries.forEach((entry, idx) => {
+      console.log(`${idx + 1}. ${entry.submission.title}`);
+      console.log(`   Score: ${entry.averageScore.toFixed(2)}/10`);
+      console.log(`   Rank: ${entry.rank}`);
+      console.log(`   Evaluations: ${entry.evaluationsCount}/${entry.totalJudges}`);
+      console.log(`   Owner: ${entry.submission.ownerKind}`);
+    });
+  }
+}
+
+docs {
+  # Alice - Get Leaderboard
+  
+  Alice (Owner) просматривает leaderboard с рейтингом всех submissions.
+  
+  ## Response:
+  - **entries**: массив submissions отсортированных по average score
+  - Каждый entry:
+    - **submission**: информация о submission
+    - **averageScore**: средняя оценка (0-10)
+    - **rank**: позиция в рейтинге (1, 2, 3...)
+    - **evaluationsCount**: сколько judges оценили
+    - **totalJudges**: сколько judges назначено
+  
+  ## Сортировка:
+  - По убыванию average score
+  - При равных scores - по количеству оценок
+  
+  ## Доступ:
+  - **Owner** (Alice): видит ✅
+  - **Organizer**: видит ✅
+  - **Judge** (Carol): видит ✅
+  - **Participant**: НЕ видит (до публикации) ❌
+  
+  ## Зачем:
+  - Определить победителей
+  - Проверить прогресс оценивания
+  - Подготовка к публикации результатов
+  
+  ## Важно:
+  Leaderboard доступен ТОЛЬКО staff!
+  Participants НЕ видят leaderboard до публикации результатов.
+  
+  ## Environment:
+  - Demo (используем aliceAccessToken)
+}

@@ -1,0 +1,45 @@
+meta {
+  name: 3f. Login Frank
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/v1/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "username": "{{frankUsername}}",
+    "password": "{{frankPassword}}"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const accessToken = res.body.accessToken;
+    const refreshToken = res.body.refreshToken;
+    
+    bru.setEnvVar('frankAccessToken', accessToken);
+    bru.setEnvVar('frankRefreshToken', refreshToken);
+    
+    console.log('✅ Frank logged in!');
+    console.log('Access token saved to frankAccessToken');
+  }
+}
+
+docs {
+  # Login Frank
+  
+  Быстрый re-login для Frank (Participant, Looking for Team).
+  
+  ## Когда использовать:
+  - Токены протухли
+  - Нужно обновить access token
+  - После перезапуска демо
+  
+  ## Environment:
+  - Demo (используем frankUsername, frankPassword)
+}

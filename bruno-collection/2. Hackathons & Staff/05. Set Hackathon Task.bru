@@ -1,0 +1,52 @@
+meta {
+  name: 05. Set Hackathon Task
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/task
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {
+    "task": "# AI Innovation Challenge\n\n## Objective\nBuild an innovative AI solution that solves a real-world problem in one of the following domains:\n\n- Healthcare\n- Education\n- Climate Change\n- Accessibility\n\n## Requirements\n\n1. Use at least one AI/ML technology (LLMs, Computer Vision, NLP, etc.)\n2. Create a working prototype or demo\n3. Prepare a 5-minute presentation\n4. Submit source code on GitHub\n\n## Judging Criteria\n\n- Innovation (30%)\n- Technical Implementation (30%)\n- Impact & Usefulness (25%)\n- Presentation (15%)\n\n## Prizes\n\n- 1st place: $5,000\n- 2nd place: $3,000\n- 3rd place: $1,000\n\nGood luck! 🚀"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Task set successfully');
+    console.log('Now hackathon is ready to publish!');
+  }
+}
+
+docs {
+  # Set Hackathon Task
+  
+  Alice устанавливает задание для хакатона. Это исправляет вторую ошибку валидации.
+  
+  ## Формат:
+  - Задание передается в **Markdown** формате
+  - Можно использовать заголовки, списки, ссылки, форматирование
+  
+  ## Что включает задание:
+  - **Objective** - цель хакатона (создать AI решение)
+  - **Requirements** - требования (технологии, формат, дедлайны)
+  - **Judging Criteria** - критерии оценивания (innovation, technical, impact)
+  - **Prizes** - призы (1st: $5,000, 2nd: $3,000, 3rd: $1,000)
+  
+  ## Важно:
+  - Task обязателен для публикации
+  - Участники увидят его после регистрации
+  - Можно обновить task позже через тот же endpoint
+  
+  ## Environment:
+  - Demo (используем aliceAccessToken)
+}

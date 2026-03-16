@@ -1,0 +1,59 @@
+meta {
+  name: 26b. Dave - Create Submission v2
+  type: http
+  seq: 26
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/submissions
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+body:json {
+  {
+    "title": "AI Healthcare Platform v2",
+    "description": "UPDATED VERSION: Added real-time prediction dashboard, integrated with hospital databases, implemented ML model versioning, and added comprehensive analytics. This is our improved solution with better performance and more features."
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const submissionId = res.body.submissionId;
+    
+    bru.setEnvVar('submissionIdV2', submissionId);
+    
+    console.log('✅ Submission v2 created!');
+    console.log('Submission ID v2:', submissionId);
+    console.log('\n📝 Multiple submissions allowed!');
+    console.log('Teams can iterate and create multiple versions.');
+  }
+}
+
+docs {
+  # Dave - Create Submission v2
+  
+  Dave создает второй submission (улучшенная версия).
+  
+  ## Что происходит:
+  - Создается новый submission для той же команды
+  - Предыдущий submission (v1) остается в системе
+  - Новый submission автоматически становится **is_final = true**
+  - Старый submission автоматически становится **is_final = false**
+  
+  ## Зачем multiple submissions:
+  - Команда может итерировать решение
+  - Загрузить улучшенную версию
+  - Сохраняется история всех версий
+  - Только последний submission считается финальным
+  
+  ## Response:
+  - **submissionId** - ID нового submission (сохраняется в submissionIdV2)
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

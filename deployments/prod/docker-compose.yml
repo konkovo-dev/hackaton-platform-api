@@ -146,6 +146,12 @@ services:
       NATS_URL: nats://nats:4222
       IDEMPOTENCY_TTL: 24h
       SERVICE_AUTH_TOKEN: ${SERVICE_AUTH_TOKEN}
+      S3_ENDPOINT: ${MINIO_ENDPOINT:-minio:9000}
+      S3_PUBLIC_ENDPOINT: ${MINIO_PUBLIC_ENDPOINT:-api.hackplatform.ru:9000}
+      S3_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      S3_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+      S3_AVATARS_BUCKET: avatars
+      S3_USE_SSL: ${MINIO_USE_SSL:-false}
     depends_on:
       postgres:
         condition: service_healthy
@@ -153,6 +159,8 @@ services:
         condition: service_completed_successfully
       nats:
         condition: service_healthy
+      minio:
+        condition: service_started
     networks:
       - hackathon-network
     restart: unless-stopped
@@ -361,6 +369,7 @@ services:
       DB_MAX_CONN_IDLE_TIME: 30m
       DB_HEALTH_CHECK_PERIOD: 1m
       S3_ENDPOINT: ${MINIO_ENDPOINT:-minio:9000}
+      S3_PUBLIC_ENDPOINT: ${MINIO_PUBLIC_ENDPOINT:-api.hackplatform.ru:9000}
       S3_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
       S3_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
       S3_SUBMISSIONS_BUCKET: submissions

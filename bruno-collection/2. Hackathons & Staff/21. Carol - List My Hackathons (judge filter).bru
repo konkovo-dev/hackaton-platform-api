@@ -1,0 +1,58 @@
+meta {
+  name: 21. Carol - List My Hackathons (judge filter)
+  type: http
+  seq: 21
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/list
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{carolAccessToken}}
+}
+
+body:json {
+  {
+    "query": {
+      "filter_groups": [
+        {
+          "filters": [
+            {
+              "field": "my_role",
+              "operation": "FILTER_OPERATION_EQUAL",
+              "string_value": "judge"
+            }
+          ]
+        }
+      ],
+      "page": {
+        "page_size": 50
+      }
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    const hackathons = data.hackathons || [];
+    
+    console.log(`✅ Found ${hackathons.length} hackathons where I'm judge`);
+    
+    hackathons.forEach(h => {
+      console.log(`  - ${h.name}`);
+    });
+  }
+}
+
+docs {
+  # Carol - List My Hackathons (Judge Filter)
+  
+  Carol фильтрует хакатоны где она судья.
+  
+  ## Environment:
+  - ⚖️ Judge (Carol)
+}

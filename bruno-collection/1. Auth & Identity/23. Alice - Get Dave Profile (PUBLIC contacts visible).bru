@@ -1,0 +1,45 @@
+meta {
+  name: 23. Alice - Get Dave Profile (PUBLIC contacts visible)
+  type: http
+  seq: 23
+}
+
+get {
+  url: {{baseUrl}}/v1/users/{{daveUserId}}?include_skills=true&include_contacts=true
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    const user = data.user;
+    const skills = data.skills || [];
+    const contacts = data.contacts || [];
+    
+    console.log('✅ Dave profile loaded');
+    console.log('Username:', user.username);
+    console.log('Skills:', skills.length);
+    console.log('Contacts:', contacts.length);
+    
+    console.log('\n⚠️  Note: Dave has no contacts yet, so contacts array is empty');
+  }
+}
+
+docs {
+  # Alice - Get Dave Profile
+  
+  Alice просматривает профиль Dave со скиллами и контактами.
+  
+  ## Что видно:
+  - ✅ Базовая информация (username, имя)
+  - ✅ Скиллы (PUBLIC)
+  - ⚠️  Контакты (Dave их еще не добавил)
+  
+  ## Environment:
+  - Demo
+}

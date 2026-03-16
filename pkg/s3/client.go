@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/minio/minio-go/v7"
@@ -59,7 +60,13 @@ func (c *Client) GeneratePresignedPutURL(ctx context.Context, bucket, key string
 		return "", fmt.Errorf("failed to generate presigned PUT URL: %w", err)
 	}
 
-	return presignedURL.String(), nil
+	urlStr := presignedURL.String()
+	
+	if c.config.PublicEndpoint != c.config.Endpoint {
+		urlStr = c.replaceEndpoint(urlStr, c.config.Endpoint, c.config.PublicEndpoint)
+	}
+
+	return urlStr, nil
 }
 
 func (c *Client) GeneratePresignedGetURL(ctx context.Context, bucket, key string, expires time.Duration) (string, error) {
@@ -69,7 +76,13 @@ func (c *Client) GeneratePresignedGetURL(ctx context.Context, bucket, key string
 		return "", fmt.Errorf("failed to generate presigned GET URL: %w", err)
 	}
 
-	return presignedURL.String(), nil
+	urlStr := presignedURL.String()
+	
+	if c.config.PublicEndpoint != c.config.Endpoint {
+		urlStr = c.replaceEndpoint(urlStr, c.config.Endpoint, c.config.PublicEndpoint)
+	}
+
+	return urlStr, nil
 }
 
 func (c *Client) HeadObject(ctx context.Context, bucket, key string) (size int64, exists bool, err error) {
@@ -83,4 +96,16 @@ func (c *Client) HeadObject(ctx context.Context, bucket, key string) (size int64
 	}
 
 	return objInfo.Size, true, nil
+}
+
+func (c *Client) replaceEndpoint(urlStr, oldEndpoint, newEndpoint string) string {
+	scheme := "http://"
+	if c.config.UseSSL {
+		scheme = "https://"
+	}
+	
+	oldURL := scheme + oldEndpoint
+	newURL := scheme + newEndpoint
+	
+	return strings.Replace(urlStr, oldURL, newURL, 1)
 }

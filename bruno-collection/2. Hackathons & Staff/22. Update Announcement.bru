@@ -1,0 +1,42 @@
+meta {
+  name: 22. Update Announcement
+  type: http
+  seq: 22
+}
+
+put {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/announcements/{{announcementId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {
+    "title": "Registration is NOW OPEN!",
+    "content": "Great news! Registration for the AI Innovation Hackathon 2026 is now officially open! 🎉\n\nJoin us on April 10-12, 2026 at Digital October Center in Moscow. Build innovative AI solutions, work with talented teams, and compete for amazing prizes!\n\nRegister now and don't miss this opportunity!"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Announcement updated');
+    console.log('Registration is open! 🎉');
+  }
+}
+
+docs {
+  # Update Announcement
+  
+  Обновление объявления - регистрация открыта!
+  
+  ## Кто может обновлять:
+  - Owner
+  - Organizer
+  
+  ## Environment:
+  - 👑 Owner (Alice)
+}

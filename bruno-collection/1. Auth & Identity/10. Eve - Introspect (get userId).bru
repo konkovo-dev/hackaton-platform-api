@@ -1,0 +1,37 @@
+meta {
+  name: 10. Eve - Introspect (get userId)
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/v1/auth/introspect
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "access_token": "{{eveAccessToken}}"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    
+    if (data.active) {
+      bru.setEnvVar('eveUserId', data.userId);
+      console.log('✅ Eve User ID:', data.userId);
+    }
+  }
+}
+
+docs {
+  # Eve - Introspect
+  
+  Получаем userId Eve.
+  
+  ## Environment:
+  - Demo
+}

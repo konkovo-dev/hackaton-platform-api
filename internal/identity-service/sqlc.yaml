@@ -5,6 +5,7 @@ sql:
       - "migrations/00002_skills_contacts_visibility.sql"
       - "migrations/00003_skill_catalog_with_ids.sql"
       - "migrations/00004_add_outbox.sql"
+      - "migrations/00005_avatar_uploads.sql"
     queries: "repository/postgres/queries"
     engine: "postgresql"
     gen:

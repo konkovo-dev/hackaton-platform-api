@@ -3,7 +3,6 @@ package hackathon
 import (
 	"context"
 
-	"github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/domain"
 	hackathonpolicy "github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/policy"
 	"github.com/google/uuid"
 )
@@ -14,7 +13,6 @@ type UpdateResultDraftIn struct {
 }
 
 type UpdateResultDraftOut struct {
-	ValidationErrors []domain.ValidationError
 }
 
 func (s *Service) UpdateResultDraft(ctx context.Context, in UpdateResultDraftIn) (*UpdateResultDraftOut, error) {
@@ -47,7 +45,5 @@ func (s *Service) UpdateResultDraft(ctx context.Context, in UpdateResultDraftIn)
 		return nil, err
 	}
 
-	return &UpdateResultDraftOut{
-		ValidationErrors: []domain.ValidationError{},
-	}, nil
+	return &UpdateResultDraftOut{}, nil
 }

@@ -1,0 +1,35 @@
+meta {
+  name: 1. Health Check
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/swagger/
+  body: none
+  auth: none
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ API is UP and running!');
+    console.log('Base URL:', bru.getEnvVar('baseUrl'));
+  } else {
+    console.error('❌ API is DOWN or unreachable');
+    console.error('Status:', res.status);
+  }
+}
+
+docs {
+  # Health Check
+  
+  Проверяет что API доступен.
+  
+  ## Использование:
+  Запусти этот запрос ПЕРЕД началом демонстрации чтобы убедиться что все сервисы работают.
+  
+  ## Если не работает:
+  1. Проверь что Docker контейнеры запущены
+  2. Проверь baseUrl в environment
+  3. Проверь что порт 8080 доступен
+}

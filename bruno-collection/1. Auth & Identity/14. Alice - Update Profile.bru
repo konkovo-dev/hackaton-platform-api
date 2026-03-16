@@ -1,0 +1,45 @@
+meta {
+  name: 14. Alice - Update Profile
+  type: http
+  seq: 14
+}
+
+put {
+  url: {{baseUrl}}/v1/users/me
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {
+    "first_name": "{{aliceFirstName}}",
+    "last_name": "{{aliceLastName}}",
+    "avatar_url": "https://i.pravatar.cc/300?u={{aliceUsername}}",
+    "timezone": "{{timezone}}"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Alice profile updated');
+    console.log('Added avatar URL');
+  }
+}
+
+docs {
+  # Alice - Update Profile
+  
+  Alice обновляет свой профиль - добавляет аватар.
+  
+  ## Что можно обновить:
+  - first_name, last_name
+  - avatar_url
+  - timezone
+  
+  ## Environment:
+  - Demo
+}

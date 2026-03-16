@@ -1,0 +1,50 @@
+meta {
+  name: 26e. Alice - Get Final Submission (Staff)
+  type: http
+  seq: 26
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/participants/team/{{daveTeamId}}/final-submission
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const submission = res.body.submission;
+    
+    console.log('✅ Alice sees final submission!');
+    console.log('Title:', submission.title);
+    console.log('Is Final:', submission.isFinal);
+    console.log('\n👑 Staff can get final submissions for judging');
+  }
+}
+
+docs {
+  # Alice - Get Final Submission (Staff)
+  
+  Alice (Owner) получает финальный submission команды для подготовки к judging.
+  
+  ## Доступ:
+  - **Owner** (Alice): может получить ✅
+  - **Organizer**: может получить ✅
+  - **Judge** (Carol): может получить ✅
+  - **Mentor** (Bob): НЕ может ❌
+  - **Other participants**: НЕ могут ❌
+  
+  ## Зачем:
+  - Owner/Organizer готовят данные для судей
+  - Судьи получают submissions для оценки
+  - Гарантия что оценивается правильная версия
+  
+  ## Результат:
+  Alice видит submission v1 (который Dave выбрал как final).
+  
+  ## Environment:
+  - Demo (используем aliceAccessToken, daveTeamId)
+}

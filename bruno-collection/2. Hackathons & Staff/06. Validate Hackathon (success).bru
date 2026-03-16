@@ -1,0 +1,53 @@
+meta {
+  name: 06. Validate Hackathon (success)
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/validate
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    const errors = data.validationErrors || [];
+    
+    if (errors.length === 0) {
+      console.log('✅ Validation passed!');
+      console.log('Hackathon is ready to publish! 🎉');
+    } else {
+      console.log('❌ Still have errors:');
+      errors.forEach(err => {
+        console.log(`  - ${err.field}: ${err.message}`);
+      });
+    }
+  }
+}
+
+docs {
+  # Validate Hackathon (Success)
+  
+  Alice повторно запускает валидацию после исправления всех ошибок.
+  
+  ## Ожидаемый результат:
+  - ✅ validationErrors: [] (пустой массив)
+  - ✅ Хакатон готов к публикации!
+  
+  ## Что изменилось:
+  - Добавили description (запрос 04)
+  - Добавили task (запрос 05)
+  - Теперь все обязательные поля заполнены
+  
+  ## Следующий шаг:
+  Можно публиковать!
+  
+  ## Environment:
+  - Demo (используем aliceAccessToken)
+}

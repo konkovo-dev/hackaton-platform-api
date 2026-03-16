@@ -5,6 +5,7 @@ package identity.v1;
 option go_package = "github.com/belikoooova/hackaton-platform-api/api/identity/v1;identityv1";
 
 import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
 import "identity/v1/common.proto";
 import "identity/v1/user.proto";
 import "identity/v1/skill.proto";
@@ -57,6 +58,30 @@ service MeService {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Replace my contacts"
       description: "Replaces the authenticated user's contact list entirely (replace-all semantics). Also updates contacts visibility."
+      tags: "Users"
+    };
+  }
+
+  rpc CreateAvatarUpload(CreateAvatarUploadRequest) returns (CreateAvatarUploadResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/me/avatar/upload"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create avatar upload"
+      description: "Initiates an avatar upload and returns a pre-signed PUT URL. Validates file type (images only) and size limits."
+      tags: "Users"
+    };
+  }
+
+  rpc CompleteAvatarUpload(CompleteAvatarUploadRequest) returns (CompleteAvatarUploadResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/me/avatar/complete"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Complete avatar upload"
+      description: "Marks the avatar upload as completed and updates the user's avatar_url after successful upload to S3."
       tags: "Users"
     };
   }
@@ -128,4 +153,28 @@ message UpdateMyContactsRequest {
 message UpdateMyContactsResponse {
   repeated MyContact contacts = 1;
   VisibilitySettings visibility = 2;
+}
+
+message CreateAvatarUploadRequest {
+  string filename = 1;
+  int64 size_bytes = 2;
+  string content_type = 3;
+  
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message CreateAvatarUploadResponse {
+  string upload_id = 1;
+  string upload_url = 2; // Pre-signed PUT URL
+  google.protobuf.Timestamp expires_at = 3;
+}
+
+message CompleteAvatarUploadRequest {
+  string upload_id = 1;
+  
+  common.v1.IdempotencyKey idempotency_key = 10;
+}
+
+message CompleteAvatarUploadResponse {
+  string avatar_url = 1;
 }

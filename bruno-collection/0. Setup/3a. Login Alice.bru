@@ -1,0 +1,49 @@
+meta {
+  name: 3a. Login Alice
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/v1/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "username": "{{aliceUsername}}",
+    "password": "{{alicePassword}}"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const accessToken = res.body.accessToken;
+    const refreshToken = res.body.refreshToken;
+    
+    bru.setEnvVar('aliceAccessToken', accessToken);
+    bru.setEnvVar('aliceRefreshToken', refreshToken);
+    
+    console.log('✅ Alice logged in!');
+    console.log('Access token saved to aliceAccessToken');
+  }
+}
+
+docs {
+  # Login Alice
+  
+  Быстрый re-login для Alice (Owner).
+  
+  ## Когда использовать:
+  - Токены протухли (обычно через несколько часов)
+  - Нужно обновить access token
+  - После перезапуска демо
+  
+  ## Response:
+  - **accessToken** - сохраняется в aliceAccessToken
+  - **refreshToken** - сохраняется в aliceRefreshToken
+  
+  ## Environment:
+  - Demo (используем aliceUsername, alicePassword)
+}

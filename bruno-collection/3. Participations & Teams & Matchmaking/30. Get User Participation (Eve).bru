@@ -1,0 +1,53 @@
+meta {
+  name: 30. Get User Participation (Frank)
+  type: http
+  seq: 30
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/participations/users/{{frankUserId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const participation = res.body.participation;
+    
+    console.log('✅ Frank participation loaded');
+    console.log('Status:', participation.status);
+    console.log('Team:', participation.teamId || 'none');
+    console.log('Motivation:', participation.profile?.motivationText?.substring(0, 50) + '...');
+    
+    console.log('\n📊 Summary:');
+    console.log('Frank: LOOKING_FOR_TEAM (rejected, still searching)');
+    console.log('Eve: TEAM_MEMBER (accepted, in AI Innovators)');
+    console.log('Dave: TEAM_CAPTAIN (leading AI Innovators)');
+  }
+}
+
+docs {
+  # Get User Participation (Frank)
+  
+  Dave просматривает participation профиль Frank.
+  
+  ## Что видно:
+  - status: PART_LOOKING_FOR_TEAM
+  - teamId: null (не в команде)
+  - profile: обновленная мотивация
+  
+  ## Итоговая картина:
+  - **Dave**: TEAM_CAPTAIN (создал команду)
+  - **Eve**: TEAM_MEMBER (приняла приглашение)
+  - **Frank**: LOOKING_FOR_TEAM (отклонен, ищет другие команды)
+  
+  ## Доступ:
+  Участники могут видеть профили друг друга для формирования команд.
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

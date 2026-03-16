@@ -13,6 +13,7 @@ import (
 	natsclient "github.com/belikoooova/hackaton-platform-api/pkg/nats"
 	"github.com/belikoooova/hackaton-platform-api/pkg/outbox"
 	"github.com/belikoooova/hackaton-platform-api/pkg/pgxutil"
+	"github.com/belikoooova/hackaton-platform-api/pkg/s3"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/fx"
@@ -24,6 +25,7 @@ func main() {
 		authclient.Module,
 		natsclient.Module,
 		postgres.Module,
+		s3.Module,
 		idempotency.Module,
 		me.Module,
 		users.Module,
@@ -36,6 +38,7 @@ func main() {
 			func(repo *postgres.SkillRepository) me.SkillRepository { return repo },
 			func(repo *postgres.ContactRepository) me.ContactRepository { return repo },
 			func(repo *postgres.VisibilityRepository) me.VisibilityRepository { return repo },
+			func(repo *postgres.AvatarUploadRepository) me.AvatarUploadRepository { return repo },
 			func(pool *pgxpool.Pool) me.UnitOfWork {
 				return pgxutil.NewUnitOfWork(pool, func(tx pgx.Tx) *me.TxRepositories {
 					return &me.TxRepositories{

@@ -1,0 +1,37 @@
+meta {
+  name: 08. Dave - Introspect (get userId)
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/v1/auth/introspect
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "access_token": "{{daveAccessToken}}"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    
+    if (data.active) {
+      bru.setEnvVar('daveUserId', data.userId);
+      console.log('✅ Dave User ID:', data.userId);
+    }
+  }
+}
+
+docs {
+  # Dave - Introspect
+  
+  Получаем userId Dave.
+  
+  ## Environment:
+  - Demo
+}

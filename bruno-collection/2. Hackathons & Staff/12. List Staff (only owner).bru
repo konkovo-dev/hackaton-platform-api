@@ -1,0 +1,49 @@
+meta {
+  name: 12. List Staff (only owner)
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/staff
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    const staff = data.staff || [];
+    
+    console.log(`✅ Staff count: ${staff.length}`);
+    
+    staff.forEach(member => {
+      const roles = member.roles || [];
+      console.log(`  - User ${member.userId}: ${roles.join(', ')}`);
+    });
+    
+    console.log('\n⚠️  Only owner so far. Need to invite mentor and judge!');
+  }
+}
+
+docs {
+  # List Staff (Only Owner)
+  
+  Просмотр текущей команды staff.
+  
+  ## Ожидаемый результат:
+  - Только Alice (owner)
+  
+  ## Доступ:
+  - Owner
+  - Organizer
+  - Mentor
+  - Judge
+  
+  ## Environment:
+  - 👑 Owner (Alice)
+}

@@ -1,0 +1,41 @@
+meta {
+  name: 12. Frank - Introspect (get userId)
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/v1/auth/introspect
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "access_token": "{{frankAccessToken}}"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    
+    if (data.active) {
+      bru.setEnvVar('frankUserId', data.userId);
+      console.log('✅ Frank User ID:', data.userId);
+      console.log('\n🎉 All users registered!');
+    }
+  }
+}
+
+docs {
+  # Frank - Introspect
+  
+  Получаем userId Frank.
+  
+  ## Итог:
+  Теперь у нас есть все userId для дальнейшей работы!
+  
+  ## Environment:
+  - Demo
+}

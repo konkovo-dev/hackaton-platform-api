@@ -1,0 +1,67 @@
+meta {
+  name: 14c. Bob - Upload Avatar (Full Flow)
+  type: http
+  seq: 14.3
+}
+
+post {
+  url: {{baseUrl}}/v1/users/me/avatar/upload
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{bobAccessToken}}
+}
+
+body:json {
+  {
+    "filename": "bob-avatar.png",
+    "sizeBytes": "102400",
+    "contentType": "image/png",
+    "idempotencyKey": {
+      "key": "bob-avatar-upload-1"
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    bru.setVar("bobAvatarUploadId", data.uploadId);
+    bru.setVar("bobAvatarUploadUrl", data.uploadUrl);
+    console.log('✅ Bob avatar upload URL created');
+    console.log('Upload ID:', data.uploadId);
+    console.log('');
+    console.log('⚠️  В production: загрузите файл по presigned URL');
+    console.log('⚠️  В demo: пропустите загрузку и сразу вызовите Complete');
+    console.log('   (для демонстрации можно сразу вызвать Complete без реальной загрузки)');
+  }
+}
+
+docs {
+  # Bob - Upload Avatar (Full Flow)
+  
+  Демонстрация полного процесса загрузки аватарки для Bob.
+  
+  ## Полный flow:
+  1. **Request Upload URL** (этот запрос)
+  2. **Upload File** - в production загрузите файл:
+     ```bash
+     curl -X PUT -H "Content-Type: image/png" \
+       --data-binary @avatar.png \
+       "{{bobAvatarUploadUrl}}"
+     ```
+  3. **Complete Upload** - подтвердите загрузку
+  
+  ## Для демонстрации:
+  Можно пропустить шаг 2 (реальную загрузку файла) и сразу вызвать Complete.
+  В этом случае получите ошибку "file not found in S3", что демонстрирует валидацию.
+  
+  ## Environment:
+  - Demo
+  
+  ## Переменные (сохраняются автоматически):
+  - `bobAvatarUploadId` - ID загрузки
+  - `bobAvatarUploadUrl` - presigned URL для загрузки
+}

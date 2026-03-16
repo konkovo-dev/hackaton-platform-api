@@ -1,0 +1,52 @@
+meta {
+  name: 03. Eve - Register (LOOKING_FOR_TEAM)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/participations/register
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{eveAccessToken}}
+}
+
+body:json {
+  {
+    "desired_status": "PART_LOOKING_FOR_TEAM",
+    "wished_role_ids": ["{{roleIdFrontend}}", "{{roleIdDesigner}}"],
+    "motivation_text": "Passionate about creating beautiful and intuitive user interfaces with React and TypeScript. I love working on responsive design and modern web applications. Excited to bring great UX to the team!"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const participation = res.body.participation;
+    
+    console.log('✅ Eve registered!');
+    console.log('Status:', participation.status);
+    console.log('Wished roles: Frontend, Designer');
+  }
+}
+
+docs {
+  # Eve - Register (LOOKING_FOR_TEAM)
+  
+  Eve регистрируется на хакатон со статусом LOOKING_FOR_TEAM.
+  
+  ## Параметры:
+  - **desired_status**: PART_LOOKING_FOR_TEAM
+  - **wished_role_ids**: Frontend, Designer
+  - **motivation_text**: Мотивация с ключевыми словами для matchmaking
+  
+  ## Ключевые слова для matchmaking:
+  - "React", "TypeScript" (совпадут с вакансией Dave)
+  - "user interfaces", "responsive design", "UX"
+  - Эти слова повысят text score при матчинге
+  
+  ## Environment:
+  - Demo (используем eveAccessToken)
+}

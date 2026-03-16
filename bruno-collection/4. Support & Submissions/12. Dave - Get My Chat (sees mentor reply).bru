@@ -1,0 +1,71 @@
+meta {
+  name: 12. Dave - Get My Chat (sees mentor reply)
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/support/my-messages?query.limit=50&query.offset=0
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const messages = res.body.messages || [];
+    
+    console.log(`✅ Dave now sees ${messages.length} messages`);
+    
+    const mentorMessages = messages.filter(m => m.authorRole === 'mentor');
+    const systemMessages = messages.filter(m => m.authorRole === 'system');
+    
+    if (mentorMessages.length > 0) {
+      console.log('\n🎉 MENTOR REPLIED!');
+      console.log('Dave sees Bob\'s response!');
+    }
+    
+    if (systemMessages.length > 0) {
+      console.log('\n📢 System messages:');
+      systemMessages.forEach(msg => {
+        console.log(`  - ${msg.text}`);
+      });
+    }
+    
+    console.log('\n📝 Full conversation:');
+    messages.forEach((msg, idx) => {
+      const author = msg.authorRole === 'participant' ? 'Team' :
+                     msg.authorRole === 'mentor' ? 'Mentor Bob' : 'System';
+      console.log(`${idx + 1}. [${author}]: ${msg.text.substring(0, 50)}...`);
+    });
+  }
+}
+
+docs {
+  # Dave - Get My Chat (Sees Mentor Reply)
+  
+  Dave проверяет чат и видит ответ ментора.
+  
+  ## Что видит Dave:
+  1. Dave: "Hi! Our team needs help..."
+  2. Eve: "Yes, specifically we need help with JWT..."
+  3. System: "Mentor Bob joined the chat"
+  4. Mentor Bob: "Hi team! For JWT authentication..."
+  
+  ## Демонстрация:
+  Показывает полный цикл коммуникации:
+  - Команда задает вопрос
+  - Ментор присоединяется (system message)
+  - Ментор отвечает
+  - Команда видит ответ
+  
+  ## Для участника:
+  Это просто "чат с поддержкой" - он не знает про тикеты, claim, assign.
+  Видит только сообщения.
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

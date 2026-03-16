@@ -1,0 +1,62 @@
+meta {
+  name: 24. Dave - Get Download URL
+  type: http
+  seq: 24
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/submissions/{{submissionId}}/files/{{fileId}}/download-url
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const downloadUrl = res.body.downloadUrl;
+    const expiresAt = res.body.expiresAt;
+    
+    bru.setEnvVar('downloadUrl', downloadUrl);
+    
+    console.log('✅ Download URL generated!');
+    console.log('Expires at:', expiresAt);
+    console.log('\n🔗 Presigned URL (15 min validity):');
+    console.log(downloadUrl.substring(0, 100) + '...');
+    console.log('\n⬇️  Next: Download file from this URL (запрос 25)');
+  }
+}
+
+docs {
+  # Dave - Get Download URL
+  
+  Dave запрашивает presigned URL для скачивания файла.
+  
+  ## Что происходит:
+  Backend генерирует **presigned URL** для прямого скачивания из MinIO/S3.
+  
+  ## Response:
+  - **downloadUrl**: Временный URL для GET запроса (expires in 15 min)
+  - **expiresAt**: Когда истечет URL
+  
+  ## Presigned URL:
+  - Указывает на MinIO: `http://minio:9000/submissions/...`
+  - Содержит signature: `X-Amz-Signature=...`
+  - Временный: `X-Amz-Expires=900` (15 минут)
+  
+  ## Безопасность:
+  - Backend проверяет права доступа перед генерацией URL
+  - URL временный - нельзя шарить навсегда
+  - Signature проверяется MinIO
+  
+  ## Production Flow:
+  На фронте:
+  1. Запросить download URL у бэкенда
+  2. Скачать файл напрямую из S3/MinIO
+  3. Показать пользователю
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

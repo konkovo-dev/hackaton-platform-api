@@ -15,8 +15,7 @@ type PublishHackathonIn struct {
 }
 
 type PublishHackathonOut struct {
-	PublishedAt      time.Time
-	ValidationErrors []domain.ValidationError
+	PublishedAt time.Time
 }
 
 func (s *Service) PublishHackathon(ctx context.Context, in PublishHackathonIn) (*PublishHackathonOut, error) {
@@ -44,22 +43,13 @@ func (s *Service) PublishHackathon(ctx context.Context, in PublishHackathonIn) (
 	validator := NewHackathonValidator()
 	validationErrors := validator.ValidateForPublish(hackathon, nil)
 	if len(validationErrors) > 0 {
-		return &PublishHackathonOut{
-			ValidationErrors: validationErrors,
-		}, nil
+		return nil, ErrValidationFailed
 	}
 
 	now := time.Now().UTC()
 
 	if hackathon.RegistrationOpensAt != nil && !now.Before(*hackathon.RegistrationOpensAt) {
-		validationErrors = append(validationErrors, domain.ValidationError{
-			Code:    domain.ValidationCodeTimeLocked,
-			Field:   "registration_opens_at",
-			Message: "cannot publish: registration_opens_at must be in the future",
-		})
-		return &PublishHackathonOut{
-			ValidationErrors: validationErrors,
-		}, nil
+		return nil, ErrValidationFailed
 	}
 
 	hackathon.PublishedAt = &now
@@ -75,8 +65,7 @@ func (s *Service) PublishHackathon(ctx context.Context, in PublishHackathonIn) (
 	}
 
 	return &PublishHackathonOut{
-		PublishedAt:      *hackathon.PublishedAt,
-		ValidationErrors: validationErrors,
+		PublishedAt: *hackathon.PublishedAt,
 	}, nil
 }
 

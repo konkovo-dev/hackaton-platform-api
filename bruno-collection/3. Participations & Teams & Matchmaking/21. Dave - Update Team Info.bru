@@ -1,0 +1,52 @@
+meta {
+  name: 21. Dave - Update Team Info
+  type: http
+  seq: 21
+}
+
+put {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/teams/{{daveTeamId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+body:json {
+  {
+    "name": "AI Innovators",
+    "description": "Building an AI-powered healthcare solution to help doctors diagnose diseases faster using machine learning and computer vision. We're creating an intuitive web dashboard with real-time predictions.",
+    "is_joinable": true
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Team info updated!');
+    console.log('Added more details to description');
+  }
+}
+
+docs {
+  # Dave - Update Team Info
+  
+  Dave обновляет информацию о команде - добавляет больше деталей в описание.
+  
+  ## Что обновили:
+  - **description**: Расширенное описание проекта
+  
+  ## Зачем:
+  - Привлечь больше кандидатов
+  - Дать больше контекста для matchmaking
+  - Обновленное описание используется в text scoring
+  
+  ## Важно:
+  - Только капитан может обновлять команду
+  - Можно обновлять: name, description, is_joinable
+  - Доступно только на стадии REGISTRATION
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

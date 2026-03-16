@@ -3,7 +3,6 @@ package hackathon
 import (
 	"context"
 
-	"github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/domain"
 	hackathonpolicy "github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/policy"
 	"github.com/google/uuid"
 )
@@ -14,7 +13,6 @@ type UpdateTaskIn struct {
 }
 
 type UpdateTaskOut struct {
-	ValidationErrors []domain.ValidationError
 }
 
 func (s *Service) UpdateTask(ctx context.Context, in UpdateTaskIn) (*UpdateTaskOut, error) {
@@ -40,16 +38,6 @@ func (s *Service) UpdateTask(ctx context.Context, in UpdateTaskIn) (*UpdateTaskO
 		return nil, ErrHackathonNotFound
 	}
 
-	validator := NewHackathonValidator()
-	stage := domain.HackathonStage(hackathon.Stage)
-	validationErrors := validator.ValidateTaskUpdate(in.Task, stage)
-
-	if stage != domain.StageDraft && len(validationErrors) > 0 {
-		return &UpdateTaskOut{
-			ValidationErrors: validationErrors,
-		}, ErrValidationFailed
-	}
-
 	hackathon.Task = in.Task
 
 	err = s.hackathonRepo.Update(ctx, hackathon)
@@ -57,7 +45,5 @@ func (s *Service) UpdateTask(ctx context.Context, in UpdateTaskIn) (*UpdateTaskO
 		return nil, err
 	}
 
-	return &UpdateTaskOut{
-		ValidationErrors: validationErrors,
-	}, nil
+	return &UpdateTaskOut{}, nil
 }

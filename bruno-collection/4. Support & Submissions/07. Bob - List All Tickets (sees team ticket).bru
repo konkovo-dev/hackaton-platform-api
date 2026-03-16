@@ -1,0 +1,77 @@
+meta {
+  name: 07. Bob - List All Tickets (sees team ticket)
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/support/tickets/all/list
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{bobAccessToken}}
+}
+
+body:json {
+  {
+    "limit": 10,
+    "offset": 0
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const tickets = res.body.tickets || [];
+    
+    console.log(`✅ Bob sees ${tickets.length} tickets`);
+    
+    tickets.forEach(ticket => {
+      const status = ticket.status;
+      const ownerKind = ticket.ownerKind;
+      const ownerName = ticket.ownerName || 'Unknown';
+      const assignee = ticket.assignedMentorName || 'Unassigned';
+      
+      console.log(`\n📋 Ticket ${ticket.ticketId.substring(0, 8)}...`);
+      console.log(`  Owner: ${ownerKind} "${ownerName}"`);
+      console.log(`  Status: ${status}`);
+      console.log(`  Assignee: ${assignee}`);
+      console.log(`  Messages: ${ticket.messageCount}`);
+    });
+    
+    if (tickets.length > 0 && tickets[0].ownerKind === 'team') {
+      console.log('\n🎫 Found team ticket from AI Innovators!');
+    }
+  }
+}
+
+docs {
+  # Bob - List All Tickets (Sees Team Ticket)
+  
+  Bob (ментор) просматривает все тикеты хакатона.
+  
+  ## Что видит Bob:
+  - Список всех тикетов (OPEN, ASSIGNED, CLOSED)
+  - Для каждого тикета:
+    - ticketId
+    - ownerKind: "team" или "user"
+    - ownerName: название команды или имя пользователя
+    - status: "open" | "assigned" | "closed"
+    - assignedMentorId, assignedMentorName (если assigned)
+    - messageCount: количество сообщений
+    - lastMessageAt: время последнего сообщения
+  
+  ## Результат:
+  Bob видит тикет команды "AI Innovators":
+  - Owner: team "AI Innovators"
+  - Status: open
+  - Assignee: Unassigned
+  - Messages: 2 (Dave + Eve)
+  
+  ## Для менторов:
+  Это интерфейс "очереди тикетов" - видят все обращения участников.
+  
+  ## Environment:
+  - Demo (используем bobAccessToken)
+}

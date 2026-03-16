@@ -1,0 +1,57 @@
+meta {
+  name: 11. Dave - Invite Eve
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/teams/{{daveTeamId}}/team-invitations
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+body:json {
+  {
+    "target_user_id": "{{eveUserId}}",
+    "vacancy_id": "{{daveVacancyId}}",
+    "message": "Hi Eve! We saw your profile and you're a perfect match for our frontend vacancy! We're building an AI healthcare platform and need someone with your React and TypeScript skills. Would love to have you on the team! 🚀"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const invitationId = res.body.invitationId;
+    bru.setEnvVar('eveTeamInvitationId', invitationId);
+    
+    console.log('✅ Invitation sent to Eve!');
+    console.log('Invitation ID:', invitationId);
+  }
+}
+
+docs {
+  # Dave - Invite Eve
+  
+  Dave отправляет приглашение Eve присоединиться к команде.
+  
+  ## Параметры:
+  - **target_user_id**: eveUserId (кого приглашаем)
+  - **vacancy_id**: daveVacancyId (на какую вакансию)
+  - **message**: Персональное сообщение
+  
+  ## Что происходит:
+  - Создается team invitation со статусом PENDING
+  - Eve получит это приглашение в свой список
+  - eveTeamInvitationId сохраняется
+  
+  ## Важно:
+  - Только капитан может приглашать
+  - Можно пригласить только участников со статусом LOOKING_FOR_TEAM
+  - Приглашение привязано к конкретной вакансии
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

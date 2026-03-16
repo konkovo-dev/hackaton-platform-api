@@ -69,9 +69,9 @@ func NewTestContext(t *testing.T) *TestContext {
 	submissionPrefix := "submission"
 	mentorsPrefix := "mentors"
 	teamPrefix := "team"
-	
+
 	var mentorsDB, submissionDB, teamDB, participationDB, matchmakingDB, judgingDB *pgxpool.Pool
-	
+
 	// Check if we're on prod (separate databases)
 	if contains(dbDSN, "hackathon_hackaton") {
 		// Prod: connect to separate databases
@@ -80,31 +80,31 @@ func NewTestContext(t *testing.T) *TestContext {
 		if err != nil {
 			t.Fatalf("Failed to connect to mentors database: %v", err)
 		}
-		
+
 		submissionDSN := replaceDatabaseName(dbDSN, "hackathon_submission")
 		submissionDB, err = pgxpool.New(context.Background(), submissionDSN)
 		if err != nil {
 			t.Fatalf("Failed to connect to submission database: %v", err)
 		}
-		
+
 		teamDSN := replaceDatabaseName(dbDSN, "hackathon_team")
 		teamDB, err = pgxpool.New(context.Background(), teamDSN)
 		if err != nil {
 			t.Fatalf("Failed to connect to team database: %v", err)
 		}
-		
+
 		participationDSN := replaceDatabaseName(dbDSN, "hackathon_participation")
 		participationDB, err = pgxpool.New(context.Background(), participationDSN)
 		if err != nil {
 			t.Fatalf("Failed to connect to participation database: %v", err)
 		}
-		
+
 		matchmakingDSN := replaceDatabaseName(dbDSN, "hackathon_matchmaking")
 		matchmakingDB, err = pgxpool.New(context.Background(), matchmakingDSN)
 		if err != nil {
 			t.Fatalf("Failed to connect to matchmaking database: %v", err)
 		}
-		
+
 		judgingDSN := replaceDatabaseName(dbDSN, "hackathon_judging")
 		judgingDB, err = pgxpool.New(context.Background(), judgingDSN)
 		if err != nil {
@@ -165,7 +165,7 @@ func replaceDatabaseName(dsn, newDBName string) string {
 	parts := []rune(dsn)
 	lastSlash := -1
 	questionMark := len(parts)
-	
+
 	for i := len(parts) - 1; i >= 0; i-- {
 		if parts[i] == '?' && questionMark == len(parts) {
 			questionMark = i
@@ -175,11 +175,11 @@ func replaceDatabaseName(dsn, newDBName string) string {
 			break
 		}
 	}
-	
+
 	if lastSlash == -1 {
 		return dsn
 	}
-	
+
 	return string(parts[:lastSlash+1]) + newDBName + string(parts[questionMark:])
 }
 

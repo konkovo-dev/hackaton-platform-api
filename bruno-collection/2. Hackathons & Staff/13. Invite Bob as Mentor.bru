@@ -1,0 +1,53 @@
+meta {
+  name: 13. Invite Bob as Mentor
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/staff-invitations
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {
+    "target_user_id": "{{bobUserId}}",
+    "requested_role": "HX_ROLE_MENTOR",
+    "message": "Hi Bob! We would love to have you as a mentor for our AI hackathon. Your expertise will be invaluable for participants!"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    bru.setEnvVar('bobInvitationId', data.invitationId);
+    
+    console.log('✅ Invitation sent to Bob');
+    console.log('Invitation ID:', data.invitationId);
+  }
+}
+
+docs {
+  # Invite Bob as Mentor
+  
+  Приглашение Bob стать ментором.
+  
+  ## Важно:
+  - `target_user_id` берется из environment Bob
+  - Нужно сначала получить userId Bob через Introspect
+  
+  ## Роли для приглашения:
+  - HX_ROLE_MENTOR
+  - HX_ROLE_JUDGE
+  - HX_ROLE_ORGANIZER
+  - ❌ НЕ HX_ROLE_OWNER!
+  
+  ## Environment:
+  - 👑 Owner (Alice)
+  - ⚠️  В body используем userId из Bob environment
+}

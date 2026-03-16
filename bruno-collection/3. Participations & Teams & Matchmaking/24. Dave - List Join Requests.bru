@@ -1,0 +1,66 @@
+meta {
+  name: 24. Dave - List Join Requests
+  type: http
+  seq: 24
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/teams/{{daveTeamId}}/join-requests/list
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+body:json {
+  {
+    "query": {
+      "page": {
+        "page_size": 20
+      }
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const requests = res.body.requests || [];
+    
+    console.log(`✅ Found ${requests.length} join requests`);
+    
+    requests.forEach(req => {
+      console.log(`\n${req.userId}:`);
+      console.log('  Status:', req.status);
+      console.log('  Vacancy:', req.vacancyId);
+      console.log('  Message:', req.message);
+    });
+  }
+}
+
+docs {
+  # Dave - List Join Requests
+  
+  Dave (капитан) просматривает заявки на вступление в команду.
+  
+  ## Что видно:
+  - **requests** - массив всех join requests
+  - Для каждого:
+    - requestId
+    - userId (кто подал заявку)
+    - vacancyId (на какую вакансию)
+    - status: JOIN_REQUEST_PENDING
+    - message: сообщение от кандидата
+    - createdAt
+  
+  ## Результат:
+  - Frank подал заявку (запрос 23)
+  - Dave видит его request
+  
+  ## Доступ:
+  - Только капитан команды
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

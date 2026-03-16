@@ -1,0 +1,70 @@
+meta {
+  name: 04. Carol - Evaluate Submission (score 9)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/submissions/{{submissionId}}/evaluate
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{carolAccessToken}}
+}
+
+body:json {
+  {
+    "score": 9,
+    "comment": "Excellent project! The AI Healthcare Platform demonstrates strong technical implementation with Go microservices, React frontend, and ML models. Real-time prediction dashboard is impressive. The integration with hospital databases shows practical applicability. Code quality is high. Minor improvement: could add more comprehensive error handling in the ML pipeline.",
+    "idempotency_key": {
+      "key": "carol-eval-{{submissionId}}"
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const evaluationId = res.body.evaluationId;
+    const evaluatedAt = res.body.evaluatedAt;
+    
+    bru.setEnvVar('carolEvaluationId', evaluationId);
+    
+    console.log('✅ Carol evaluated submission!');
+    console.log('Evaluation ID:', evaluationId);
+    console.log('Score: 9/10');
+    console.log('Evaluated at:', evaluatedAt);
+  }
+}
+
+docs {
+  # Carol - Evaluate Submission (Score 9)
+  
+  Carol оценивает submission команды "AI Innovators".
+  
+  ## Параметры:
+  - **score**: 0-10 (обязательно)
+  - **comment**: текст 1-5000 символов (обязательно)
+  - **idempotency_key**: для предотвращения дублей
+  
+  ## Validation:
+  - Score должен быть 0-10 (иначе ошибка)
+  - Comment обязателен (пустой - ошибка)
+  - Judge должен быть assigned на этот submission
+  
+  ## Response:
+  - **evaluationId**: UUID оценки
+  - **evaluatedAt**: timestamp
+  
+  ## Idempotency:
+  - Можно вызывать многократно с тем же ключом
+  - Обновит существующую оценку (не создаст дубль)
+  
+  ## Доступ:
+  - Только assigned judge может оценивать
+  - Другие judges НЕ видят этот submission
+  
+  ## Environment:
+  - Demo (используем carolAccessToken, submissionId)
+}

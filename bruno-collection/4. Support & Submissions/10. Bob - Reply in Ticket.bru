@@ -1,0 +1,54 @@
+meta {
+  name: 10. Bob - Reply in Ticket
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/support/tickets/{{teamTicketId}}/reply
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{bobAccessToken}}
+}
+
+body:json {
+  {
+    "text": "Hi team! For JWT authentication, please check our API documentation at /docs/auth. The key steps are: 1) Login to get access token, 2) Include token in Authorization header, 3) Use refresh token when access expires. Let me know if you need more details!"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const messageId = res.body.messageId;
+    
+    console.log('✅ Bob replied!');
+    console.log('Message ID:', messageId);
+    console.log('\n📨 Message sent to team chat');
+    console.log('Dave and Eve will see this reply!');
+  }
+}
+
+docs {
+  # Bob - Reply in Ticket
+  
+  Bob отвечает команде "AI Innovators" в тикете.
+  
+  ## Что происходит:
+  - Создается новое сообщение в тикете
+  - author_role: "mentor"
+  - author_user_id: Bob's ID
+  - Dave и Eve увидят это сообщение в своем чате
+  
+  ## Разница между endpoints:
+  - **Participants** используют `/support/messages` (не знают про тикеты)
+  - **Mentors** используют `/support/tickets/{id}/reply` (работают с тикетами)
+  
+  ## Real-time:
+  В production с WebSockets Dave и Eve получат уведомление мгновенно!
+  
+  ## Environment:
+  - Demo (используем bobAccessToken)
+}

@@ -46,8 +46,7 @@ type CreateHackathonLink struct {
 }
 
 type CreateHackathonOut struct {
-	HackathonID      uuid.UUID
-	ValidationErrors []domain.ValidationError
+	HackathonID uuid.UUID
 }
 
 func (s *Service) CreateHackathon(ctx context.Context, in CreateHackathonIn) (*CreateHackathonOut, error) {
@@ -93,9 +92,6 @@ func (s *Service) CreateHackathon(ctx context.Context, in CreateHackathonIn) (*C
 		Result:               "",
 	}
 
-	validator := NewHackathonValidator()
-	validationErrors := validator.ValidateForPublish(hackathon, in.Links)
-
 	err = s.uow.Do(ctx, func(ctx context.Context, txRepos *TxRepositories) error {
 		if err := txRepos.Hackathons.Create(ctx, hackathon); err != nil {
 			return fmt.Errorf("failed to create hackathon: %w", err)
@@ -137,8 +133,7 @@ func (s *Service) CreateHackathon(ctx context.Context, in CreateHackathonIn) (*C
 	}
 
 	return &CreateHackathonOut{
-		HackathonID:      hackathonID,
-		ValidationErrors: validationErrors,
+		HackathonID: hackathonID,
 	}, nil
 }
 

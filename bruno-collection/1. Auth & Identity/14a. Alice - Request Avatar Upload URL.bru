@@ -1,0 +1,69 @@
+meta {
+  name: 14a. Alice - Request Avatar Upload URL
+  type: http
+  seq: 14.1
+}
+
+post {
+  url: {{baseUrl}}/v1/users/me/avatar/upload
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {
+    "filename": "alice-avatar.jpg",
+    "sizeBytes": "51200",
+    "contentType": "image/jpeg",
+    "idempotencyKey": {
+      "key": "alice-avatar-upload-1"
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    bru.setVar("aliceAvatarUploadId", data.uploadId);
+    bru.setVar("aliceAvatarUploadUrl", data.uploadUrl);
+    console.log('✅ Alice avatar upload URL created');
+    console.log('Upload ID:', data.uploadId);
+    console.log('Expires at:', data.expiresAt);
+    console.log('');
+    console.log('📤 Next: Upload file to presigned URL (use curl or Postman)');
+    console.log('curl -X PUT -H "Content-Type: image/jpeg" --data-binary @avatar.jpg "' + data.uploadUrl + '"');
+  }
+}
+
+docs {
+  # Alice - Request Avatar Upload URL
+  
+  Alice запрашивает presigned URL для загрузки аватарки.
+  
+  ## Процесс загрузки аватарки:
+  1. **Request Upload URL** (этот запрос) - получаем presigned URL
+  2. **Upload File** - загружаем файл по presigned URL (вне Bruno, через curl/Postman)
+  3. **Complete Upload** - подтверждаем загрузку
+  
+  ## Валидация:
+  - Только изображения (jpg, jpeg, png, gif, webp)
+  - Максимальный размер: 5 MB
+  
+  ## Хранение:
+  - S3 bucket: `avatars` (отдельный от submissions)
+  - Структура: `avatars/{userId}/{uploadId}/{filename}`
+  
+  ## Idempotency:
+  Повторный запрос с тем же ключом вернет тот же uploadId.
+  
+  ## Environment:
+  - Demo
+  
+  ## Переменные (сохраняются автоматически):
+  - `aliceAvatarUploadId` - ID загрузки
+  - `aliceAvatarUploadUrl` - presigned URL для загрузки
+}

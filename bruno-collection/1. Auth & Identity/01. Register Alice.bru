@@ -1,0 +1,47 @@
+meta {
+  name: 01. Register Alice
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/v1/auth/register
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "username": "{{aliceUsername}}",
+    "email": "{{aliceEmail}}",
+    "password": "{{alicePassword}}",
+    "first_name": "{{aliceFirstName}}",
+    "last_name": "{{aliceLastName}}",
+    "timezone": "{{timezone}}"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    bru.setEnvVar('aliceAccessToken', data.accessToken);
+    bru.setEnvVar('aliceRefreshToken', data.refreshToken);
+    
+    console.log('✅ Alice registered!');
+    console.log('Access Token:', data.accessToken.substring(0, 20) + '...');
+  }
+}
+
+docs {
+  # Register Alice (Owner)
+  
+  Регистрируем Alice - она будет владельцем хакатона.
+  
+  ## Что происходит:
+  - Создается новый пользователь
+  - Возвращаются JWT токены
+  - Токены сохраняются в `aliceAccessToken` и `aliceRefreshToken`
+  
+  ## Environment:
+  - Demo (единый для всех)
+}

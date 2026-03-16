@@ -1,0 +1,43 @@
+meta {
+  name: 18. Frank - Add Skills (only catalog)
+  type: http
+  seq: 18
+}
+
+put {
+  url: {{baseUrl}}/v1/users/me/skills
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{frankAccessToken}}
+}
+
+body:json {
+  {
+    "catalog_skill_ids": {{frankCatalogSkillIds}},
+    "user_skills": {{frankUserSkills}},
+    "skills_visibility": "VISIBILITY_LEVEL_PUBLIC"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Frank skills updated');
+    console.log('Catalog: Python, Machine Learning, Data Science');
+  }
+}
+
+docs {
+  # Frank - Add Skills
+  
+  Frank добавляет свои ML скиллы из каталога.
+  
+  ## Логика:
+  - **Catalog skills** (3): Python, Machine Learning, Data Science
+  - **Custom skills**: нет
+  
+  ## Environment:
+  - Demo
+}

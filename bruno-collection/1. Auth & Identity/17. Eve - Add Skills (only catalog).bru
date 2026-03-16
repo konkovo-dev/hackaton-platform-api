@@ -1,0 +1,46 @@
+meta {
+  name: 17. Eve - Add Skills (only catalog)
+  type: http
+  seq: 17
+}
+
+put {
+  url: {{baseUrl}}/v1/users/me/skills
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{eveAccessToken}}
+}
+
+body:json {
+  {
+    "catalog_skill_ids": {{eveCatalogSkillIds}},
+    "user_skills": {{eveUserSkills}},
+    "skills_visibility": "VISIBILITY_LEVEL_PUBLIC"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Eve skills updated');
+    console.log('Catalog: React, TypeScript, Node.js, UI/UX Design');
+    console.log('Custom: none (all from catalog)');
+  }
+}
+
+docs {
+  # Eve - Add Skills (Only Catalog)
+  
+  Eve добавляет свои скиллы - все из каталога.
+  
+  ## Логика:
+  - **Catalog skills** (4): React, TypeScript, Node.js, UI/UX Design
+  - **Custom skills**: нет (все есть в каталоге)
+  
+  Это показывает что каталог покрывает большинство популярных технологий.
+  
+  ## Environment:
+  - Demo
+}

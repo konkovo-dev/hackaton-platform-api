@@ -1,0 +1,81 @@
+meta {
+  name: 01. Create Hackathon (incomplete)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {
+    "name": "AI Innovation Hackathon 2026",
+    "short_description": "Build the future with AI",
+    "location": {
+      "online": false,
+      "country": "Russia",
+      "city": "Moscow",
+      "venue": "Digital October Center"
+    },
+    "dates": {
+      "registration_opens_at": "2026-03-20T10:00:00Z",
+      "registration_closes_at": "2026-04-05T23:59:59Z",
+      "starts_at": "2026-04-10T09:00:00Z",
+      "ends_at": "2026-04-12T18:00:00Z",
+      "judging_ends_at": "2026-04-15T23:59:59Z"
+    },
+    "registration_policy": {
+      "allow_individual": true,
+      "allow_team": true
+    },
+    "limits": {
+      "team_size_max": 5
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    bru.setEnvVar('hackathonId', data.hackathonId);
+    
+    console.log('✅ Hackathon created (DRAFT)');
+    console.log('Hackathon ID:', data.hackathonId);
+    console.log('⚠️  Note: No description and no task - validation will fail!');
+  } else {
+    console.error('❌ Failed to create hackathon:', res.body);
+  }
+}
+
+docs {
+  # Create Hackathon (Incomplete)
+  
+  Alice создает черновик AI хакатона, но **специально делаем неполным** чтобы показать работу валидации.
+  
+  ## Что заполнено:
+  - ✅ name, short_description
+  - ✅ location (offline, Moscow, Digital October Center)
+  - ✅ dates (регистрация 20 марта, хакатон 10-12 апреля)
+  - ✅ registration_policy (individual + team)
+  - ✅ limits (max 5 человек в команде)
+  
+  ## Что НЕ заполнено (специально):
+  - ❌ description (полное описание)
+  - ❌ task (задание для участников)
+  
+  ## Что происходит:
+  - Хакатон создается в статусе **DRAFT**
+  - Виден только владельцу (Alice)
+  - hackathonId автоматически сохраняется в environment
+  - Нельзя опубликовать пока валидация не пройдет
+  
+  ## Environment:
+  - Demo (используем aliceAccessToken)
+}

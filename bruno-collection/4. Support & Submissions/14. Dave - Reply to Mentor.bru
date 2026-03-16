@@ -1,0 +1,55 @@
+meta {
+  name: 14. Dave - Reply to Mentor
+  type: http
+  seq: 14
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/support/messages
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+body:json {
+  {
+    "text": "Thank you Bob! That's very helpful. One more question - how do we handle token expiration on the frontend? Should we automatically refresh or show a login prompt?"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const ticketId = res.body.ticketId;
+    const messageId = res.body.messageId;
+    
+    console.log('✅ Dave replied to mentor!');
+    console.log('Ticket ID:', ticketId);
+    console.log('Message ID:', messageId);
+    console.log('\n💬 Conversation continues...');
+  }
+}
+
+docs {
+  # Dave - Reply to Mentor
+  
+  Dave отвечает ментору, продолжая диалог.
+  
+  ## Что происходит:
+  - Сообщение добавляется в тот же тикет
+  - Ticket остается в статусе "assigned"
+  - Bob увидит новое сообщение
+  
+  ## Для участника:
+  Это просто "отправить сообщение" - он не думает про тикеты.
+  Система автоматически находит правильный тикет (OPEN или ASSIGNED).
+  
+  ## Диалог продолжается:
+  Тикет остается открытым пока ментор не закроет его.
+  Команда и ментор могут обмениваться сообщениями.
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

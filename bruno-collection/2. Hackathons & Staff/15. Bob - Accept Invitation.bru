@@ -1,0 +1,40 @@
+meta {
+  name: 15. Bob - Accept Invitation
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{baseUrl}}/v1/users/me/staff-invitations/{{bobInvitationId}}/accept
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{bobAccessToken}}
+}
+
+body:json {
+  {}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Invitation accepted!');
+    console.log('Bob is now a MENTOR! 🎓');
+  }
+}
+
+docs {
+  # Bob - Accept Invitation
+  
+  Bob принимает приглашение стать ментором.
+  
+  ## Что происходит:
+  - Bob получает роль HX_ROLE_MENTOR
+  - Теперь виден в списке staff
+  - Может видеть хакатон в фильтре my_role=mentor
+  
+  ## Environment:
+  - 🎓 Mentor (Bob)
+}

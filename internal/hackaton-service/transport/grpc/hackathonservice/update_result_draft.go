@@ -21,23 +21,11 @@ func (s *HackathonService) UpdateHackathonResultDraft(ctx context.Context, req *
 		Result:      req.Result,
 	}
 
-	out, err := s.hackathonService.UpdateResultDraft(ctx, in)
+	_, err = s.hackathonService.UpdateResultDraft(ctx, in)
 	if err != nil {
 		return nil, s.handleError(ctx, err, "UpdateHackathonResultDraft")
 	}
 
-	validationErrors := make([]*hackathonv1.ValidationError, 0, len(out.ValidationErrors))
-	for _, ve := range out.ValidationErrors {
-		validationErrors = append(validationErrors, &hackathonv1.ValidationError{
-			Code:    ve.Code,
-			Field:   ve.Field,
-			Message: ve.Message,
-			Meta:    ve.Meta,
-		})
-	}
-
-	return &hackathonv1.UpdateHackathonResultDraftResponse{
-		ValidationErrors: validationErrors,
-	}, nil
+	return &hackathonv1.UpdateHackathonResultDraftResponse{}, nil
 }
 

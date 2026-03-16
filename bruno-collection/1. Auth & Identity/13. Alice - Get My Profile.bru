@@ -1,0 +1,38 @@
+meta {
+  name: 13. Alice - Get My Profile
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{baseUrl}}/v1/users/me
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const user = res.body.user;
+    console.log('✅ Alice profile loaded');
+    console.log('Username:', user.username);
+    console.log('Name:', user.firstName, user.lastName);
+  }
+}
+
+docs {
+  # Alice - Get My Profile
+  
+  Alice просматривает свой профиль.
+  
+  ## Что видим:
+  - Базовую информацию (username, email, имя)
+  - Timezone
+  - Дату создания аккаунта
+  
+  ## Environment:
+  - Demo (используем aliceAccessToken)
+}

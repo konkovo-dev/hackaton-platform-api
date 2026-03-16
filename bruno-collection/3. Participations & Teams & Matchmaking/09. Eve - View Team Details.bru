@@ -1,0 +1,59 @@
+meta {
+  name: 09. Eve - View Team Details
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/teams/{{daveTeamId}}?include_vacancies=true
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{eveAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const teamData = res.body.team;
+    const team = teamData.team;
+    const vacancies = teamData.vacancies || [];
+    
+    console.log('✅ Team details loaded');
+    console.log('Name:', team.name);
+    console.log('Description:', team.description);
+    console.log('Joinable:', team.isJoinable);
+    console.log('Vacancies:', vacancies.length);
+    
+    if (vacancies.length > 0) {
+      const vac = vacancies[0];
+      console.log('\nVacancy:');
+      console.log('  Slots:', vac.slotsOpen, '/', vac.slotsTotal);
+      console.log('  Description:', vac.description);
+    }
+  }
+}
+
+docs {
+  # Eve - View Team Details
+  
+  Eve просматривает детали команды "AI Innovators" перед принятием решения.
+  
+  ## Что видно:
+  - **team**: название, описание, is_joinable
+  - **vacancies**: список открытых вакансий
+    - description (детальное описание)
+    - desired_role_ids (требуемые роли)
+    - desired_skill_ids (требуемые скиллы)
+    - slots_total, slots_open (сколько мест)
+  
+  ## Query параметр:
+  - **include_vacancies=true** - включить вакансии в ответ
+  
+  ## Зачем:
+  Eve может посмотреть детали команды и вакансии перед тем как подавать join request или принимать приглашение.
+  
+  ## Environment:
+  - Demo (используем eveAccessToken)
+}

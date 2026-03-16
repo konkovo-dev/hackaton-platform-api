@@ -1,0 +1,64 @@
+meta {
+  name: 01. List Team Roles
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/v1/team-roles
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const roles = res.body.teamRoles || [];
+    
+    console.log(`✅ Found ${roles.length} team roles`);
+    
+    const roleMapping = {
+      'Backend': 'roleIdBackend',
+      'Frontend': 'roleIdFrontend',
+      'Designer': 'roleIdDesigner',
+      'Data Scientist': 'roleIdDataScientist',
+      'DevOps': 'roleIdDevOps',
+      'Fullstack': 'roleIdFullstack',
+      'Mobile': 'roleIdMobile',
+      'Product Manager': 'roleIdProductManager',
+      'QA': 'roleIdQA'
+    };
+    
+    roles.forEach(role => {
+      console.log(`  - ${role.name} (${role.id})`);
+      const varName = roleMapping[role.name];
+      if (varName) {
+        bru.setEnvVar(varName, role.id);
+      }
+    });
+    
+    console.log('\n📝 Role IDs saved to environment');
+  }
+}
+
+docs {
+  # List Team Roles
+  
+  Просмотр каталога командных ролей перед регистрацией.
+  
+  ## Что показать:
+  - Список доступных ролей (Backend, Frontend, Designer, Data Scientist, DevOps, etc.)
+  - Каждая роль имеет id и name
+  - Role IDs автоматически сохраняются в environment
+  
+  ## Зачем:
+  - Участники выбирают желаемые роли при регистрации
+  - Команды указывают требуемые роли в вакансиях
+  - Используется в matchmaking для скоринга
+  
+  ## Environment:
+  - Demo
+}

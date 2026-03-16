@@ -1,0 +1,60 @@
+meta {
+  name: 28. List Team Invitations (outgoing)
+  type: http
+  seq: 28
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/teams/{{daveTeamId}}/team-invitations/list
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+body:json {
+  {
+    "query": {
+      "page": {
+        "page_size": 20
+      }
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const invitations = res.body.invitations || [];
+    
+    console.log(`✅ Found ${invitations.length} outgoing invitations`);
+    
+    invitations.forEach(inv => {
+      console.log(`\nTo ${inv.targetUserId}:`);
+      console.log('  Status:', inv.status);
+      console.log('  Vacancy:', inv.vacancyId);
+    });
+  }
+}
+
+docs {
+  # List Team Invitations (Outgoing)
+  
+  Dave просматривает исходящие приглашения своей команды.
+  
+  ## Что видно:
+  - Приглашение Eve (ACCEPTED) - она приняла и вступила
+  
+  ## Статусы:
+  - TEAM_INVITATION_PENDING - ожидает ответа
+  - TEAM_INVITATION_ACCEPTED - принято
+  - TEAM_INVITATION_REJECTED - отклонено
+  - TEAM_INVITATION_CANCELED - отменено капитаном
+  
+  ## Доступ:
+  - Только капитан команды
+  
+  ## Environment:
+  - Demo (используем daveAccessToken)
+}

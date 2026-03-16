@@ -249,3 +249,20 @@ func (r *UserRepository) buildListUsersQuery(params users.ListUsersRepoParams) (
 	query, args := qb.Build()
 	return query, args, nil
 }
+
+func (r *UserRepository) UpdateAvatarURL(ctx context.Context, userID uuid.UUID, avatarURL string) error {
+	err := r.Queries().UserUpdateAvatarURL(ctx, queries.UserUpdateAvatarURLParams{
+		ID:        pgxutil.UUIDToPgtype(userID),
+		AvatarUrl: pgxutil.StringToPgtype(avatarURL),
+	})
+
+	if err != nil {
+		err = pgxutil.MapDBError(err)
+		if pgxutil.IsNotFound(err) {
+			return fmt.Errorf("user not found: %w", err)
+		}
+		return fmt.Errorf("failed to update avatar URL: %w", err)
+	}
+
+	return nil
+}

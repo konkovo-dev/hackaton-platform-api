@@ -1,0 +1,74 @@
+meta {
+  name: 09. List My Hackathons (owner filter)
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/list
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {
+    "query": {
+      "filter_groups": [
+        {
+          "filters": [
+            {
+              "field": "my_role",
+              "operation": "FILTER_OPERATION_EQUAL",
+              "string_value": "owner"
+            }
+          ]
+        }
+      ],
+      "page": {
+        "page_size": 50
+      }
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    const hackathons = data.hackathons || [];
+    
+    console.log(`✅ Found ${hackathons.length} hackathons where I'm owner`);
+    
+    hackathons.forEach(h => {
+      console.log(`  - ${h.name} (${h.stage})`);
+    });
+  }
+}
+
+docs {
+  # List My Hackathons (Owner Filter)
+  
+  Alice фильтрует хакатоны где она владелец (owner).
+  
+  ## Фильтр:
+  - **my_role = owner** - показать только хакатоны где я owner
+  
+  ## Зачем:
+  - Удобно когда пользователь участвует во многих хакатонах в разных ролях
+  - Быстро найти хакатоны которыми я управляю
+  - Dashboard для owner
+  
+  ## Результат:
+  - AI Innovation Hackathon 2026 в списке (Alice - owner)
+  
+  ## Другие возможные фильтры:
+  - my_role=mentor - хакатоны где я ментор
+  - my_role=judge - хакатоны где я судья
+  - my_role=organizer - хакатоны где я организатор
+  
+  ## Environment:
+  - Demo (используем aliceAccessToken)
+}

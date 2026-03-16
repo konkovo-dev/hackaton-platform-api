@@ -10,6 +10,18 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type IdentityAvatarUpload struct {
+	UploadID    pgtype.UUID        `json:"upload_id"`
+	UserID      pgtype.UUID        `json:"user_id"`
+	Filename    string             `json:"filename"`
+	SizeBytes   int64              `json:"size_bytes"`
+	ContentType string             `json:"content_type"`
+	StorageKey  string             `json:"storage_key"`
+	Status      string             `json:"status"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	CompletedAt pgtype.Timestamptz `json:"completed_at"`
+}
+
 type IdentityIdempotencyKey struct {
 	Key          string    `json:"key"`
 	Scope        string    `json:"scope"`

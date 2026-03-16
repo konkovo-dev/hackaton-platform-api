@@ -1,0 +1,70 @@
+meta {
+  name: 16. Bob - List My Hackathons (mentor filter)
+  type: http
+  seq: 16
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/list
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{bobAccessToken}}
+}
+
+body:json {
+  {
+    "query": {
+      "filter_groups": [
+        {
+          "filters": [
+            {
+              "field": "my_role",
+              "operation": "FILTER_OPERATION_EQUAL",
+              "string_value": "mentor"
+            }
+          ]
+        }
+      ],
+      "page": {
+        "page_size": 50
+      }
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    const hackathons = data.hackathons || [];
+    
+    console.log(`✅ Found ${hackathons.length} hackathons where I'm mentor`);
+    
+    hackathons.forEach(h => {
+      console.log(`  - ${h.name}`);
+    });
+    
+    if (hackathons.length > 0) {
+      console.log('\n✅ Bob now sees AI hackathon! (after accepting invitation)');
+    }
+  }
+}
+
+docs {
+  # Bob - List My Hackathons (Mentor Filter)
+  
+  Bob фильтрует хакатоны где он ментор.
+  
+  ## До принятия приглашения:
+  - ❌ Список пустой
+  
+  ## После принятия:
+  - ✅ Видит AI Innovation Hackathon
+  
+  Это показывает что фильтр работает корректно!
+  
+  ## Environment:
+  - 🎓 Mentor (Bob)
+}

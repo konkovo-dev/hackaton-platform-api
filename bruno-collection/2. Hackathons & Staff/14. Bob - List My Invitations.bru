@@ -1,0 +1,54 @@
+meta {
+  name: 14. Bob - List My Invitations
+  type: http
+  seq: 14
+}
+
+post {
+  url: {{baseUrl}}/v1/users/me/staff-invitations/list
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{bobAccessToken}}
+}
+
+body:json {
+  {}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body;
+    const invitations = data.invitations || [];
+    
+    console.log(`✅ Found ${invitations.length} invitations`);
+    
+    invitations.forEach(inv => {
+      console.log(`\n  Invitation ID: ${inv.invitationId}`);
+      console.log(`  Role: ${inv.requestedRole}`);
+      console.log(`  Status: ${inv.status}`);
+      console.log(`  Message: ${inv.message}`);
+      
+      if (inv.status === 'STAFF_INVITATION_PENDING') {
+        bru.setEnvVar('bobInvitationId', inv.invitationId);
+      }
+    });
+  }
+}
+
+docs {
+  # Bob - List My Invitations
+  
+  Bob просматривает свои приглашения в staff.
+  
+  ## Статусы:
+  - STAFF_INVITATION_PENDING - ожидает ответа
+  - STAFF_INVITATION_ACCEPTED - принято
+  - STAFF_INVITATION_DECLINED - отклонено
+  - STAFF_INVITATION_CANCELED - отменено владельцем
+  
+  ## Environment:
+  - 🎓 Mentor (Bob)
+}
