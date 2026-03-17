@@ -206,6 +206,38 @@
         ]
       }
     },
+    "/v1/hackathons/{hackathonId}/participations/permissions": {
+      "get": {
+        "summary": "Get participation permissions",
+        "description": "Returns what participation-related actions the authenticated user can perform on this hackathon (register, unregister, switch mode, invite staff, list participants).",
+        "operationId": "ParticipationService_GetParticipationPermissions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetParticipationPermissionsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Participation"
+        ]
+      }
+    },
     "/v1/hackathons/{hackathonId}/participations/register": {
       "post": {
         "summary": "Register for a hackathon",
@@ -466,6 +498,14 @@
         }
       }
     },
+    "v1GetParticipationPermissionsResponse": {
+      "type": "object",
+      "properties": {
+        "permissions": {
+          "$ref": "#/definitions/v1ParticipationPermissions"
+        }
+      }
+    },
     "v1GetUserParticipationResponse": {
       "type": "object",
       "properties": {
@@ -556,6 +596,29 @@
           "type": "string"
         },
         "hasMore": {
+          "type": "boolean"
+        }
+      }
+    },
+    "v1ParticipationPermissions": {
+      "type": "object",
+      "properties": {
+        "register": {
+          "type": "boolean"
+        },
+        "unregister": {
+          "type": "boolean"
+        },
+        "switchParticipationMode": {
+          "type": "boolean"
+        },
+        "updateParticipationProfile": {
+          "type": "boolean"
+        },
+        "inviteStaff": {
+          "type": "boolean"
+        },
+        "listParticipants": {
           "type": "boolean"
         }
       }

@@ -255,7 +255,8 @@ func (r *HackathonRepository) buildListHackathonsQuery(params hackathon.ListHack
 
 	qb := queryutil.NewQueryBuilder(baseQuery)
 
-	qb.WithCustomWhere("h.state = ?", "published")
+	// Note: state filtering is now handled at usecase level based on user permissions
+	// No hardcoded state filter here
 
 	if params.Filters != nil && len(params.Filters.HackathonIDsOnly) > 0 {
 		placeholders := make([]string, len(params.Filters.HackathonIDsOnly))

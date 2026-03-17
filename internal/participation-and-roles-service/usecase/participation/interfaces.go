@@ -41,3 +41,13 @@ type TeamRoleRepository interface {
 type OutboxRepository interface {
 	Create(ctx context.Context, event *outbox.Event) error
 }
+
+type HackathonInfo struct {
+	Stage           string
+	AllowIndividual bool
+	AllowTeam       bool
+}
+
+type HackathonClient interface {
+	GetHackathonInfo(ctx context.Context, hackathonID uuid.UUID) (*HackathonInfo, error)
+}

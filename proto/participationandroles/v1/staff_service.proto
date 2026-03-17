@@ -29,6 +29,17 @@ service StaffService {
     };
   }
 
+  rpc ListHackathonStaffInvitations(ListHackathonStaffInvitationsRequest) returns (ListHackathonStaffInvitationsResponse) {
+    option (google.api.http) = {
+      get: "/v1/hackathons/{hackathon_id}/staff-invitations"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List staff invitations for a hackathon"
+      description: "Returns all staff invitations sent for this hackathon. Requires OWNER or MANAGER role."
+      tags: "Staff"
+    };
+  }
+
   rpc CreateStaffInvitation(CreateStaffInvitationRequest) returns (CreateStaffInvitationResponse) {
     option (google.api.http) = {
       post: "/v1/hackathons/{hackathon_id}/staff-invitations"
@@ -150,6 +161,16 @@ message ListHackathonStaffResponse {
 message HackathonStaffMember {
   string user_id = 1;
   repeated HackathonRole roles = 2;
+}
+
+message ListHackathonStaffInvitationsRequest {
+  string hackathon_id = 1;
+  common.v1.Query query = 10;
+}
+
+message ListHackathonStaffInvitationsResponse {
+  repeated StaffInvitation invitations = 1;
+  common.v1.PageResponse page = 2;
 }
 
 message CreateStaffInvitationRequest {

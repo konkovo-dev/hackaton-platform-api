@@ -67,6 +67,17 @@ service TeamService {
       tags: "Team"
     };
   }
+
+  rpc GetTeamPermissions(GetTeamPermissionsRequest) returns (GetTeamPermissionsResponse) {
+    option (google.api.http) = {
+      get: "/v1/hackathons/{hackathon_id}/teams/permissions"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get team permissions"
+      description: "Returns what team-related actions the authenticated user can perform on this hackathon (create team, manage own team)."
+      tags: "Team"
+    };
+  }
 }
 
 message ListTeamsRequest {
@@ -132,4 +143,28 @@ message DeleteTeamRequest {
   common.v1.IdempotencyKey idempotency_key = 10;
 }
 
-message DeleteTeamResponse {}    
+message DeleteTeamResponse {}
+
+message GetTeamPermissionsRequest {
+  string hackathon_id = 1;
+}
+
+message GetTeamPermissionsResponse {
+  TeamPermissions permissions = 1;
+}
+
+message TeamPermissions {
+  bool create_team = 1;
+  TeamManagementPermissions can_in_my_team = 2;
+}
+
+message TeamManagementPermissions {
+  bool edit_team = 1;
+  bool delete_team = 2;
+  bool manage_vacancies = 3;
+  bool invite_member = 4;
+  bool manage_join_requests = 5;
+  bool kick_member = 6;
+  bool transfer_captain = 7;
+  bool leave_team = 8;
+}

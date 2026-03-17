@@ -26,6 +26,7 @@ type StaffInvitationRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*entity.StaffInvitation, error)
 	GetPendingInvitationForUser(ctx context.Context, hackathonID, userID uuid.UUID, role string) (*entity.StaffInvitation, error)
 	GetByTargetUserID(ctx context.Context, userID uuid.UUID) ([]*entity.StaffInvitation, error)
+	ListByHackathonID(ctx context.Context, hackathonID uuid.UUID, limit, offset int32) ([]*entity.StaffInvitation, error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, status string, updatedAt time.Time) error
 	GetStatusAndHackathonID(ctx context.Context, id uuid.UUID) (string, uuid.UUID, error)
 	GetDetails(ctx context.Context, id uuid.UUID) (exists bool, status string, targetUserID uuid.UUID, hackathonID uuid.UUID, requestedRole string, err error)

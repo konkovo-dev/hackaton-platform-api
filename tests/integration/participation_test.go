@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"testing"
@@ -348,4 +349,35 @@ func TestUnregisterFromHackathon(t *testing.T) {
 
 	resp, _ = tc.DoAuthenticatedRequest("GET", fmt.Sprintf("/v1/hackathons/%s/participations/me", hackathonID), participant.AccessToken, nil)
 	assert.Equal(t, http.StatusForbidden, resp.StatusCode, "Should not find participation after unregister")
+}
+
+func TestRegisterForRunningHackathonShouldFail(t *testing.T) {
+	tc := NewTestContext(t)
+	owner := tc.RegisterUser()
+	participant := tc.RegisterUser()
+
+	// Create and publish hackathon
+	hackathonID := createAndPublishHackathon(tc, owner)
+
+	// Manually update hackathon stage to RUNNING in the database
+	_, err := tc.DB.Exec(context.Background(), `
+		UPDATE hackathon.hackathons 
+		SET stage = 'running' 
+		WHERE id = $1
+	`, hackathonID)
+	require.NoError(t, err, "Failed to update hackathon stage")
+
+	// Try to register - should fail because stage is not REGISTRATION
+	registerBody := map[string]interface{}{
+		"desired_status":  "PART_INDIVIDUAL",
+		"motivation_text": "Trying to register for running hackathon",
+	}
+
+	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/register", hackathonID), participant.AccessToken, registerBody)
+	require.Equal(t, http.StatusForbidden, resp.StatusCode, "Should not allow registration during RUNNING stage: %s", string(body))
+
+	data := tc.ParseJSON(body)
+	message, ok := data["message"].(string)
+	require.True(t, ok, "Response should have message field")
+	assert.Contains(t, message, "registration is only allowed during REGISTRATION stage", "Error message should mention stage restriction")
 }

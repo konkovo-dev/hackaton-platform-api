@@ -95,6 +95,47 @@ func (s *Service) ListHackathons(ctx context.Context, in ListHackathonsIn) (*Lis
 		return nil, err
 	}
 
+	// Apply state filter based on user permissions
+	// If no state filter is explicitly provided, only show published hackathons to regular users
+	// Owners and organizers can see drafts of their own hackathons via my_role filter
+	hasStateFilter := s.hasStateFilter(in.Query)
+	hasDraftStateFilter := s.hasDraftStateFilter(in.Query)
+	
+	if !hasStateFilter && roleFilters == nil {
+		// No state filter and no role filter - show only published hackathons
+		// Add to existing filter group if exists, otherwise create new one
+		if len(filters.FilterGroups) > 0 {
+			// Add to the first (and typically only) filter group to ensure AND logic
+			filters.FilterGroups[0].Filters = append(filters.FilterGroups[0].Filters, &sqlbuilder.Filter{
+				Field:     FieldState,
+				Operation: commonv1.FilterOperation_FILTER_OPERATION_EQUAL,
+				Value:     "published",
+			})
+		} else {
+			// No existing filters, create new group
+			filters.FilterGroups = append(filters.FilterGroups, &sqlbuilder.FilterGroup{
+				Filters: []*sqlbuilder.Filter{
+					{
+						Field:     FieldState,
+						Operation: commonv1.FilterOperation_FILTER_OPERATION_EQUAL,
+						Value:     "published",
+					},
+				},
+			})
+		}
+	} else if hasDraftStateFilter && roleFilters == nil {
+		// User requested state=draft but has no role filter
+		// This means they're trying to see all drafts without specifying which ones
+		// Return empty result (drafts are only accessible via my_role filter)
+		return &ListHackathonsOut{
+			Hackathons:    []*entity.Hackathon{},
+			Links:         map[string][]*entity.HackathonLink{},
+			NextPageToken: "",
+		}, nil
+	}
+	// If hasStateFilter && roleFilters != nil, the state filter will be applied normally
+	// This allows filtering by state=draft when combined with my_role=owner
+
 	if roleFilters != nil {
 		hackathonIDs, err := s.parClient.GetMyHackathonIDs(
 			ctx,
@@ -392,4 +433,42 @@ func normalizeEnumValue(val string) string {
 	val = strings.TrimPrefix(val, "hackathon_state_")
 	val = strings.ReplaceAll(val, "_", "")
 	return val
+}
+
+func (s *Service) hasStateFilter(query *commonv1.Query) bool {
+	if query == nil || len(query.FilterGroups) == 0 {
+		return false
+	}
+
+	for _, group := range query.FilterGroups {
+		for _, f := range group.Filters {
+			normalizedField := strings.ReplaceAll(f.Field, ".", "_")
+			if normalizedField == FieldState {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func (s *Service) hasDraftStateFilter(query *commonv1.Query) bool {
+	if query == nil || len(query.FilterGroups) == 0 {
+		return false
+	}
+
+	for _, group := range query.FilterGroups {
+		for _, f := range group.Filters {
+			normalizedField := strings.ReplaceAll(f.Field, ".", "_")
+			if normalizedField == FieldState {
+				stringVal := getStringValue(f)
+				normalizedVal := normalizeEnumValue(stringVal)
+				if normalizedVal == "draft" {
+					return true
+				}
+			}
+		}
+	}
+
+	return false
 }

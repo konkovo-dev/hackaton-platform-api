@@ -1,6 +1,7 @@
 package main
 
 import (
+	hackathonclient "github.com/belikoooova/hackaton-platform-api/internal/participation-and-roles-service/client/hackathon"
 	identityclient "github.com/belikoooova/hackaton-platform-api/internal/participation-and-roles-service/client/identity"
 	"github.com/belikoooova/hackaton-platform-api/internal/participation-and-roles-service/repository/postgres"
 	"github.com/belikoooova/hackaton-platform-api/internal/participation-and-roles-service/transport/grpc"
@@ -23,6 +24,7 @@ func main() {
 		logger.Module,
 		authclient.Module,
 		identityclient.Module,
+		hackathonclient.Module,
 		natsclient.Module,
 		postgres.Module,
 		idempotency.Module,
@@ -39,6 +41,9 @@ func main() {
 			func(repo *postgres.ParticipationRepository) usecaseparticipation.ParticipationRepository { return repo },
 			func(repo *postgres.TeamRoleRepository) usecaseparticipation.TeamRoleRepository { return repo },
 			func(repo *postgres.OutboxRepository) usecaseparticipation.OutboxRepository { return repo },
+			func(client *hackathonclient.Client) usecaseparticipation.HackathonClient {
+				return usecaseparticipation.NewHackathonClientAdapter(client)
+			},
 			func(pool *pgxpool.Pool) role.UnitOfWork {
 				return pgxutil.NewUnitOfWork(pool, func(tx pgx.Tx) *role.TxRepositories {
 					return &role.TxRepositories{

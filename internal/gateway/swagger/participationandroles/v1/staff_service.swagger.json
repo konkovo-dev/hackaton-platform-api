@@ -82,6 +82,69 @@
       }
     },
     "/v1/hackathons/{hackathonId}/staff-invitations": {
+      "get": {
+        "summary": "List staff invitations for a hackathon",
+        "description": "Returns all staff invitations sent for this hackathon. Requires OWNER or MANAGER role.",
+        "operationId": "StaffService_ListHackathonStaffInvitations",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListHackathonStaffInvitationsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "query.q",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "query.page.pageSize",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "query.page.pageToken",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "query.limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "query.offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "Staff"
+        ]
+      },
       "post": {
         "summary": "Invite a user to staff",
         "description": "Creates a staff invitation for the target user. They can accept or reject it from their invitations list. Requires OWNER or MANAGER role.",
@@ -548,6 +611,21 @@
       "properties": {
         "key": {
           "type": "string"
+        }
+      }
+    },
+    "v1ListHackathonStaffInvitationsResponse": {
+      "type": "object",
+      "properties": {
+        "invitations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1StaffInvitation"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/v1PageResponse"
         }
       }
     },

@@ -96,6 +96,38 @@
         ]
       }
     },
+    "/v1/hackathons/{hackathonId}/teams/permissions": {
+      "get": {
+        "summary": "Get team permissions",
+        "description": "Returns what team-related actions the authenticated user can perform on this hackathon (create team, manage own team).",
+        "operationId": "TeamService_GetTeamPermissions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetTeamPermissionsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Team"
+        ]
+      }
+    },
     "/v1/hackathons/{hackathonId}/teams/{teamId}": {
       "get": {
         "summary": "Get a team",
@@ -361,6 +393,14 @@
       ],
       "default": "FILTER_OPERATION_UNSPECIFIED"
     },
+    "v1GetTeamPermissionsResponse": {
+      "type": "object",
+      "properties": {
+        "permissions": {
+          "$ref": "#/definitions/v1TeamPermissions"
+        }
+      }
+    },
     "v1GetTeamResponse": {
       "type": "object",
       "properties": {
@@ -506,6 +546,46 @@
         "updatedAt": {
           "type": "string",
           "format": "date-time"
+        }
+      }
+    },
+    "v1TeamManagementPermissions": {
+      "type": "object",
+      "properties": {
+        "editTeam": {
+          "type": "boolean"
+        },
+        "deleteTeam": {
+          "type": "boolean"
+        },
+        "manageVacancies": {
+          "type": "boolean"
+        },
+        "inviteMember": {
+          "type": "boolean"
+        },
+        "manageJoinRequests": {
+          "type": "boolean"
+        },
+        "kickMember": {
+          "type": "boolean"
+        },
+        "transferCaptain": {
+          "type": "boolean"
+        },
+        "leaveTeam": {
+          "type": "boolean"
+        }
+      }
+    },
+    "v1TeamPermissions": {
+      "type": "object",
+      "properties": {
+        "createTeam": {
+          "type": "boolean"
+        },
+        "canInMyTeam": {
+          "$ref": "#/definitions/v1TeamManagementPermissions"
         }
       }
     },

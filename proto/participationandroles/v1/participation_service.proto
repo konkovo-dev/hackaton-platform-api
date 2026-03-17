@@ -104,6 +104,17 @@ service ParticipationService {
       tags: "Participation"
     };
   };
+
+  rpc GetParticipationPermissions(GetParticipationPermissionsRequest) returns (GetParticipationPermissionsResponse) {
+    option (google.api.http) = {
+      get: "/v1/hackathons/{hackathon_id}/participations/permissions"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get participation permissions"
+      description: "Returns what participation-related actions the authenticated user can perform on this hackathon (register, unregister, switch mode, invite staff, list participants)."
+      tags: "Participation"
+    };
+  }
 }
 
 message ListTeamRolesRequest {}
@@ -219,4 +230,21 @@ message ConvertFromTeamParticipationRequest {
 
 message ConvertFromTeamParticipationResponse {
   HackathonParticipation participation = 1;
+}
+
+message GetParticipationPermissionsRequest {
+  string hackathon_id = 1;
+}
+
+message GetParticipationPermissionsResponse {
+  ParticipationPermissions permissions = 1;
+}
+
+message ParticipationPermissions {
+  bool register = 1;
+  bool unregister = 2;
+  bool switch_participation_mode = 3;
+  bool update_participation_profile = 4;
+  bool invite_staff = 5;
+  bool list_participants = 6;
 }

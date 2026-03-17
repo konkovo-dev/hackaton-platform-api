@@ -1,10 +1,11 @@
 package participation
 
 type Service struct {
-	participRepo ParticipationRepository
-	roleRepo     StaffRoleRepository
-	teamRoleRepo TeamRoleRepository
-	outboxRepo   OutboxRepository
+	participRepo    ParticipationRepository
+	roleRepo        StaffRoleRepository
+	teamRoleRepo    TeamRoleRepository
+	outboxRepo      OutboxRepository
+	hackathonClient HackathonClient
 }
 
 func NewService(
@@ -12,11 +13,13 @@ func NewService(
 	roleRepo StaffRoleRepository,
 	teamRoleRepo TeamRoleRepository,
 	outboxRepo OutboxRepository,
+	hackathonClient HackathonClient,
 ) *Service {
 	return &Service{
-		participRepo: participRepo,
-		roleRepo:     roleRepo,
-		teamRoleRepo: teamRoleRepo,
-		outboxRepo:   outboxRepo,
+		participRepo:    participRepo,
+		roleRepo:        roleRepo,
+		teamRoleRepo:    teamRoleRepo,
+		outboxRepo:      outboxRepo,
+		hackathonClient: hackathonClient,
 	}
 }

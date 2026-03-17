@@ -28,8 +28,9 @@ type RegisterOut struct {
 }
 
 type policyRepositoryAdapter struct {
-	roleRepo     StaffRoleRepository
-	participRepo ParticipationRepository
+	roleRepo        StaffRoleRepository
+	participRepo    ParticipationRepository
+	hackathonClient HackathonClient
 }
 
 func (a *policyRepositoryAdapter) GetRoleStrings(ctx context.Context, hackathonID, userID uuid.UUID) ([]string, error) {
@@ -38,6 +39,18 @@ func (a *policyRepositoryAdapter) GetRoleStrings(ctx context.Context, hackathonI
 
 func (a *policyRepositoryAdapter) GetParticipationStatus(ctx context.Context, hackathonID, userID uuid.UUID) (string, error) {
 	return a.participRepo.GetStatus(ctx, hackathonID, userID)
+}
+
+func (a *policyRepositoryAdapter) GetHackathonInfo(ctx context.Context, hackathonID uuid.UUID) (*participationpolicy.HackathonInfo, error) {
+	info, err := a.hackathonClient.GetHackathonInfo(ctx, hackathonID)
+	if err != nil {
+		return nil, err
+	}
+	return &participationpolicy.HackathonInfo{
+		Stage:           info.Stage,
+		AllowIndividual: info.AllowIndividual,
+		AllowTeam:       info.AllowTeam,
+	}, nil
 }
 
 func (s *Service) Register(ctx context.Context, in RegisterIn) (*RegisterOut, error) {
@@ -57,8 +70,9 @@ func (s *Service) Register(ctx context.Context, in RegisterIn) (*RegisterOut, er
 	}
 
 	adapter := &policyRepositoryAdapter{
-		roleRepo:     s.roleRepo,
-		participRepo: s.participRepo,
+		roleRepo:        s.roleRepo,
+		participRepo:    s.participRepo,
+		hackathonClient: s.hackathonClient,
 	}
 
 	registerPolicy := participationpolicy.NewRegisterForHackathonPolicy(adapter)

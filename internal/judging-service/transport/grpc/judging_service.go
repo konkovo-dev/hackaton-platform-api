@@ -251,6 +251,30 @@ func (s *JudgingServiceServer) GetMyEvaluationResult(ctx context.Context, req *j
 	}, nil
 }
 
+func (s *JudgingServiceServer) GetJudgingPermissions(ctx context.Context, req *judgingv1.GetJudgingPermissionsRequest) (*judgingv1.GetJudgingPermissionsResponse, error) {
+	hackathonID, err := uuid.Parse(req.HackathonId)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid hackathon_id")
+	}
+
+	out, err := s.service.GetJudgingPermissions(ctx, judging.GetJudgingPermissionsIn{
+		HackathonID: hackathonID,
+	})
+	if err != nil {
+		return nil, mapError(err)
+	}
+
+	return &judgingv1.GetJudgingPermissionsResponse{
+		Permissions: &judgingv1.JudgingPermissions{
+			ViewSubmissionEvaluations: out.ViewSubmissionEvaluations,
+			ViewMyJudgingAssignments:  out.ViewMyJudgingAssignments,
+			ViewLeaderboard:           out.ViewLeaderboard,
+			AssignJudging:             out.AssignJudging,
+			SubmitVerdict:             out.SubmitVerdict,
+		},
+	}, nil
+}
+
 func mapError(err error) error {
 	if err == nil {
 		return nil

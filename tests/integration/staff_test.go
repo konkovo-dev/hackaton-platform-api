@@ -385,3 +385,124 @@ func TestAcceptInvitationNotAddressedToYouShouldFail(t *testing.T) {
 	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/users/me/staff-invitations/%s/accept", invitationID), other.AccessToken, acceptBody)
 	assert.Equal(t, http.StatusForbidden, resp.StatusCode, "Should not allow accepting invitation not addressed to you: %s", string(body))
 }
+
+func TestListHackathonStaffInvitations(t *testing.T) {
+	tc := NewTestContext(t)
+	owner := tc.RegisterUser()
+	mentor1 := tc.RegisterUser()
+	mentor2 := tc.RegisterUser()
+
+	hackathonID := createAndPublishHackathon(tc, owner)
+
+	// Create first invitation
+	inviteBody1 := map[string]interface{}{
+		"target_user_id": mentor1.UserID,
+		"requested_role": "HX_ROLE_MENTOR",
+		"message":        "Join us as mentor!",
+	}
+	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff-invitations", hackathonID), owner.AccessToken, inviteBody1)
+	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to create first invitation: %s", string(body))
+
+	// Create second invitation
+	inviteBody2 := map[string]interface{}{
+		"target_user_id": mentor2.UserID,
+		"requested_role": "HX_ROLE_JUDGE",
+		"message":        "Join us as judge!",
+	}
+	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff-invitations", hackathonID), owner.AccessToken, inviteBody2)
+	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to create second invitation: %s", string(body))
+
+	// List invitations as owner
+	resp, body = tc.DoAuthenticatedRequest("GET", fmt.Sprintf("/v1/hackathons/%s/staff-invitations", hackathonID), owner.AccessToken, nil)
+	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to list invitations: %s", string(body))
+
+	data := tc.ParseJSON(body)
+	invitations, ok := data["invitations"].([]interface{})
+	require.True(t, ok, "Invitations array should be present")
+	assert.GreaterOrEqual(t, len(invitations), 2, "Should have at least 2 invitations")
+
+	// Verify invitation details
+	foundMentor := false
+	foundJudge := false
+	for _, inv := range invitations {
+		invitation := inv.(map[string]interface{})
+		assert.Equal(t, hackathonID, invitation["hackathonId"], "Hackathon ID should match")
+		assert.Equal(t, owner.UserID, invitation["createdByUserId"], "Creator should be owner")
+		assert.Equal(t, "STAFF_INVITATION_PENDING", invitation["status"], "Status should be pending")
+
+		if invitation["targetUserId"] == mentor1.UserID {
+			assert.Equal(t, "HX_ROLE_MENTOR", invitation["requestedRole"])
+			foundMentor = true
+		}
+		if invitation["targetUserId"] == mentor2.UserID {
+			assert.Equal(t, "HX_ROLE_JUDGE", invitation["requestedRole"])
+			foundJudge = true
+		}
+	}
+	assert.True(t, foundMentor, "Should find mentor invitation")
+	assert.True(t, foundJudge, "Should find judge invitation")
+}
+
+func TestListHackathonStaffInvitationsAsNonOwnerShouldFail(t *testing.T) {
+	tc := NewTestContext(t)
+	owner := tc.RegisterUser()
+	nonOwner := tc.RegisterUser()
+	mentor := tc.RegisterUser()
+
+	hackathonID := createAndPublishHackathon(tc, owner)
+
+	// Create invitation
+	inviteBody := map[string]interface{}{
+		"target_user_id": mentor.UserID,
+		"requested_role": "HX_ROLE_MENTOR",
+		"message":        "Join us!",
+	}
+	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff-invitations", hackathonID), owner.AccessToken, inviteBody)
+
+	// Try to list as non-owner
+	resp, body := tc.DoAuthenticatedRequest("GET", fmt.Sprintf("/v1/hackathons/%s/staff-invitations", hackathonID), nonOwner.AccessToken, nil)
+	assert.Equal(t, http.StatusForbidden, resp.StatusCode, "Non-owner should not list invitations: %s", string(body))
+}
+
+func TestListHackathonStaffInvitationsAsOrganizerShouldSucceed(t *testing.T) {
+	tc := NewTestContext(t)
+	owner := tc.RegisterUser()
+	organizer := tc.RegisterUser()
+	mentor := tc.RegisterUser()
+
+	hackathonID := createAndPublishHackathon(tc, owner)
+
+	// Invite organizer
+	inviteOrganizerBody := map[string]interface{}{
+		"target_user_id": organizer.UserID,
+		"requested_role": "HX_ROLE_ORGANIZER",
+		"message":        "Be our organizer!",
+	}
+	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff-invitations", hackathonID), owner.AccessToken, inviteOrganizerBody)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	inviteData := tc.ParseJSON(body)
+	organizerInvitationID := inviteData["invitationId"].(string)
+
+	// Accept organizer invitation
+	acceptBody := map[string]interface{}{}
+	resp, _ = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/users/me/staff-invitations/%s/accept", organizerInvitationID), organizer.AccessToken, acceptBody)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	// Create mentor invitation as owner
+	inviteMentorBody := map[string]interface{}{
+		"target_user_id": mentor.UserID,
+		"requested_role": "HX_ROLE_MENTOR",
+		"message":        "Join us!",
+	}
+	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/staff-invitations", hackathonID), owner.AccessToken, inviteMentorBody)
+
+	// List invitations as organizer - should succeed
+	resp, body = tc.DoAuthenticatedRequest("GET", fmt.Sprintf("/v1/hackathons/%s/staff-invitations", hackathonID), organizer.AccessToken, nil)
+	require.Equal(t, http.StatusOK, resp.StatusCode, "Organizer should be able to list invitations: %s", string(body))
+
+	data := tc.ParseJSON(body)
+	invitations, ok := data["invitations"].([]interface{})
+	require.True(t, ok, "Invitations array should be present")
+	assert.GreaterOrEqual(t, len(invitations), 2, "Should have at least 2 invitations (organizer + mentor)")
+}

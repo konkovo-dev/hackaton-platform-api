@@ -342,6 +342,38 @@
         ]
       }
     },
+    "/v1/hackathons/{hackathonId}/permissions": {
+      "get": {
+        "summary": "Get hackathon permissions",
+        "description": "Returns what actions the authenticated user can perform on this hackathon (manage, publish, announcements, task, result).",
+        "operationId": "HackathonService_GetHackathonPermissions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetHackathonPermissionsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Hackathons"
+        ]
+      }
+    },
     "/v1/hackathons/{hackathonId}/publish": {
       "post": {
         "summary": "Publish a hackathon",
@@ -817,6 +849,14 @@
       ],
       "default": "FILTER_OPERATION_UNSPECIFIED"
     },
+    "v1GetHackathonPermissionsResponse": {
+      "type": "object",
+      "properties": {
+        "permissions": {
+          "$ref": "#/definitions/v1HackathonPermissions"
+        }
+      }
+    },
     "v1GetHackathonResponse": {
       "type": "object",
       "properties": {
@@ -995,6 +1035,41 @@
         },
         "venue": {
           "type": "string"
+        }
+      }
+    },
+    "v1HackathonPermissions": {
+      "type": "object",
+      "properties": {
+        "manageHackathon": {
+          "type": "boolean"
+        },
+        "readDraft": {
+          "type": "boolean"
+        },
+        "publishHackathon": {
+          "type": "boolean"
+        },
+        "viewAnnouncements": {
+          "type": "boolean"
+        },
+        "createAnnouncement": {
+          "type": "boolean"
+        },
+        "readTask": {
+          "type": "boolean"
+        },
+        "viewResultPublic": {
+          "type": "boolean"
+        },
+        "readResultDraft": {
+          "type": "boolean"
+        },
+        "publishResult": {
+          "type": "boolean"
+        },
+        "updateResultDraft": {
+          "type": "boolean"
         }
       }
     },

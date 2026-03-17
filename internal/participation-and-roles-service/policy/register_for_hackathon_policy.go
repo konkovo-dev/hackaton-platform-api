@@ -21,6 +21,9 @@ type RegisterParticipationContext struct {
 	actorRoles              []string
 	actorParticipationKind  string
 	desiredStatus           string
+	hackathonStage          string
+	allowIndividual         bool
+	allowTeam               bool
 }
 
 func NewRegisterParticipationContext() *RegisterParticipationContext {
@@ -76,9 +79,40 @@ func (c *RegisterParticipationContext) DesiredStatus() string {
 	return c.desiredStatus
 }
 
+func (c *RegisterParticipationContext) SetHackathonStage(stage string) {
+	c.hackathonStage = stage
+}
+
+func (c *RegisterParticipationContext) HackathonStage() string {
+	return c.hackathonStage
+}
+
+func (c *RegisterParticipationContext) SetAllowIndividual(allow bool) {
+	c.allowIndividual = allow
+}
+
+func (c *RegisterParticipationContext) AllowIndividual() bool {
+	return c.allowIndividual
+}
+
+func (c *RegisterParticipationContext) SetAllowTeam(allow bool) {
+	c.allowTeam = allow
+}
+
+func (c *RegisterParticipationContext) AllowTeam() bool {
+	return c.allowTeam
+}
+
+type HackathonInfo struct {
+	Stage           string
+	AllowIndividual bool
+	AllowTeam       bool
+}
+
 type RegisterForHackathonRepositories interface {
 	GetRoleStrings(ctx context.Context, hackathonID, userID uuid.UUID) ([]string, error)
 	GetParticipationStatus(ctx context.Context, hackathonID, userID uuid.UUID) (string, error)
+	GetHackathonInfo(ctx context.Context, hackathonID uuid.UUID) (*HackathonInfo, error)
 }
 
 type RegisterForHackathonPolicy struct {
@@ -96,6 +130,15 @@ func NewRegisterForHackathonPolicy(repos RegisterForHackathonRepositories) *Regi
 func (p *RegisterForHackathonPolicy) LoadContext(ctx context.Context, params RegisterForHackathonParams) (policy.PolicyContext, error) {
 	pctx := NewRegisterParticipationContext()
 	pctx.SetDesiredStatus(params.DesiredStatus)
+
+	// Load hackathon info (stage, allow_individual, allow_team)
+	hackathonInfo, err := p.repos.GetHackathonInfo(ctx, params.HackathonID)
+	if err != nil {
+		return nil, err
+	}
+	pctx.SetHackathonStage(hackathonInfo.Stage)
+	pctx.SetAllowIndividual(hackathonInfo.AllowIndividual)
+	pctx.SetAllowTeam(hackathonInfo.AllowTeam)
 
 	userID, ok := auth.GetUserID(ctx)
 	if !ok {
@@ -135,6 +178,15 @@ func (p *RegisterForHackathonPolicy) Check(ctx context.Context, pctx policy.Poli
 		return decision
 	}
 
+	// Check ParticipationWriteWindow: stage must be REGISTRATION
+	if regCtx.HackathonStage() != "registration" {
+		decision.Deny(policy.Violation{
+			Code:    policy.ViolationCodeForbidden,
+			Message: "registration is only allowed during REGISTRATION stage",
+		})
+		return decision
+	}
+
 	if regCtx.ActorHasAnyStaffRole() {
 		decision.Deny(policy.Violation{
 			Code:    policy.ViolationCodeForbidden,
@@ -158,6 +210,24 @@ func (p *RegisterForHackathonPolicy) Check(ctx context.Context, pctx policy.Poli
 		decision.Deny(policy.Violation{
 			Code:    policy.ViolationCodePolicyRule,
 			Message: "can only register with INDIVIDUAL_ACTIVE or LOOKING_FOR_TEAM status",
+		})
+		return decision
+	}
+
+	// Check registration policy: if registering as INDIVIDUAL, allow_individual must be true
+	if desiredStatus == string(domain.ParticipationIndividual) && !regCtx.AllowIndividual() {
+		decision.Deny(policy.Violation{
+			Code:    policy.ViolationCodeForbidden,
+			Message: "individual registration is not allowed for this hackathon",
+		})
+		return decision
+	}
+
+	// Check registration policy: if registering as LOOKING_FOR_TEAM, allow_team must be true
+	if desiredStatus == string(domain.ParticipationLookingForTeam) && !regCtx.AllowTeam() {
+		decision.Deny(policy.Violation{
+			Code:    policy.ViolationCodeForbidden,
+			Message: "team registration is not allowed for this hackathon",
 		})
 		return decision
 	}

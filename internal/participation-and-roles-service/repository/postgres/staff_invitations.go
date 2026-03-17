@@ -161,3 +161,33 @@ func (r *StaffInvitationRepository) GetBasicInfo(ctx context.Context, id uuid.UU
 	}
 	return true, invitation.Status, invitation.TargetUserID, nil
 }
+
+func (r *StaffInvitationRepository) ListByHackathonID(ctx context.Context, hackathonID uuid.UUID, limit, offset int32) ([]*entity.StaffInvitation, error) {
+	rows, err := r.Queries().ListStaffInvitationsByHackathon(ctx, queries.ListStaffInvitationsByHackathonParams{
+		HackathonID: hackathonID,
+		Limit:       limit,
+		Offset:      offset,
+	})
+	if err != nil {
+		err = pgxutil.MapDBError(err)
+		return nil, fmt.Errorf("failed to list staff invitations by hackathon: %w", err)
+	}
+
+	invitations := make([]*entity.StaffInvitation, 0, len(rows))
+	for _, row := range rows {
+		invitations = append(invitations, &entity.StaffInvitation{
+			ID:              row.ID,
+			HackathonID:     row.HackathonID,
+			TargetUserID:    row.TargetUserID,
+			RequestedRole:   row.RequestedRole,
+			CreatedByUserID: row.CreatedByUserID,
+			Message:         row.Message,
+			Status:          row.Status,
+			CreatedAt:       row.CreatedAt,
+			UpdatedAt:       row.UpdatedAt,
+			ExpiresAt:       pgxutil.PgtypeTimestampToTimePtr(row.ExpiresAt),
+		})
+	}
+
+	return invitations, nil
+}

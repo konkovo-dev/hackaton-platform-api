@@ -42,3 +42,9 @@ SELECT * FROM participation_and_roles.staff_invitations
 WHERE hackathon_id = $1
 ORDER BY created_at DESC;
 
+-- name: ListStaffInvitationsByHackathon :many
+SELECT * FROM participation_and_roles.staff_invitations
+WHERE hackathon_id = $1
+ORDER BY created_at DESC
+LIMIT $2 OFFSET $3;
+

@@ -208,6 +208,38 @@
         ]
       }
     },
+    "/v1/hackathons/{hackathonId}/judging/permissions": {
+      "get": {
+        "summary": "Get judging permissions",
+        "description": "Returns what judging-related actions the authenticated user can perform on this hackathon (view evaluations, assign judges, submit verdict).",
+        "operationId": "JudgingService_GetJudgingPermissions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetJudgingPermissionsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hackathonId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Judging"
+        ]
+      }
+    },
     "/v1/hackathons/{hackathonId}/submissions/{submissionId}/evaluate": {
       "post": {
         "summary": "Submit evaluation",
@@ -570,6 +602,14 @@
       ],
       "default": "FILTER_OPERATION_UNSPECIFIED"
     },
+    "v1GetJudgingPermissionsResponse": {
+      "type": "object",
+      "properties": {
+        "permissions": {
+          "$ref": "#/definitions/v1JudgingPermissions"
+        }
+      }
+    },
     "v1GetLeaderboardResponse": {
       "type": "object",
       "properties": {
@@ -640,6 +680,26 @@
       "properties": {
         "key": {
           "type": "string"
+        }
+      }
+    },
+    "v1JudgingPermissions": {
+      "type": "object",
+      "properties": {
+        "viewSubmissionEvaluations": {
+          "type": "boolean"
+        },
+        "viewMyJudgingAssignments": {
+          "type": "boolean"
+        },
+        "viewLeaderboard": {
+          "type": "boolean"
+        },
+        "assignJudging": {
+          "type": "boolean"
+        },
+        "submitVerdict": {
+          "type": "boolean"
         }
       }
     },

@@ -186,6 +186,17 @@ service HackathonService {
       tags: "Hackathons"
     };
   }
+
+  rpc GetHackathonPermissions(GetHackathonPermissionsRequest) returns (GetHackathonPermissionsResponse) {
+    option (google.api.http) = {
+      get: "/v1/hackathons/{hackathon_id}/permissions"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get hackathon permissions"
+      description: "Returns what actions the authenticated user can perform on this hackathon (manage, publish, announcements, task, result)."
+      tags: "Hackathons"
+    };
+  }
 }
 
 // ─── Hackathon CRUD ───────────────────────────────────────────────────────────
@@ -339,3 +350,26 @@ message DeleteHackathonAnnouncementRequest {
 }
 
 message DeleteHackathonAnnouncementResponse {}
+
+// ─── Permissions ──────────────────────────────────────────────────────────────
+
+message GetHackathonPermissionsRequest {
+  string hackathon_id = 1;
+}
+
+message GetHackathonPermissionsResponse {
+  HackathonPermissions permissions = 1;
+}
+
+message HackathonPermissions {
+  bool manage_hackathon = 1;
+  bool read_draft = 2;
+  bool publish_hackathon = 3;
+  bool view_announcements = 4;
+  bool create_announcement = 5;
+  bool read_task = 6;
+  bool view_result_public = 7;
+  bool read_result_draft = 8;
+  bool publish_result = 9;
+  bool update_result_draft = 10;
+}

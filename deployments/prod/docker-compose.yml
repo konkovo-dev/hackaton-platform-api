@@ -208,6 +208,7 @@ services:
       AUTH_CLIENT_MAX_CACHE_TTL: 60s
       AUTH_CLIENT_CACHE_CLEANUP_INTERVAL: 1m
       HACKATHON_SERVICE_URL: hackaton-service:50052
+      HACKATHON_CLIENT_SERVICE_URL: hackaton-service:50052
       IDENTITY_SERVICE_URL: identity-service:50051
       IDENTITY_CLIENT_SERVICE_URL: identity-service:50051
       NATS_URL: nats://nats:4222

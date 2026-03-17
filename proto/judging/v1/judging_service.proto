@@ -100,6 +100,17 @@ service JudgingService {
       tags: "Judging"
     };
   }
+
+  rpc GetJudgingPermissions(GetJudgingPermissionsRequest) returns (GetJudgingPermissionsResponse) {
+    option (google.api.http) = {
+      get: "/v1/hackathons/{hackathon_id}/judging/permissions"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get judging permissions"
+      description: "Returns what judging-related actions the authenticated user can perform on this hackathon (view evaluations, assign judges, submit verdict)."
+      tags: "Judging"
+    };
+  }
 }
 
 // === Request/Response messages ===
@@ -182,4 +193,20 @@ message GetMyEvaluationResultRequest {
 
 message GetMyEvaluationResultResponse {
   EvaluationResult result = 1;
+}
+
+message GetJudgingPermissionsRequest {
+  string hackathon_id = 1;
+}
+
+message GetJudgingPermissionsResponse {
+  JudgingPermissions permissions = 1;
+}
+
+message JudgingPermissions {
+  bool view_submission_evaluations = 1;
+  bool view_my_judging_assignments = 2;
+  bool view_leaderboard = 3;
+  bool assign_judging = 4;
+  bool submit_verdict = 5;
 }
