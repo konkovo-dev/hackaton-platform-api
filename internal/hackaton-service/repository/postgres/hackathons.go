@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/domain"
 	"github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/domain/entity"
 	"github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/repository/postgres/queries"
 	"github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/usecase/hackathon"
@@ -80,7 +81,7 @@ func (r *HackathonRepository) GetByID(ctx context.Context, id uuid.UUID) (*entit
 		return nil, fmt.Errorf("failed to get hackathon: %w", err)
 	}
 
-	return &entity.Hackathon{
+	hackathon := &entity.Hackathon{
 		ID:                   row.ID,
 		Name:                 row.Name,
 		ShortDescription:     row.ShortDescription,
@@ -107,7 +108,12 @@ func (r *HackathonRepository) GetByID(ctx context.Context, id uuid.UUID) (*entit
 		AllowTeam:            row.AllowTeam,
 		CreatedAt:            row.CreatedAt,
 		UpdatedAt:            row.UpdatedAt,
-	}, nil
+	}
+
+	// Пересчитываем stage на основе текущего времени
+	hackathon.Stage = domain.ComputeStage(time.Now().UTC(), hackathon)
+
+	return hackathon, nil
 }
 
 func (r *HackathonRepository) Update(ctx context.Context, hackathon *entity.Hackathon) error {
@@ -212,6 +218,9 @@ func (r *HackathonRepository) List(ctx context.Context, params hackathon.ListHac
 		h.JudgingEndsAt = pgxutil.PgtypeTimestampToTimePtr(judgingEndsAt)
 		h.PublishedAt = pgxutil.PgtypeTimestampToTimePtr(publishedAt)
 		h.ResultPublishedAt = pgxutil.PgtypeTimestampToTimePtr(resultPublishedAt)
+
+		// Пересчитываем stage на основе текущего времени
+		h.Stage = domain.ComputeStage(time.Now().UTC(), &h)
 
 		hackathons = append(hackathons, &h)
 	}

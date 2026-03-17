@@ -565,12 +565,23 @@ func TestListHackathonsWithFilters(t *testing.T) {
 		},
 	})
 
+	// Update hackathon1 to RUNNING stage with proper dates
 	_, err := tc.DB.Exec(context.Background(), fmt.Sprintf(`
 		UPDATE %s 
-		SET starts_at = $1,
+		SET registration_opens_at = $1,
+		    registration_closes_at = $2,
+		    starts_at = $3,
+		    ends_at = $4,
+		    judging_ends_at = $5,
 		    stage = 'running'
-		WHERE id = $2
-	`, tc.HackathonDBName), now.Add(-1*time.Hour), hackathon1)
+		WHERE id = $6
+	`, tc.HackathonDBName), 
+		now.Add(-10*24*time.Hour),  // registration opened 10 days ago
+		now.Add(-5*24*time.Hour),   // registration closed 5 days ago
+		now.Add(-2*24*time.Hour),   // started 2 days ago
+		now.Add(3*24*time.Hour),    // ends in 3 days
+		now.Add(5*24*time.Hour),    // judging ends in 5 days
+		hackathon1)
 	require.NoError(tc.T, err, "Failed to update hackathon1 to RUNNING stage")
 
 	hackathon2 := createAndPublishHackathonCustom(tc, owner, map[string]interface{}{

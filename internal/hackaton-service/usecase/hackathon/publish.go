@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/domain"
-	"github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/domain/entity"
 	hackathonpolicy "github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/policy"
 	"github.com/google/uuid"
 )
@@ -54,7 +53,7 @@ func (s *Service) PublishHackathon(ctx context.Context, in PublishHackathonIn) (
 
 	hackathon.PublishedAt = &now
 	hackathon.State = string(domain.StatePublished)
-	hackathon.Stage = s.computeStage(now, hackathon)
+	hackathon.Stage = domain.ComputeStage(now, hackathon)
 
 	err = s.uow.Do(ctx, func(ctx context.Context, txRepos *TxRepositories) error {
 		return txRepos.Hackathons.Update(ctx, hackathon)
@@ -69,25 +68,3 @@ func (s *Service) PublishHackathon(ctx context.Context, in PublishHackathonIn) (
 	}, nil
 }
 
-func (s *Service) computeStage(now time.Time, hackathon *entity.Hackathon) string {
-	if hackathon.PublishedAt == nil {
-		return string(domain.StageDraft)
-	}
-
-	if hackathon.RegistrationOpensAt != nil && now.Before(*hackathon.RegistrationOpensAt) {
-		return string(domain.StageUpcoming)
-	}
-	if hackathon.RegistrationClosesAt != nil && now.Before(*hackathon.RegistrationClosesAt) {
-		return string(domain.StageRegistration)
-	}
-	if hackathon.StartsAt != nil && now.Before(*hackathon.StartsAt) {
-		return string(domain.StagePreStart)
-	}
-	if hackathon.EndsAt != nil && now.Before(*hackathon.EndsAt) {
-		return string(domain.StageRunning)
-	}
-	if hackathon.JudgingEndsAt != nil && now.Before(*hackathon.JudgingEndsAt) && hackathon.ResultPublishedAt == nil {
-		return string(domain.StageJudging)
-	}
-	return string(domain.StageFinished)
-}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/domain"
 	hackathonpolicy "github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/policy"
 	"github.com/google/uuid"
 )
@@ -47,7 +48,7 @@ func (s *Service) PublishResult(ctx context.Context, in PublishResultIn) (*Publi
 	hackathon.ResultPublishedAt = &now
 	hackathon.JudgingEndsAt = &now
 
-	hackathon.Stage = s.computeStage(now, hackathon)
+	hackathon.Stage = domain.ComputeStage(now, hackathon)
 
 	err = s.hackathonRepo.Update(ctx, hackathon)
 	if err != nil {
