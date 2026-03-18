@@ -59,7 +59,7 @@ func (s *Service) GetParticipationPermissions(ctx context.Context, in GetPartici
 	registerPolicy := policy.NewRegisterForHackathonPolicy(repos)
 	if pctx, err := registerPolicy.LoadContext(ctx, policy.RegisterForHackathonParams{
 		HackathonID:   in.HackathonID,
-		DesiredStatus: "PART_INDIVIDUAL", // dummy value for permission check
+		DesiredStatus: "individual", // dummy value for permission check
 	}); err == nil {
 		decision := registerPolicy.Check(ctx, pctx)
 		out.Register = decision.Allowed
@@ -78,7 +78,7 @@ func (s *Service) GetParticipationPermissions(ctx context.Context, in GetPartici
 	switchModePolicy := policy.NewSwitchParticipationModePolicy(repos)
 	if pctx, err := switchModePolicy.LoadContext(ctx, policy.SwitchParticipationModeParams{
 		HackathonID: in.HackathonID,
-		NewStatus:   "PART_LOOKING_FOR_TEAM", // dummy value
+		NewStatus:   "looking_for_team", // dummy value
 	}); err == nil {
 		decision := switchModePolicy.Check(ctx, pctx)
 		out.SwitchParticipationMode = decision.Allowed
@@ -98,7 +98,7 @@ func (s *Service) GetParticipationPermissions(ctx context.Context, in GetPartici
 	if pctx, err := inviteStaffPolicy.LoadContext(ctx, policy.CreateStaffInvitationParams{
 		HackathonID:   in.HackathonID,
 		TargetUserID:  uuid.New(), // dummy value
-		RequestedRole: "ROLE_ORGANIZER",
+		RequestedRole: "organizer",
 	}); err == nil {
 		decision := inviteStaffPolicy.Check(ctx, pctx)
 		out.InviteStaff = decision.Allowed
