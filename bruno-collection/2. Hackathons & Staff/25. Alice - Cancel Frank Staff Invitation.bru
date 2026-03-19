@@ -1,0 +1,46 @@
+meta {
+  name: 25. Alice - Cancel Frank Staff Invitation
+  type: http
+  seq: 25
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/staff-invitations/{{frankStaffInvitationId}}/cancel
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Staff invitation to Frank cancelled!');
+    console.log('Frank can no longer accept this invitation.');
+  }
+}
+
+docs {
+  # Alice - Cancel Frank Staff Invitation
+
+  Владелец отменяет ещё не принятое приглашение в сотрудники.
+
+  ## Что происходит:
+  - Приглашение переходит в статус cancelled
+  - Frank больше не может принять это приглашение
+  - Список сотрудников не изменился (Frank не был добавлен)
+
+  ## Требование ТЗ:
+  Управление сотрудниками, п.3: Отмена приглашения стать сотрудником.
+
+  ## Важно:
+  Используется frankStaffInvitationId из предыдущего шага (файл 24).
+
+  ## Environment:
+  - 👑 Owner (Alice)
+}

@@ -27,11 +27,21 @@ script:post-response {
   if (res.status === 200) {
     const vacancyId = res.body.vacancyId;
     bru.setEnvVar('daveVacancyId', vacancyId);
-    
     console.log('✅ Vacancy created!');
     console.log('Vacancy ID:', vacancyId);
     console.log('Slots: 2 open');
     console.log('Looking for: Frontend + Designer with React + TypeScript');
+  } else {
+    // Vacancy might already exist — get team details to find vacancy ID
+    const teamRes = await axios.get(
+      `${bru.getEnvVar('baseUrl')}/v1/hackathons/${bru.getEnvVar('hackathonId')}/teams/${bru.getEnvVar('daveTeamId')}?include_vacancies=true`,
+      { headers: { Authorization: `Bearer ${bru.getEnvVar('daveAccessToken')}` } }
+    );
+    const vacancies = teamRes.data.team?.vacancies || [];
+    if (vacancies.length > 0) {
+      bru.setEnvVar('daveVacancyId', vacancies[0].vacancyId);
+      console.log('ℹ️ Vacancy already exists. ID:', vacancies[0].vacancyId);
+    }
   }
 }
 

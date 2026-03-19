@@ -1,0 +1,48 @@
+meta {
+  name: 33. Frank - Leave Team
+  type: http
+  seq: 33
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/teams/{{daveTeamId}}/members/leave
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{frankAccessToken}}
+}
+
+body:json {
+  {}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Frank left the team!');
+    console.log('Frank is now LOOKING_FOR_TEAM again.');
+    console.log('slots_open in vacancy increased by 1.');
+  }
+}
+
+docs {
+  # Frank - Leave Team
+
+  Frank добровольно покидает команду AI Innovators.
+
+  ## Что происходит:
+  - Frank удаляется из состава команды
+  - Его статус меняется: TEAM_MEMBER → LOOKING_FOR_TEAM
+  - slots_open вакансии увеличивается на 1
+
+  ## Требование ТЗ:
+  Регистрация и команды, п.29: Выход из команды.
+
+  ## Важно:
+  - Только не-капитан может выйти сам
+  - Капитан должен передать капитанство перед выходом
+
+  ## Environment:
+  - 🎯 Team Member (Frank)
+}

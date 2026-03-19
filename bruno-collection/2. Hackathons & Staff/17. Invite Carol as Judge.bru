@@ -26,9 +26,11 @@ script:post-response {
   if (res.status === 200) {
     const data = res.body;
     bru.setEnvVar('carolInvitationId', data.invitationId);
-    
     console.log('✅ Invitation sent to Carol');
     console.log('Invitation ID:', data.invitationId);
+  } else {
+    // Carol may already be staff — log and continue
+    console.log('ℹ️ Could not invite Carol (status ' + res.status + '). She may already be a judge in this hackathon.');
   }
 }
 

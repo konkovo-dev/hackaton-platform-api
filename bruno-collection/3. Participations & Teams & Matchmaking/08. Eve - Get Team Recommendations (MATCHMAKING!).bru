@@ -17,31 +17,41 @@ auth:bearer {
 script:post-response {
   if (res.status === 200) {
     const recommendations = res.body.recommendations || [];
-    
-    console.log(`✅ Found ${recommendations.length} team recommendations`);
-    
+    console.log(`✅ Found ${recommendations.length} team recommendations for Eve`);
     if (recommendations.length > 0) {
       const top = recommendations[0];
       const score = top.matchScore;
-      
       console.log('\n🏆 TOP MATCH:');
       console.log('Team ID:', top.teamId);
       console.log('Total Score:', score.totalScore.toFixed(3));
-      
       console.log('\n📊 BREAKDOWN:');
       console.log(`Skills: ${score.skills.score.toFixed(2)} × ${score.skills.weight.toFixed(2)} = ${(score.skills.score * score.skills.weight).toFixed(3)}`);
-      console.log(`  Matched: ${score.skills.matchedSkills || []}`);
-      console.log(`  Count: ${score.skills.matchedCount}/${score.skills.requiredCount}`);
-      
       console.log(`Roles: ${score.roles.score.toFixed(2)} × ${score.roles.weight.toFixed(2)} = ${(score.roles.score * score.roles.weight).toFixed(3)}`);
-      console.log(`  Matched: ${score.roles.matchedRoles || []}`);
-      console.log(`  Count: ${score.roles.matchedCount}/${score.roles.requiredCount}`);
-      
       console.log(`Text: ${score.text.score.toFixed(2)} × ${score.text.weight.toFixed(2)} = ${(score.text.score * score.text.weight).toFixed(3)}`);
-      console.log(`  Keywords: ${score.text.matchedKeywords || []}`);
-      
       console.log('\n🎯 This is AI Innovators team - perfect match!');
     }
+  } else if (res.body && res.body.code === 9) {
+    // Eve already joined a team — show Frank's recommendations instead as fallback demo
+    console.log('ℹ️  Eve is already in AI Innovators team (she joined via this matchmaking!)');
+    console.log('📊 Showing Frank\'s recommendations as demo fallback...');
+    try {
+      const frankRes = await axios.get(
+        `${bru.getEnvVar('baseUrl')}/v1/hackathons/${bru.getEnvVar('hackathonId')}/matchmaking/teams?limit=10`,
+        { headers: { Authorization: `Bearer ${bru.getEnvVar('frankAccessToken')}` } }
+      );
+      const recs = frankRes.data.recommendations || [];
+      console.log(`\n✅ Frank found ${recs.length} team recommendation(s)`);
+      if (recs.length > 0) {
+        const top = recs[0];
+        const score = top.matchScore;
+        console.log('Total Score:', score.totalScore.toFixed(3));
+        console.log(`Skills: ${score.skills.score.toFixed(2)} × ${score.skills.weight.toFixed(2)}`);
+        console.log(`Roles:  ${score.roles.score.toFixed(2)} × ${score.roles.weight.toFixed(2)}`);
+        console.log(`Text:   ${score.text.score.toFixed(2)} × ${score.text.weight.toFixed(2)}`);
+      }
+    } catch(e) { console.log('Fallback failed:', e.message); }
+  } else {
+    console.log('❌ Error:', res.body);
   }
 }
 

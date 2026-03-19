@@ -1,0 +1,45 @@
+meta {
+  name: 32. Dave - Accept Frank 2nd Join Request
+  type: http
+  seq: 32
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/teams/{{daveTeamId}}/join-requests/{{frankJoinRequestId2}}/accept
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+body:json {
+  {}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Frank\'s join request ACCEPTED!');
+    console.log('Frank is now a TEAM_MEMBER of AI Innovators!');
+    console.log('Vacancy slots_open decreased by 1.');
+  }
+}
+
+docs {
+  # Dave - Accept Frank 2nd Join Request
+
+  Dave принимает заявку Frank — тот становится участником команды.
+
+  ## Что происходит:
+  - Frank добавляется в состав команды AI Innovators
+  - Его статус меняется: LOOKING_FOR_TEAM → TEAM_MEMBER
+  - slots_open вакансии уменьшается на 1
+  - Все остальные pending заявки Frank в этом хакатоне отменяются
+
+  ## Требование ТЗ:
+  Регистрация и команды, п.25: Принятие заявки в команду.
+
+  ## Environment:
+  - 👑 Captain (Dave)
+}

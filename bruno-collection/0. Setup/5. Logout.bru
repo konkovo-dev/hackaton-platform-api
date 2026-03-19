@@ -1,0 +1,40 @@
+meta {
+  name: 5. Logout
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/v1/auth/logout
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {
+    "refresh_token": "{{aliceRefreshToken}}"
+  }
+}
+
+docs {
+  # Logout
+
+  Завершение активной сессии — refresh_token отзывается.
+
+  ## Что происходит:
+  - Текущий refresh_token становится недействительным
+  - Последующий вызов /v1/auth/refresh с этим токеном вернёт ошибку
+
+  ## Требование ТЗ:
+  Функционал аутентификации, п.4: Выход.
+
+  ## Важно:
+  После logout нужно снова выполнить Login Alice перед продолжением демо!
+
+  ## Environment:
+  - Demo (aliceAccessToken, aliceRefreshToken)
+}

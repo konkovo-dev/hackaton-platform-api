@@ -26,10 +26,32 @@ script:post-response {
   if (res.status === 200) {
     const teamId = res.body.teamId;
     bru.setEnvVar('daveTeamId', teamId);
-    
     console.log('✅ Team created!');
     console.log('Team ID:', teamId);
     console.log('Dave is now TEAM_CAPTAIN! 👑');
+  } else {
+    // Dave is already captain — find his team via participation
+    const partRes = await axios.get(
+      `${bru.getEnvVar('baseUrl')}/v1/hackathons/${bru.getEnvVar('hackathonId')}/participations/me`,
+      { headers: { Authorization: `Bearer ${bru.getEnvVar('daveAccessToken')}` } }
+    );
+    const teamId = partRes.data.participation?.teamId;
+    if (teamId) {
+      bru.setEnvVar('daveTeamId', teamId);
+      console.log('ℹ️ Dave already captain. Team ID:', teamId);
+    } else {
+      // Fallback: list teams and take the first one
+      const teamsRes = await axios.post(
+        `${bru.getEnvVar('baseUrl')}/v1/hackathons/${bru.getEnvVar('hackathonId')}/teams/list`,
+        { include_vacancies: false },
+        { headers: { Authorization: `Bearer ${bru.getEnvVar('daveAccessToken')}` } }
+      );
+      const teams = teamsRes.data.teams || [];
+      if (teams.length > 0) {
+        bru.setEnvVar('daveTeamId', teams[0].teamId);
+        console.log('ℹ️ Dave already captain. Team ID (from list):', teams[0].teamId);
+      }
+    }
   }
 }
 

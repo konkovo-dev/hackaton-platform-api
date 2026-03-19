@@ -1,0 +1,66 @@
+meta {
+  name: 00. API - Transition to RUNNING
+  type: http
+  seq: 1
+}
+
+put {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {
+    "name": "AI Innovation Hackathon 2026",
+    "short_description": "Build the future with AI",
+    "description": "Join us for an exciting AI hackathon where teams compete to build innovative AI-powered solutions!",
+    "location": {"online": false, "city": "Moscow", "country": "Russia", "venue": "Digital October Center"},
+    "dates": {
+      "registration_opens_at": "2026-03-14T10:00:00Z",
+      "registration_closes_at": "2026-03-17T23:59:59Z",
+      "starts_at": "2026-03-18T10:00:00Z",
+      "ends_at": "2026-04-05T23:59:59Z",
+      "judging_ends_at": "2026-04-15T23:59:59Z"
+    },
+    "registration_policy": {"allow_individual": true, "allow_team": true},
+    "limits": {"team_size_max": 5}
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Hackathon dates updated — transitioning to RUNNING stage');
+    console.log('starts_at is now in the past → stage = RUNNING');
+    console.log('\nNow available:');
+    console.log('  ✅ Support system (messages, tickets)');
+    console.log('  ✅ Submissions (create, upload files)');
+  } else {
+    console.log('❌ Error:', res.body);
+  }
+}
+
+docs {
+  # API: Transition to RUNNING Stage
+
+  Переводим хакатон в стадию RUNNING через обновление дат по API.
+  (Заменяет ручной SQL-запрос)
+
+  ## Как работает:
+  - starts_at установлен в прошлое → стадия автоматически = RUNNING
+  - ends_at установлен в будущее → хакатон активен
+
+  ## Что становится доступным:
+  - ✅ Support system (чат, тикеты, менторы)
+  - ✅ Submissions (создание, загрузка файлов)
+
+  ## Требование ТЗ:
+  Действия на этапе Разработки (Running stage).
+
+  ## Environment:
+  - 👑 Owner (Alice)
+}

@@ -1,0 +1,54 @@
+meta {
+  name: 11. Dave - View My Evaluation Result
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/judging/my-result
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const result = res.body.result;
+    console.log('✅ Dave can now see his evaluation result!');
+    console.log('\n🏆 YOUR RESULT:');
+    console.log(`Title: ${result.title}`);
+    console.log(`Average Score: ${result.averageScore}/10`);
+    console.log(`Rank: #${result.rank}`);
+    console.log(`Evaluations: ${result.evaluationCount}`);
+    console.log('\n💬 Judge Comments:');
+    (result.comments || []).forEach((c, i) => {
+      console.log(`${i+1}. "${c}"`);
+    });
+  }
+}
+
+docs {
+  # Dave - View My Evaluation Result
+
+  После публикации результатов участник видит: оценку, место в рейтинге
+  и комментарии всех судей по его посылке.
+
+  ## Что показывает:
+  - **averageScore**: средний балл всех судей (0-10)
+  - **rank**: позиция команды в рейтинге
+  - **evaluationCount**: количество оценок
+  - **comments**: массив текстовых комментариев судей
+
+  ## Требование ТЗ:
+  Функционал судейства, п.7: Просмотр своего результата участником.
+
+  ## Важно:
+  Этот эндпоинт доступен ТОЛЬКО после публикации результатов (файл 10).
+  До публикации — ошибка 403.
+
+  ## Environment:
+  - 🎯 Team Captain (Dave)
+}

@@ -1,0 +1,65 @@
+meta {
+  name: 00. API - Transition to JUDGING
+  type: http
+  seq: 0
+}
+
+put {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {
+    "name": "AI Innovation Hackathon 2026",
+    "short_description": "Build the future with AI",
+    "description": "Join us for an exciting AI hackathon where teams compete to build innovative AI-powered solutions!",
+    "location": {"online": false, "city": "Moscow", "country": "Russia", "venue": "Digital October Center"},
+    "dates": {
+      "registration_opens_at": "2026-03-14T10:00:00Z",
+      "registration_closes_at": "2026-03-17T23:59:59Z",
+      "starts_at": "2026-03-18T10:00:00Z",
+      "ends_at": "2026-03-18T12:00:00Z",
+      "judging_ends_at": "2026-04-15T23:59:59Z"
+    },
+    "registration_policy": {"allow_individual": true, "allow_team": true},
+    "limits": {"team_size_max": 5}
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Hackathon dates updated — transitioning to JUDGING stage');
+    console.log('ends_at is now in the past → stage = JUDGING');
+    console.log('\nNow available:');
+    console.log('  ✅ Assign submissions to judges');
+    console.log('  ✅ Evaluate submissions');
+    console.log('  ✅ View leaderboard (staff only)');
+  } else {
+    console.log('❌ Error:', res.body);
+  }
+}
+
+docs {
+  # API: Transition to JUDGING Stage
+
+  Переводим хакатон в стадию JUDGING через обновление дат по API.
+  (Заменяет ручной SQL-запрос)
+
+  ## Как работает:
+  - ends_at установлен в прошлое → стадия = JUDGING
+  - judging_ends_at всё ещё в будущем → период оценивания активен
+
+  ## Что становится доступным:
+  - ✅ Assign submissions to judges
+  - ✅ Submit evaluations (score + comment)
+  - ✅ View leaderboard (staff only)
+
+  ## Environment:
+  - 👑 Owner (Alice)
+}

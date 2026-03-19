@@ -1,0 +1,49 @@
+meta {
+  name: 31. Frank - Create 2nd Join Request
+  type: http
+  seq: 31
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/teams/{{daveTeamId}}/join-requests
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{frankAccessToken}}
+}
+
+body:json {
+  {
+    "vacancy_id": "{{daveVacancyId}}",
+    "message": "Hi Dave! I know you rejected my first request, but I've reviewed the requirements more carefully. I have strong ML and Python skills that match your vacancy perfectly. Please give me a chance!"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setEnvVar('frankJoinRequestId2', res.body.requestId);
+    console.log('✅ Frank created 2nd join request!');
+    console.log('Request ID:', res.body.requestId);
+    console.log('Next: Dave accepts this request (file 32)');
+  }
+}
+
+docs {
+  # Frank - Create 2nd Join Request
+
+  Frank подаёт ВТОРУЮ заявку после того, как первая была отклонена.
+  Эта заявка будет ПРИНЯТА (в отличие от первой).
+
+  ## Зачем:
+  Демонстрируем полный цикл: создание → принятие заявки.
+  Первая заявка (файл 23) была отклонена — это демо отклонения.
+  Эта заявка будет принята — это демо принятия.
+
+  ## Требование ТЗ:
+  Регистрация и команды, п.21: Отправка заявки на вступление в команду.
+
+  ## Environment:
+  - 🎯 Participant (Frank)
+}

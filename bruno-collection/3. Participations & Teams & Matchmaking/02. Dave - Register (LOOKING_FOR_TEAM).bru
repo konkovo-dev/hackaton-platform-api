@@ -25,10 +25,18 @@ body:json {
 script:post-response {
   if (res.status === 200) {
     const participation = res.body.participation;
-    
     console.log('✅ Dave registered!');
     console.log('Status:', participation.status);
     console.log('Motivation saved for matchmaking!');
+  } else {
+    // Already registered — get existing participation
+    const partRes = await axios.get(
+      `${bru.getEnvVar('baseUrl')}/v1/hackathons/${bru.getEnvVar('hackathonId')}/participations/me`,
+      { headers: { Authorization: `Bearer ${bru.getEnvVar('daveAccessToken')}` } }
+    );
+    if (partRes.data.participation) {
+      console.log('ℹ️ Dave already registered. Status:', partRes.data.participation.status);
+    }
   }
 }
 

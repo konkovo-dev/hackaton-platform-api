@@ -1,0 +1,58 @@
+meta {
+  name: 26f. Dave - List All My Submissions
+  type: http
+  seq: 28
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/submissions/list
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{daveAccessToken}}
+}
+
+body:json {
+  {
+    "query": {
+      "page": {
+        "page_size": 20
+      }
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const submissions = res.body.submissions || [];
+    console.log(`✅ Dave has ${submissions.length} submission(s)`);
+    submissions.forEach((s, i) => {
+      const isFinal = s.isFinal ? '⭐ FINAL' : '';
+      console.log(`${i+1}. ${s.title} ${isFinal}`);
+      console.log(`   ID: ${s.submissionId}`);
+    });
+  }
+}
+
+docs {
+  # Dave - List All My Submissions
+
+  Просмотр всех посылок команды Dave в рамках текущего хакатона.
+
+  ## Что показывает:
+  - Все версии посылки (v1, v2...)
+  - Какая из них помечена как финальная (isFinal: true)
+  - ID каждой посылки
+
+  ## Требование ТЗ:
+  Функционал посылок, п.7: Просмотр списка своих посылок.
+
+  ## Важно:
+  Запрос возвращает ТОЛЬКО посылки этой команды (owner_kind=team).
+  Посылки других команд НЕ видны.
+
+  ## Environment:
+  - 🎯 Team Captain (Dave)
+}

@@ -1,0 +1,43 @@
+meta {
+  name: 4. Refresh Token
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/v1/auth/refresh
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "refresh_token": "{{aliceRefreshToken}}"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setEnvVar('aliceAccessToken', res.body.accessToken);
+    bru.setEnvVar('aliceRefreshToken', res.body.refreshToken);
+    console.log('✅ Token refreshed for Alice!');
+    console.log('New access token saved to aliceAccessToken');
+  }
+}
+
+docs {
+  # Refresh Token
+
+  Демонстрация обновления сессии без повторного входа.
+
+  ## Что происходит:
+  - Старый refresh_token обменивается на новую пару токенов
+  - Старый refresh_token становится недействительным (ротация)
+  - Новые токены сохраняются в environment
+
+  ## Требование ТЗ:
+  Функционал аутентификации, п.3: Обновление сессии.
+
+  ## Environment:
+  - Demo (используем aliceRefreshToken)
+}

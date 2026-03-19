@@ -26,9 +26,19 @@ script:post-response {
     const data = res.body;
     bru.setEnvVar('aliceAccessToken', data.accessToken);
     bru.setEnvVar('aliceRefreshToken', data.refreshToken);
-    
-    console.log('✅ Alice registered!');
+    console.log('✅ Alice registered and logged in!');
     console.log('Access Token:', data.accessToken.substring(0, 20) + '...');
+  } else {
+    // User already exists — fallback to login
+    const loginRes = await axios.post(`${bru.getEnvVar('baseUrl')}/v1/auth/login`, {
+      username: bru.getEnvVar('aliceUsername'),
+      password: bru.getEnvVar('alicePassword')
+    });
+    if (loginRes.data.accessToken) {
+      bru.setEnvVar('aliceAccessToken', loginRes.data.accessToken);
+      bru.setEnvVar('aliceRefreshToken', loginRes.data.refreshToken);
+      console.log('ℹ️ Alice already exists — logged in via fallback');
+    }
   }
 }
 

@@ -1,0 +1,54 @@
+meta {
+  name: 18b. Alice - Assign Ticket to Bob
+  type: http
+  seq: 19
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/support/tickets/{{teamTicketId}}/assign
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {
+    "mentor_user_id": "{{bobUserId}}"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Ticket assigned to Bob by Alice (Organizer)!');
+    console.log('Assigned at:', res.body.assignedAt);
+    console.log('Mentor:', res.body.assignedMentorUserId);
+  }
+}
+
+docs {
+  # Alice - Assign Ticket to Bob (Organizer action)
+
+  Организатор вручную назначает ментора к конкретному обращению.
+
+  ## Отличие от ClaimTicket:
+  - **ClaimTicket** (файл 08): ментор сам берёт тикет
+  - **AssignTicket** (этот файл): ОРГАНИЗАТОР назначает ментора
+
+  ## Что происходит:
+  - Тикет получает статус assigned
+  - Bob становится ответственным ментором
+  - В ленте участника появляется системное сообщение
+
+  ## Требование ТЗ:
+  Функционал поддержки, п.5: Назначение обращения ментору.
+
+  ## Важно:
+  Можно запустить ВМЕСТО файла 08 (ClaimTicket), а не после!
+  Оба показывают назначение, но разными способами.
+
+  ## Environment:
+  - 👑 Owner/Organizer (Alice)
+}

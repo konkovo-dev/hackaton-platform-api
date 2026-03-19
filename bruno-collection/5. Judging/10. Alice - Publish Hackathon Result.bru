@@ -1,0 +1,50 @@
+meta {
+  name: 10. Alice - Publish Hackathon Result
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/result/publish
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Hackathon result PUBLISHED!');
+    console.log('Participants can now see the result.');
+    console.log('result_published_at is set.');
+    console.log('Next: Dave views his personal result (file 11)');
+  }
+}
+
+docs {
+  # Alice - Publish Hackathon Result
+
+  Финальный шаг: публикация результатов хакатона.
+
+  ## Что происходит:
+  - Результат становится видимым для всех зарегистрированных пользователей
+  - Хакатон переходит в стадию Finished
+  - Поле result_published_at заполняется
+  - Участники получают доступ к GET /judging/my-result
+
+  ## Требование ТЗ:
+  Функционал хакатона, п.10: Управление результатом — публикация.
+
+  ## После публикации:
+  - Dave может видеть свой результат (файл 11)
+  - GET /hackathons/{id}/result возвращает опубликованный текст
+
+  ## Environment:
+  - 👑 Owner (Alice)
+}

@@ -1,0 +1,56 @@
+meta {
+  name: 14a_put. Alice - Upload Avatar to MinIO
+  type: http
+  seq: 14.15
+}
+
+put {
+  url: {{aliceAvatarUploadUrl}}
+  body: file
+  auth: none
+}
+
+headers {
+  Content-Type: image/jpeg
+}
+
+body:file {
+  @file(../avatar.jpg)
+}
+
+script:pre-request {
+  const url = bru.getEnvVar('aliceAvatarUploadUrl');
+  if (!url) {
+    throw new Error('❌ aliceAvatarUploadUrl not set! Run запрос 14a first');
+  }
+  console.log('📤 Uploading avatar.jpg to MinIO...');
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Avatar uploaded to MinIO!');
+    console.log('Next: Run запрос 14b to confirm and update profile');
+  } else {
+    console.log('❌ Upload failed. Status:', res.status);
+    console.log('Possible cause: presigned URL expired — re-run 14a');
+  }
+}
+
+docs {
+  # Alice - Upload Avatar to MinIO (Direct PUT)
+
+  PUT файла аватарки НАПРЯМУЮ в MinIO по presigned URL.
+
+  ## Настройка (один раз):
+  - Body → File → выбрать avatar.jpg из корня bruno-collection
+  - Header Content-Type: image/jpeg
+  - Auth: None (presigned URL самодостаточен)
+
+  ## Порядок:
+  1. 14a: Запросить presigned URL → сохраняет aliceAvatarUploadUrl
+  2. 14a_put: PUT файл в MinIO (этот запрос)
+  3. 14b: Подтвердить загрузку → аватарка обновится в профиле
+
+  ## Тестовый файл:
+  avatar.jpg в корне коллекции (284 байт, минимальный валидный JPEG).
+}

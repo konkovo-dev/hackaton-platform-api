@@ -1,0 +1,49 @@
+meta {
+  name: 24. Alice - Invite Frank as Organizer (to Cancel)
+  type: http
+  seq: 24
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/staff-invitations
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {
+    "target_user_id": "{{frankUserId}}",
+    "requested_role": "HX_ROLE_ORGANIZER",
+    "message": "Frank, would you like to join as an organizer? (demo of cancel invitation)"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setEnvVar('frankStaffInvitationId', res.body.invitationId);
+    console.log('✅ Invitation to Frank created');
+    console.log('Invitation ID:', res.body.invitationId);
+    console.log('Next: Cancel this invitation (file 25)');
+  }
+}
+
+docs {
+  # Alice - Invite Frank as Organizer (to Cancel)
+
+  Создаём приглашение Frank стать организатором — специально для того,
+  чтобы показать возможность ОТМЕНЫ приглашения.
+
+  ## Что будет дальше:
+  → Файл 25 отменяет это приглашение
+
+  ## Требование ТЗ:
+  Управление сотрудниками, п.2: Приглашение пользователя стать сотрудником.
+
+  ## Environment:
+  - 👑 Owner (Alice)
+  - Frank (frankUserId)
+}

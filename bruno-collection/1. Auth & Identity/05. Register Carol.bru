@@ -26,8 +26,18 @@ script:post-response {
     const data = res.body;
     bru.setEnvVar('carolAccessToken', data.accessToken);
     bru.setEnvVar('carolRefreshToken', data.refreshToken);
-    
-    console.log('✅ Carol registered!');
+    console.log('✅ Carol registered and logged in!');
+  } else {
+    // User already exists — fallback to login
+    const loginRes = await axios.post(`${bru.getEnvVar('baseUrl')}/v1/auth/login`, {
+      username: bru.getEnvVar('carolUsername'),
+      password: bru.getEnvVar('carolPassword')
+    });
+    if (loginRes.data.accessToken) {
+      bru.setEnvVar('carolAccessToken', loginRes.data.accessToken);
+      bru.setEnvVar('carolRefreshToken', loginRes.data.refreshToken);
+      console.log('ℹ️ Carol already exists — logged in via fallback');
+    }
   }
 }
 

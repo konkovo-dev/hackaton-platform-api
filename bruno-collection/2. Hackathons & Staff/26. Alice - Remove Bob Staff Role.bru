@@ -1,0 +1,50 @@
+meta {
+  name: 26. Alice - Remove Bob Staff Role
+  type: http
+  seq: 26
+}
+
+post {
+  url: {{baseUrl}}/v1/hackathons/{{hackathonId}}/staff/removeRole
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{aliceAccessToken}}
+}
+
+body:json {
+  {
+    "user_id": "{{bobUserId}}",
+    "role": "HX_ROLE_MENTOR"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log('✅ Bob\'s MENTOR role removed!');
+    console.log('Bob is no longer a mentor of this hackathon.');
+  }
+}
+
+docs {
+  # Alice - Remove Bob Staff Role
+
+  Демонстрация снятия роли сотрудника владельцем хакатона.
+
+  ## Что происходит:
+  - Роль HX_ROLE_MENTOR снимается с Bob
+  - Bob теряет доступ к функциональности ментора
+  - Если у Bob была только эта роль — он выходит из состава сотрудников
+
+  ## Требование ТЗ:
+  Управление сотрудниками, п.4: Снятие роли сотрудника с другого пользователя.
+
+  ## Важно:
+  Только OWNER может снимать роли с других пользователей.
+  Нельзя снять роль OWNER.
+
+  ## Environment:
+  - 👑 Owner (Alice)
+}
