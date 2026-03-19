@@ -133,6 +133,12 @@ func (p *GetUserParticipationPolicy) LoadContext(ctx context.Context, params Get
 func (p *GetUserParticipationPolicy) Check(ctx context.Context, pctx *GetUserParticipationContext) *policy.Decision {
 	decision := policy.NewDecision()
 
+	// Allow service-to-service calls
+	if auth.IsServiceCall(ctx) {
+		decision.Allow()
+		return decision
+	}
+
 	if !pctx.IsAuthenticated() {
 		decision.Deny(policy.Violation{
 			Code:    policy.ViolationCodeForbidden,

@@ -25,13 +25,12 @@ func NewGRPCServer(
 
 	optionalMethods := []string{
 		"/hackathon.v1.HackathonService/ListHackathons",
+		"/hackathon.v1.HackathonService/GetHackathon",
 	}
 
 	internalMethods := []string{}
 
-	hybridMethods := []string{
-		"/hackathon.v1.HackathonService/GetHackathon",
-	}
+	hybridMethods := []string{}
 
 	serviceToken := env.GetEnv("SERVICE_AUTH_TOKEN", "")
 
