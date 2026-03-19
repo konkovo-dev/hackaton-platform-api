@@ -14,6 +14,7 @@ type Vacancy struct {
 	DesiredSkillIDs  []uuid.UUID
 	SlotsTotal       int64
 	SlotsOpen        int64
+	IsSystem         bool
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 }

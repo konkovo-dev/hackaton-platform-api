@@ -114,7 +114,9 @@ func (s *Service) ListTeams(ctx context.Context, in ListTeamsIn) (*ListTeamsOut,
 		}
 
 		for _, vacancy := range allVacancies {
-			vacanciesMap[vacancy.TeamID.String()] = append(vacanciesMap[vacancy.TeamID.String()], vacancy)
+			if !vacancy.IsSystem {
+				vacanciesMap[vacancy.TeamID.String()] = append(vacanciesMap[vacancy.TeamID.String()], vacancy)
+			}
 		}
 	}
 

@@ -35,7 +35,7 @@ func (s *Service) CreateTeamInvitation(ctx context.Context, in CreateTeamInvitat
 		return nil, ErrUnauthorized
 	}
 
-	stage, allowTeam, _, err := s.hackathonClient.GetHackathon(ctx, in.HackathonID.String())
+	stage, allowTeam, teamSizeMax, err := s.hackathonClient.GetHackathon(ctx, in.HackathonID.String())
 	if err != nil {
 		s.logger.Error("failed to get hackathon", "error", err)
 		return nil, fmt.Errorf("failed to get hackathon: %w", err)
@@ -52,7 +52,72 @@ func (s *Service) CreateTeamInvitation(ctx context.Context, in CreateTeamInvitat
 		return nil, fmt.Errorf("failed to check captain status: %w", err)
 	}
 
-	vacancy, err := s.vacancyRepo.GetByID(ctx, in.VacancyID)
+	vacancyID := in.VacancyID
+
+	if vacancyID == uuid.Nil {
+		membersCount, err := s.membershipRepo.CountMembers(ctx, in.TeamID)
+		if err != nil {
+			s.logger.Error("failed to count members", "error", err)
+			return nil, fmt.Errorf("failed to count members: %w", err)
+		}
+
+		allVacancies, err := s.vacancyRepo.GetByTeamID(ctx, in.TeamID)
+		if err != nil {
+			s.logger.Error("failed to get vacancies", "error", err)
+			return nil, fmt.Errorf("failed to get vacancies: %w", err)
+		}
+
+		var existingSystemVacancy *entity.Vacancy
+		var totalOpenSlots int64
+		for _, v := range allVacancies {
+			if v.IsSystem {
+				existingSystemVacancy = v
+			}
+			totalOpenSlots += v.SlotsOpen
+		}
+
+		if existingSystemVacancy != nil && existingSystemVacancy.SlotsOpen > 0 {
+			vacancyID = existingSystemVacancy.ID
+			s.logger.Info("reusing existing system vacancy",
+				"vacancy_id", vacancyID,
+				"slots_open", existingSystemVacancy.SlotsOpen,
+				"team_id", in.TeamID)
+		} else {
+			availableSlots := int64(teamSizeMax) - membersCount - totalOpenSlots
+			if availableSlots <= 0 {
+				return nil, fmt.Errorf("%w: no available slots in team (members: %d, open slots: %d, max: %d)",
+					ErrConflict, membersCount, totalOpenSlots, teamSizeMax)
+			}
+
+			now := time.Now().UTC()
+			systemVacancy := &entity.Vacancy{
+				ID:              uuid.New(),
+				TeamID:          in.TeamID,
+				Description:     "",
+				DesiredRoleIDs:  []uuid.UUID{},
+				DesiredSkillIDs: []uuid.UUID{},
+				SlotsTotal:      availableSlots,
+				SlotsOpen:       availableSlots,
+				IsSystem:        true,
+				CreatedAt:       now,
+				UpdatedAt:       now,
+			}
+
+			if err := s.vacancyRepo.Create(ctx, systemVacancy); err != nil {
+				s.logger.Error("failed to create system vacancy", "error", err)
+				return nil, fmt.Errorf("failed to create system vacancy: %w", err)
+			}
+
+			s.logger.Info("created virtual system vacancy on-the-fly",
+				"vacancy_id", systemVacancy.ID,
+				"available_slots", availableSlots,
+				"team_id", in.TeamID)
+
+			vacancyID = systemVacancy.ID
+		}
+	}
+
+	vacancy, err := s.vacancyRepo.GetByID(ctx, vacancyID)
 	if err != nil {
 		return nil, fmt.Errorf("%w: vacancy not found", ErrBadRequest)
 	}
@@ -106,7 +171,7 @@ func (s *Service) CreateTeamInvitation(ctx context.Context, in CreateTeamInvitat
 		ID:              invitationID,
 		HackathonID:     in.HackathonID,
 		TeamID:          team.ID,
-		VacancyID:       in.VacancyID,
+		VacancyID:       vacancyID,
 		TargetUserID:    in.TargetUserID,
 		CreatedByUserID: userUUID,
 		Message:         in.Message,

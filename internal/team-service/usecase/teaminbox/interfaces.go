@@ -22,6 +22,8 @@ type TeamInvitationRepository interface {
 
 type VacancyRepository interface {
 	GetByID(ctx context.Context, vacancyID uuid.UUID) (*entity.Vacancy, error)
+	GetByTeamID(ctx context.Context, teamID uuid.UUID) ([]*entity.Vacancy, error)
+	Create(ctx context.Context, vacancy *entity.Vacancy) error
 	DecrementSlotsOpen(ctx context.Context, vacancyID uuid.UUID) error
 }
 
@@ -32,6 +34,7 @@ type TeamRepository interface {
 type MembershipRepository interface {
 	Create(ctx context.Context, membership *entity.Membership) error
 	CheckIsCaptain(ctx context.Context, teamID, userID uuid.UUID) (bool, error)
+	CountMembers(ctx context.Context, teamID uuid.UUID) (int64, error)
 }
 
 type JoinRequestRepository interface {

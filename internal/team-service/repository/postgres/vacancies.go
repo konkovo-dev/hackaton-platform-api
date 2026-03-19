@@ -40,6 +40,7 @@ func (r *VacancyRepository) GetByTeamIDs(ctx context.Context, teamIDs []uuid.UUI
 			DesiredSkillIDs: row.DesiredSkillIds,
 			SlotsTotal:      row.SlotsTotal,
 			SlotsOpen:       row.SlotsOpen,
+			IsSystem:        row.IsSystem,
 			CreatedAt:       row.CreatedAt,
 			UpdatedAt:       row.UpdatedAt,
 		})
@@ -64,6 +65,7 @@ func (r *VacancyRepository) GetByTeamID(ctx context.Context, teamID uuid.UUID) (
 			DesiredSkillIDs: row.DesiredSkillIds,
 			SlotsTotal:      row.SlotsTotal,
 			SlotsOpen:       row.SlotsOpen,
+			IsSystem:        row.IsSystem,
 			CreatedAt:       row.CreatedAt,
 			UpdatedAt:       row.UpdatedAt,
 		})
@@ -87,6 +89,7 @@ func (r *VacancyRepository) GetByID(ctx context.Context, vacancyID uuid.UUID) (*
 		DesiredSkillIDs: row.DesiredSkillIds,
 		SlotsTotal:      row.SlotsTotal,
 		SlotsOpen:       row.SlotsOpen,
+		IsSystem:        row.IsSystem,
 		CreatedAt:       row.CreatedAt,
 		UpdatedAt:       row.UpdatedAt,
 	}, nil
@@ -101,6 +104,7 @@ func (r *VacancyRepository) Create(ctx context.Context, vacancy *entity.Vacancy)
 		DesiredSkillIds: vacancy.DesiredSkillIDs,
 		SlotsTotal:      vacancy.SlotsTotal,
 		SlotsOpen:       vacancy.SlotsOpen,
+		IsSystem:        vacancy.IsSystem,
 		CreatedAt:       vacancy.CreatedAt,
 		UpdatedAt:       vacancy.UpdatedAt,
 	})

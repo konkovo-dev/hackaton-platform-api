@@ -10,6 +10,7 @@ import (
 
 type VacancyRepository interface {
 	GetByID(ctx context.Context, vacancyID uuid.UUID) (*entity.Vacancy, error)
+	GetByTeamID(ctx context.Context, teamID uuid.UUID) ([]*entity.Vacancy, error)
 	Create(ctx context.Context, vacancy *entity.Vacancy) error
 	Update(ctx context.Context, vacancy *entity.Vacancy) error
 	CountOccupiedSlots(ctx context.Context, vacancyID uuid.UUID) (int64, error)

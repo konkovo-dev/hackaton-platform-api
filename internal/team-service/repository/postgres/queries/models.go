@@ -88,4 +88,5 @@ type TeamVacancy struct {
 	SlotsOpen       int64       `json:"slots_open"`
 	CreatedAt       time.Time   `json:"created_at"`
 	UpdatedAt       time.Time   `json:"updated_at"`
+	IsSystem        bool        `json:"is_system"`
 }

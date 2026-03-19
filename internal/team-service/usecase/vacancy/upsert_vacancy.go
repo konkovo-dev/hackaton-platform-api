@@ -147,6 +147,7 @@ func (s *Service) UpsertVacancy(ctx context.Context, in UpsertVacancyIn) (*Upser
 		DesiredSkillIDs: in.DesiredSkillIDs,
 		SlotsTotal:      in.SlotsTotal,
 		SlotsOpen:       slotsOpen,
+		IsSystem:        false,
 		CreatedAt:       now,
 		UpdatedAt:       now,
 	}

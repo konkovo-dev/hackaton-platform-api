@@ -2197,3 +2197,205 @@ func getParticipation(tc *TestContext, hackathonID string, user *UserCredentials
 	data := tc.ParseJSON(body)
 	return data["participation"].(map[string]interface{})
 }
+
+func TestDefaultVacancy_NotCreatedUntilNeeded(t *testing.T) {
+	tc := NewTestContext(t)
+	owner := tc.RegisterUser()
+	captain := tc.RegisterUser()
+
+	hackathonID := createHackathonInRegistration(tc, owner)
+	registerParticipant(tc, hackathonID, captain, "PART_LOOKING_FOR_TEAM")
+
+	teamID := createTeam(tc, hackathonID, captain, "Test Team")
+
+	resp, body := tc.DoAuthenticatedRequest("GET", fmt.Sprintf("/v1/hackathons/%s/teams/%s?include_vacancies=true", hackathonID, teamID), captain.AccessToken, nil)
+	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to get team: %s", string(body))
+
+	data := tc.ParseJSON(body)
+	teamWithVacancies := data["team"].(map[string]interface{})
+	vacancies, ok := teamWithVacancies["vacancies"].([]interface{})
+	require.True(t, ok, "Vacancies should be present")
+
+	assert.Equal(t, 0, len(vacancies), "No vacancies should exist initially")
+
+	var vacancyCount int64
+	err := tc.TeamDB.QueryRow(context.Background(), `
+		SELECT COUNT(*) FROM team.vacancies 
+		WHERE team_id = $1
+	`, teamID).Scan(&vacancyCount)
+	require.NoError(t, err)
+	assert.Equal(t, int64(0), vacancyCount, "No vacancies should exist in database initially")
+}
+
+func TestDefaultVacancy_CreatedOnTheFlyWhenNeeded(t *testing.T) {
+	tc := NewTestContext(t)
+	owner := tc.RegisterUser()
+	captain := tc.RegisterUser()
+	member := tc.RegisterUser()
+
+	hackathonID := createHackathonInRegistration(tc, owner)
+	registerParticipant(tc, hackathonID, captain, "PART_LOOKING_FOR_TEAM")
+	registerParticipant(tc, hackathonID, member, "PART_INDIVIDUAL")
+
+	teamID := createTeam(tc, hackathonID, captain, "Test Team")
+
+	var vacancyCountBefore int64
+	err := tc.TeamDB.QueryRow(context.Background(), `
+		SELECT COUNT(*) FROM team.vacancies WHERE team_id = $1
+	`, teamID).Scan(&vacancyCountBefore)
+	require.NoError(t, err)
+	assert.Equal(t, int64(0), vacancyCountBefore, "No vacancies should exist before invitation")
+
+	inviteBody := map[string]interface{}{
+		"target_user_id": member.UserID,
+		"vacancy_id":     "00000000-0000-0000-0000-000000000000",
+		"message":        "Join us!",
+	}
+	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/teams/%s/team-invitations", hackathonID, teamID), captain.AccessToken, inviteBody)
+	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to create invitation: %s", string(body))
+
+	inviteData := tc.ParseJSON(body)
+	invitationID := inviteData["invitationId"].(string)
+	assert.NotEmpty(t, invitationID)
+
+	var vacancyID string
+	err = tc.TeamDB.QueryRow(context.Background(), `
+		SELECT vacancy_id FROM team.team_invitations 
+		WHERE id = $1
+	`, invitationID).Scan(&vacancyID)
+	require.NoError(t, err)
+
+	var isSystem bool
+	var slotsTotal int64
+	err = tc.TeamDB.QueryRow(context.Background(), `
+		SELECT is_system, slots_total FROM team.vacancies 
+		WHERE id = $1
+	`, vacancyID).Scan(&isSystem, &slotsTotal)
+	require.NoError(t, err)
+	assert.True(t, isSystem, "Invitation should use system vacancy created on-the-fly")
+	assert.Equal(t, int64(4), slotsTotal, "System vacancy should have 4 slots (team_size_max=5 - 1 member)")
+
+	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/users/me/team-invitations/%s/accept", invitationID), member.AccessToken, map[string]interface{}{})
+	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to accept invitation: %s", string(body))
+
+	time.Sleep(500 * time.Millisecond)
+
+	participation := getParticipation(tc, hackathonID, member)
+	assert.Equal(t, "PART_TEAM_MEMBER", participation["status"])
+	assert.Equal(t, teamID, participation["teamId"])
+
+	resp, body = tc.DoAuthenticatedRequest("GET", fmt.Sprintf("/v1/hackathons/%s/teams/%s?include_vacancies=true", hackathonID, teamID), captain.AccessToken, nil)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	data := tc.ParseJSON(body)
+	teamWithVacancies := data["team"].(map[string]interface{})
+	vacancies, ok := teamWithVacancies["vacancies"].([]interface{})
+	require.True(t, ok)
+
+	assert.Equal(t, 0, len(vacancies), "System vacancy should still be hidden even after being used")
+}
+
+func TestDefaultVacancy_CalculatesAvailableSlotsDynamically(t *testing.T) {
+	tc := NewTestContext(t)
+	owner := tc.RegisterUser()
+	captain := tc.RegisterUser()
+	member1 := tc.RegisterUser()
+	member2 := tc.RegisterUser()
+
+	hackathonID := createHackathonInRegistration(tc, owner)
+	registerParticipant(tc, hackathonID, captain, "PART_LOOKING_FOR_TEAM")
+	registerParticipant(tc, hackathonID, member1, "PART_INDIVIDUAL")
+	registerParticipant(tc, hackathonID, member2, "PART_INDIVIDUAL")
+
+	teamID := createTeam(tc, hackathonID, captain, "Test Team")
+
+	vacancyID := createVacancy(tc, hackathonID, teamID, captain, 2)
+	assert.NotEmpty(t, vacancyID)
+
+	inviteBody1 := map[string]interface{}{
+		"target_user_id": member1.UserID,
+		"vacancy_id":     "00000000-0000-0000-0000-000000000000",
+		"message":        "Join us!",
+	}
+	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/teams/%s/team-invitations", hackathonID, teamID), captain.AccessToken, inviteBody1)
+	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to create first invitation: %s", string(body))
+
+	var systemVacancySlots int64
+	err := tc.TeamDB.QueryRow(context.Background(), `
+		SELECT slots_total FROM team.vacancies 
+		WHERE team_id = $1 AND is_system = true
+	`, teamID).Scan(&systemVacancySlots)
+	require.NoError(t, err)
+	assert.Equal(t, int64(2), systemVacancySlots, "System vacancy should have 2 slots (team_size_max=5 - 1 member - 2 regular vacancy slots)")
+
+	inviteBody2 := map[string]interface{}{
+		"target_user_id": member2.UserID,
+		"vacancy_id":     "00000000-0000-0000-0000-000000000000",
+		"message":        "Join us too!",
+	}
+	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/teams/%s/team-invitations", hackathonID, teamID), captain.AccessToken, inviteBody2)
+	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to create second invitation: %s", string(body))
+
+	var totalCapacity int64
+	err = tc.TeamDB.QueryRow(context.Background(), `
+		SELECT 
+			(SELECT COUNT(*) FROM team.memberships WHERE team_id = $1) +
+			(SELECT COALESCE(SUM(slots_open), 0) FROM team.vacancies WHERE team_id = $1)
+	`, teamID).Scan(&totalCapacity)
+	require.NoError(t, err)
+	assert.LessOrEqual(t, totalCapacity, int64(5), "Total capacity should never exceed team_size_max")
+}
+
+func TestDefaultVacancy_WorksAfterDeletingRegularVacancy(t *testing.T) {
+	tc := NewTestContext(t)
+	owner := tc.RegisterUser()
+	captain := tc.RegisterUser()
+	member := tc.RegisterUser()
+
+	hackathonID := createHackathonInRegistration(tc, owner)
+	registerParticipant(tc, hackathonID, captain, "PART_LOOKING_FOR_TEAM")
+	registerParticipant(tc, hackathonID, member, "PART_INDIVIDUAL")
+
+	teamID := createTeam(tc, hackathonID, captain, "Test Team")
+
+	vacancyID := createVacancy(tc, hackathonID, teamID, captain, 3)
+	assert.NotEmpty(t, vacancyID)
+
+	inviteBody := map[string]interface{}{
+		"target_user_id": member.UserID,
+		"vacancy_id":     "00000000-0000-0000-0000-000000000000",
+		"message":        "Join us!",
+	}
+	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/teams/%s/team-invitations", hackathonID, teamID), captain.AccessToken, inviteBody)
+	require.Equal(t, http.StatusOK, resp.StatusCode, "Should create invitation with available slot: %s", string(body))
+
+	var systemVacancySlots int64
+	err := tc.TeamDB.QueryRow(context.Background(), `
+		SELECT slots_total FROM team.vacancies 
+		WHERE team_id = $1 AND is_system = true
+	`, teamID).Scan(&systemVacancySlots)
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), systemVacancySlots, "System vacancy should have 1 slot (team_size_max=5 - 1 member - 3 regular vacancy slots)")
+
+	_, err = tc.TeamDB.Exec(context.Background(), `DELETE FROM team.vacancies WHERE id = $1`, vacancyID)
+	require.NoError(t, err, "Should delete regular vacancy")
+
+	member2 := tc.RegisterUser()
+	registerParticipant(tc, hackathonID, member2, "PART_INDIVIDUAL")
+
+	inviteBody2 := map[string]interface{}{
+		"target_user_id": member2.UserID,
+		"vacancy_id":     "00000000-0000-0000-0000-000000000000",
+		"message":        "Join us after deletion!",
+	}
+	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/teams/%s/team-invitations", hackathonID, teamID), captain.AccessToken, inviteBody2)
+	require.Equal(t, http.StatusOK, resp.StatusCode, "Should create new system vacancy after regular vacancy deletion: %s", string(body))
+
+	var systemVacancyCount int64
+	err = tc.TeamDB.QueryRow(context.Background(), `
+		SELECT COUNT(*) FROM team.vacancies 
+		WHERE team_id = $1 AND is_system = true
+	`, teamID).Scan(&systemVacancyCount)
+	require.NoError(t, err)
+	assert.GreaterOrEqual(t, systemVacancyCount, int64(1), "Should have at least one system vacancy")
+}

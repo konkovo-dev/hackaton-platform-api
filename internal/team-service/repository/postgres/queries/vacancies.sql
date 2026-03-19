@@ -7,6 +7,7 @@ SELECT
     desired_skill_ids,
     slots_total,
     slots_open,
+    is_system,
     created_at,
     updated_at
 FROM team.vacancies
@@ -22,6 +23,7 @@ SELECT
     desired_skill_ids,
     slots_total,
     slots_open,
+    is_system,
     created_at,
     updated_at
 FROM team.vacancies
@@ -37,6 +39,7 @@ SELECT
     desired_skill_ids,
     slots_total,
     slots_open,
+    is_system,
     created_at,
     updated_at
 FROM team.vacancies
@@ -51,10 +54,11 @@ INSERT INTO team.vacancies (
     desired_skill_ids,
     slots_total,
     slots_open,
+    is_system,
     created_at,
     updated_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 )
 RETURNING
     id,
@@ -64,6 +68,7 @@ RETURNING
     desired_skill_ids,
     slots_total,
     slots_open,
+    is_system,
     created_at,
     updated_at;
 
@@ -85,6 +90,7 @@ RETURNING
     desired_skill_ids,
     slots_total,
     slots_open,
+    is_system,
     created_at,
     updated_at;
 

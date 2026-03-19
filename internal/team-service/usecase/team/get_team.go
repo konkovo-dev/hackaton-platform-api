@@ -82,9 +82,19 @@ func (s *Service) GetTeam(ctx context.Context, in GetTeamIn) (*GetTeamOut, error
 		if err != nil {
 			return nil, fmt.Errorf("failed to get vacancies: %w", err)
 		}
-		out.Vacancies = vacancies
+		out.Vacancies = filterSystemVacancies(vacancies)
 	}
 
 	return out, nil
+}
+
+func filterSystemVacancies(vacancies []*entity.Vacancy) []*entity.Vacancy {
+	filtered := make([]*entity.Vacancy, 0, len(vacancies))
+	for _, v := range vacancies {
+		if !v.IsSystem {
+			filtered = append(filtered, v)
+		}
+	}
+	return filtered
 }
 

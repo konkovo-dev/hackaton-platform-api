@@ -110,6 +110,28 @@ func NewVacancyRepository(tx pgx.Tx) *VacancyRepository {
 	}
 }
 
+func (r *VacancyRepository) Create(ctx context.Context, vacancy *entity.Vacancy) error {
+	row, err := r.Queries().CreateVacancy(ctx, queries.CreateVacancyParams{
+		ID:              vacancy.ID,
+		TeamID:          vacancy.TeamID,
+		Description:     vacancy.Description,
+		DesiredRoleIds:  vacancy.DesiredRoleIDs,
+		DesiredSkillIds: vacancy.DesiredSkillIDs,
+		SlotsTotal:      vacancy.SlotsTotal,
+		SlotsOpen:       vacancy.SlotsOpen,
+		IsSystem:        vacancy.IsSystem,
+		CreatedAt:       vacancy.CreatedAt,
+		UpdatedAt:       vacancy.UpdatedAt,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create vacancy: %w", pgxutil.MapDBError(err))
+	}
+
+	vacancy.CreatedAt = row.CreatedAt
+	vacancy.UpdatedAt = row.UpdatedAt
+	return nil
+}
+
 func (r *VacancyRepository) IncrementSlotsOpen(ctx context.Context, vacancyID uuid.UUID) error {
 	err := r.Queries().IncrementSlotsOpen(ctx, vacancyID)
 	if err != nil {
