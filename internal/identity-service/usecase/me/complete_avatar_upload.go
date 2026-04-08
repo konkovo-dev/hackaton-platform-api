@@ -41,7 +41,7 @@ func (s *Service) CompleteAvatarUpload(ctx context.Context, in CompleteAvatarUpl
 	// Check if already completed
 	if upload.Status == "completed" {
 		// Generate public URL
-		avatarURL := fmt.Sprintf("https://%s/%s", s.s3Client.Config().PublicEndpoint, upload.StorageKey)
+		avatarURL := fmt.Sprintf("%s://%s/%s", s.s3Client.Config().Scheme(), s.s3Client.Config().PublicEndpoint, upload.StorageKey)
 		return &CompleteAvatarUploadOut{
 			AvatarURL: avatarURL,
 		}, nil
@@ -69,7 +69,7 @@ func (s *Service) CompleteAvatarUpload(ctx context.Context, in CompleteAvatarUpl
 	}
 
 	// Generate public URL
-	avatarURL := fmt.Sprintf("https://%s/%s", s.s3Client.Config().PublicEndpoint, upload.StorageKey)
+	avatarURL := fmt.Sprintf("%s://%s/%s", s.s3Client.Config().Scheme(), s.s3Client.Config().PublicEndpoint, upload.StorageKey)
 
 	// Update user's avatar_url
 	err = s.userRepo.UpdateAvatarURL(ctx, userUUID, avatarURL)

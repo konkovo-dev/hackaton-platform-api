@@ -39,6 +39,14 @@ func NewConfig() *Config {
 	}
 }
 
+// Scheme returns "https" if UseSSL is true, "http" otherwise.
+func (c *Config) Scheme() string {
+	if c.UseSSL {
+		return "https"
+	}
+	return "http"
+}
+
 func MustNewConfig() *Config {
 	cfg := NewConfig()
 
