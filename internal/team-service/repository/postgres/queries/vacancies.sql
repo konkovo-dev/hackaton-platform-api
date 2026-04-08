@@ -114,6 +114,6 @@ WHERE id = $1;
 -- name: IncrementSlotsOpen :exec
 UPDATE team.vacancies
 SET
-    slots_open = slots_open + 1,
+    slots_open = LEAST(slots_open + 1, slots_total),
     updated_at = NOW()
 WHERE id = $1;

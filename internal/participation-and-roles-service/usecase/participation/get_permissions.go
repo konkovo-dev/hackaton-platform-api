@@ -74,14 +74,17 @@ func (s *Service) GetParticipationPermissions(ctx context.Context, in GetPartici
 		out.Unregister = decision.Allowed
 	}
 
-	// Check switchParticipationMode
+	// Check switchParticipationMode.
+	// We only need to know if the user CAN switch at all (CanSwitch), not whether a
+	// specific target status differs from the current one (IsStatusDifferent).
+	// Using the full Check() with a hardcoded dummy target causes a false-negative
+	// when the user's current status equals the dummy value.
 	switchModePolicy := policy.NewSwitchParticipationModePolicy(repos)
 	if pctx, err := switchModePolicy.LoadContext(ctx, policy.SwitchParticipationModeParams{
 		HackathonID: in.HackathonID,
-		NewStatus:   "looking_for_team", // dummy value
+		NewStatus:   "individual", // value doesn't matter here — we check CanSwitch directly
 	}); err == nil {
-		decision := switchModePolicy.Check(ctx, pctx)
-		out.SwitchParticipationMode = decision.Allowed
+		out.SwitchParticipationMode = pctx.IsAuthenticated() && pctx.CanSwitch()
 	}
 
 	// Check updateParticipationProfile

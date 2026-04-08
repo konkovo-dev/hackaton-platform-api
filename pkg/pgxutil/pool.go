@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -19,6 +21,13 @@ func NewPool(ctx context.Context, cfg *Config) (*pgxpool.Pool, error) {
 	poolConfig.MaxConnLifetime = cfg.MaxConnLifetime
 	poolConfig.MaxConnIdleTime = cfg.MaxConnIdleTime
 	poolConfig.HealthCheckPeriod = cfg.HealthCheckPeriod
+
+	// Register google/uuid so pgx can encode []uuid.UUID as uuid[] parameters.
+	poolConfig.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
+		conn.TypeMap().RegisterDefaultPgType(uuid.UUID{}, "uuid")
+		conn.TypeMap().RegisterDefaultPgType([]uuid.UUID{}, "_uuid")
+		return nil
+	}
 
 	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {

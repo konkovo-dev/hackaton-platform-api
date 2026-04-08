@@ -48,6 +48,9 @@ func (s *HackathonService) handleError(ctx context.Context, err error, operation
 	case errors.Is(err, hackathon.ErrForbidden):
 		s.logger.WarnContext(ctx, operation, slog.String("error", err.Error()))
 		return status.Error(codes.PermissionDenied, err.Error())
+	case errors.Is(err, hackathon.ErrValidationFailed):
+		s.logger.WarnContext(ctx, operation, slog.String("error", err.Error()))
+		return status.Error(codes.InvalidArgument, err.Error())
 	case errors.Is(err, hackathon.ErrEmptyName),
 		errors.Is(err, hackathon.ErrEmptyShortDescription),
 		errors.Is(err, hackathon.ErrInvalidLocation),

@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/domain"
 	"github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/domain/entity"
 	hackathonpolicy "github.com/belikoooova/hackaton-platform-api/internal/hackaton-service/policy"
 	"github.com/google/uuid"
@@ -81,13 +82,18 @@ func (s *Service) UpdateHackathon(ctx context.Context, in UpdateHackathonIn) (*U
 		TeamSizeMax:          in.TeamSizeMax,
 		AllowIndividual:      in.AllowIndividual,
 		AllowTeam:            in.AllowTeam,
-		Stage:                oldHackathon.Stage,
+		Stage:                oldHackathon.Stage, // recalculated below if published
 		State:                oldHackathon.State,
 		PublishedAt:          oldHackathon.PublishedAt,
 		Task:                 oldHackathon.Task,
 		Result:               oldHackathon.Result,
 		ResultPublishedAt:    oldHackathon.ResultPublishedAt,
 		CreatedAt:            oldHackathon.CreatedAt,
+	}
+
+	// Recalculate stage based on new timestamps (only relevant for published hackathons).
+	if newHackathon.PublishedAt != nil {
+		newHackathon.Stage = domain.ComputeStage(time.Now().UTC(), newHackathon)
 	}
 
 	err = s.uow.Do(ctx, func(ctx context.Context, txRepos *TxRepositories) error {

@@ -3,15 +3,21 @@ package sync
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
 
 	"github.com/belikoooova/hackaton-platform-api/internal/matchmaking-service/domain"
 	"github.com/belikoooova/hackaton-platform-api/internal/matchmaking-service/domain/entity"
+	pkgerrors "github.com/belikoooova/hackaton-platform-api/pkg/errors"
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 )
+
+func isNotFound(err error) bool {
+	return errors.Is(err, pkgerrors.ErrNotFound)
+}
 
 func parseUUIDs(ids []string) ([]uuid.UUID, error) {
 	result := make([]uuid.UUID, 0, len(ids))
@@ -123,6 +129,8 @@ type ParticipationTeamRemovedPayload struct {
 
 type UserRepository interface {
 	Upsert(ctx context.Context, user *entity.User) error
+	InsertStubIfNotExists(ctx context.Context, user *entity.User) error
+	UpdateSkills(ctx context.Context, userID uuid.UUID, catalogSkillIDs []uuid.UUID, customSkillNames []string, updatedAt time.Time) error
 }
 
 type ParticipationRepository interface {
@@ -181,17 +189,23 @@ func (h *UserSkillsUpdatedHandler) Handle(ctx context.Context, msg *nats.Msg) er
 		return fmt.Errorf("invalid catalog_skill_ids: %w", err)
 	}
 
-	user := &entity.User{
+	// Ensure user exists before updating skills.
+	// Skills events can arrive before participation events (NATS ordering is not guaranteed).
+	stub := &entity.User{
 		UserID:           userID,
-		Username:         payload.Username,
-		AvatarURL:        payload.AvatarURL,
-		CatalogSkillIDs:  catalogSkillIDs,
-		CustomSkillNames: payload.CustomSkillNames,
+		Username:         "",
+		AvatarURL:        "",
+		CatalogSkillIDs:  []uuid.UUID{},
+		CustomSkillNames: []string{},
 		UpdatedAt:        updatedAt,
 	}
+	if err := h.userRepo.InsertStubIfNotExists(ctx, stub); err != nil {
+		return fmt.Errorf("failed to ensure user exists: %w", err)
+	}
 
-	if err := h.userRepo.Upsert(ctx, user); err != nil {
-		return fmt.Errorf("failed to upsert user: %w", err)
+	// Update skills using text[]→uuid[] cast to avoid pgx encoding issues with []uuid.UUID.
+	if err := h.userRepo.UpdateSkills(ctx, userID, catalogSkillIDs, payload.CustomSkillNames, updatedAt); err != nil {
+		return fmt.Errorf("failed to update user skills: %w", err)
 	}
 
 	h.logger.InfoContext(ctx, "synced user skills",
@@ -438,8 +452,20 @@ func (h *VacancyCreatedHandler) Handle(ctx context.Context, msg *nats.Msg) error
 		UpdatedAt:       createdAt,
 	}
 
-	if err := h.vacancyRepo.Upsert(ctx, vacancy); err != nil {
-		return fmt.Errorf("failed to upsert vacancy: %w", err)
+	// Retry on not-found: team may not be synced yet (NATS ordering not guaranteed).
+	var upsertErr error
+	for attempt := 0; attempt < 5; attempt++ {
+		upsertErr = h.vacancyRepo.Upsert(ctx, vacancy)
+		if upsertErr == nil {
+			break
+		}
+		if !isNotFound(upsertErr) {
+			break
+		}
+		time.Sleep(time.Duration(attempt+1) * 200 * time.Millisecond)
+	}
+	if upsertErr != nil {
+		return fmt.Errorf("failed to upsert vacancy: %w", upsertErr)
 	}
 
 	h.logger.InfoContext(ctx, "synced vacancy created",
@@ -578,7 +604,8 @@ func (h *ParticipationRegisteredHandler) Handle(ctx context.Context, msg *nats.M
 		return fmt.Errorf("invalid wished_role_ids: %w", err)
 	}
 
-	// Ensure user exists in read-model (create stub if not)
+	// Ensure user exists in read-model — use insert-if-not-exists to avoid
+	// overwriting skills that were already synced from identity-service.
 	user := &entity.User{
 		UserID:           userID,
 		Username:         "",
@@ -587,8 +614,8 @@ func (h *ParticipationRegisteredHandler) Handle(ctx context.Context, msg *nats.M
 		CustomSkillNames: []string{},
 		UpdatedAt:        registeredAt,
 	}
-	if err := h.userRepo.Upsert(ctx, user); err != nil {
-		return fmt.Errorf("failed to upsert user: %w", err)
+	if err := h.userRepo.InsertStubIfNotExists(ctx, user); err != nil {
+		return fmt.Errorf("failed to insert user stub: %w", err)
 	}
 
 	participation := &entity.Participation{
