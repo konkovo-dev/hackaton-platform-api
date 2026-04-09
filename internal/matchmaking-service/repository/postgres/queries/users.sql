@@ -1,11 +1,3 @@
--- name: UpdateUserSkills :exec
-UPDATE matchmaking.users
-SET
-    catalog_skill_ids = $2::uuid[],
-    custom_skill_names = $3,
-    updated_at = $4
-WHERE user_id = $1;
-
 -- name: InsertUserStubIfNotExists :exec
 INSERT INTO matchmaking.users (
     user_id,
