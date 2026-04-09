@@ -152,6 +152,7 @@ services:
       S3_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
       S3_AVATARS_BUCKET: avatars
       S3_USE_SSL: ${MINIO_USE_SSL:-false}
+      S3_PUBLIC_READ: "true"
     depends_on:
       postgres:
         condition: service_healthy

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/minio/minio-go/v7"
@@ -65,7 +66,27 @@ func (c *Client) EnsureBucket(ctx context.Context, bucketName string) error {
 		}
 	}
 
+	if c.config.PublicRead {
+		if err := c.setPublicReadPolicy(ctx, bucketName); err != nil {
+			return fmt.Errorf("failed to set public read policy: %w", err)
+		}
+	}
+
 	return nil
+}
+
+// setPublicReadPolicy sets an S3 bucket policy that allows anonymous GET on all objects.
+func (c *Client) setPublicReadPolicy(ctx context.Context, bucketName string) error {
+	policy := strings.NewReplacer("BUCKET", bucketName).Replace(`{
+		"Version":"2012-10-17",
+		"Statement":[{
+			"Effect":"Allow",
+			"Principal":{"AWS":["*"]},
+			"Action":["s3:GetObject"],
+			"Resource":["arn:aws:s3:::BUCKET/*"]
+		}]
+	}`)
+	return c.client.SetBucketPolicy(ctx, bucketName, policy)
 }
 
 func (c *Client) GeneratePresignedPutURL(ctx context.Context, bucket, key string, expires time.Duration) (string, error) {

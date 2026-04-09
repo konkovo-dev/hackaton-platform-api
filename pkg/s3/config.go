@@ -14,6 +14,7 @@ type Config struct {
 	SecretAccessKey string
 	BucketName      string
 	UseSSL          bool
+	PublicRead      bool // if true, sets bucket policy to allow anonymous GET (for avatars)
 }
 
 func NewConfig() *Config {
@@ -36,6 +37,7 @@ func NewConfig() *Config {
 		SecretAccessKey: env.GetEnv("S3_SECRET_ACCESS_KEY", "minioadmin"),
 		BucketName:      bucketName,
 		UseSSL:          useSSL,
+		PublicRead:      env.GetEnv("S3_PUBLIC_READ", "false") == "true",
 	}
 }
 
