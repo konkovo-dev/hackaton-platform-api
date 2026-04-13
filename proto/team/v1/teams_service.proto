@@ -156,6 +156,7 @@ message GetTeamPermissionsResponse {
 message TeamPermissions {
   bool create_team = 1;
   TeamManagementPermissions can_in_my_team = 2;
+  bool can_select_final_submission = 3;
 }
 
 message TeamManagementPermissions {

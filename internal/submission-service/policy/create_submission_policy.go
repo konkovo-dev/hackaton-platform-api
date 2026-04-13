@@ -58,7 +58,9 @@ func (c *CreateSubmissionContext) IsStaff() bool {
 }
 
 func (c *CreateSubmissionContext) IsParticipant() bool {
-	return c.participationStatus == domain.ParticipationStatusActive
+	return c.participationStatus == "individual_active" ||
+		c.participationStatus == "team_member" ||
+		c.participationStatus == "team_captain"
 }
 
 type CreateSubmissionPolicy struct{}

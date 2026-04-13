@@ -27,7 +27,8 @@ func (a *API) GetTeamPermissions(ctx context.Context, req *teamv1.GetTeamPermiss
 
 	return &teamv1.GetTeamPermissionsResponse{
 		Permissions: &teamv1.TeamPermissions{
-			CreateTeam: out.CreateTeam,
+			CreateTeam:               out.CreateTeam,
+			CanSelectFinalSubmission: out.CanSelectFinalSubmission,
 			CanInMyTeam: &teamv1.TeamManagementPermissions{
 				EditTeam:           out.CanInMyTeam.EditTeam,
 				DeleteTeam:         out.CanInMyTeam.DeleteTeam,

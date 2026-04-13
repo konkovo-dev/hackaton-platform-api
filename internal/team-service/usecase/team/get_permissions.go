@@ -13,8 +13,9 @@ type GetTeamPermissionsIn struct {
 }
 
 type GetTeamPermissionsOut struct {
-	CreateTeam bool
-	CanInMyTeam struct {
+	CreateTeam               bool
+	CanSelectFinalSubmission bool
+	CanInMyTeam              struct {
 		EditTeam           bool
 		DeleteTeam         bool
 		ManageVacancies    bool
@@ -67,12 +68,16 @@ func (s *Service) GetTeamPermissions(ctx context.Context, in GetTeamPermissionsI
 	decision := createTeamPolicy.Check(ctx, createTeamCtx)
 	out.CreateTeam = decision.Allowed
 
+	isIndividual := participationStatus == "individual_active"
+	isTeamCaptain := participationStatus == "team_captain"
+	out.CanSelectFinalSubmission = (isIndividual || isTeamCaptain) && stage == "running"
+
 	// If user is in a team (team_member or team_captain), check team management permissions
 	isInTeam := participationStatus == "team_member" || participationStatus == "team_captain"
 	if isInTeam {
 		// Determine if user is captain
 		isCaptain := participationStatus == "team_captain"
-		
+
 		// For delete team check, we need members count
 		// We'll assume 1 member for captain-only check
 		membersCount := int64(1)
