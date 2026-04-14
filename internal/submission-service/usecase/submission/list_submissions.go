@@ -63,6 +63,11 @@ func (s *Service) ListSubmissions(ctx context.Context, in ListSubmissionsIn) (*L
 		return nil, ErrUnauthorized
 	}
 
+	stage, err := s.hackathonClient.GetHackathon(ctx, in.HackathonID.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get hackathon stage: %w", err)
+	}
+
 	actorUserID, _, roles, teamID, err := s.prClient.GetHackathonContext(ctx, in.HackathonID.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get hackathon context: %w", err)
@@ -109,6 +114,7 @@ func (s *Service) ListSubmissions(ctx context.Context, in ListSubmissionsIn) (*L
 	pctx.SetAuthenticated(true)
 	pctx.SetActorUserID(userUUID)
 	pctx.SetActorRoles(roles)
+	pctx.SetHackathonStage(stage)
 
 	decision := listPolicy.Check(ctx, pctx)
 	if !decision.Allowed {

@@ -21,6 +21,7 @@ type GetSubmissionContext struct {
 	authenticated  bool
 	actorUserID    uuid.UUID
 	actorRoles     []string
+	hackathonStage string
 	ownerKind      string
 	ownerID        uuid.UUID
 	actorOwnerKind string
@@ -47,6 +48,10 @@ func (c *GetSubmissionContext) SetActorRoles(roles []string) {
 	c.actorRoles = roles
 }
 
+func (c *GetSubmissionContext) SetHackathonStage(stage string) {
+	c.hackathonStage = stage
+}
+
 func (c *GetSubmissionContext) SetOwner(kind string, id uuid.UUID) {
 	c.ownerKind = kind
 	c.ownerID = id
@@ -68,6 +73,12 @@ func (c *GetSubmissionContext) IsStaff() bool {
 
 func (c *GetSubmissionContext) IsOwner() bool {
 	return c.ownerKind == c.actorOwnerKind && c.ownerID == c.actorOwnerID
+}
+
+func (c *GetSubmissionContext) IsReadWindowStage() bool {
+	return c.hackathonStage == domain.HackathonStageRunning ||
+		c.hackathonStage == domain.HackathonStageJudging ||
+		c.hackathonStage == domain.HackathonStageFinished
 }
 
 type GetSubmissionPolicy struct{}
@@ -94,6 +105,14 @@ func (p *GetSubmissionPolicy) Check(ctx context.Context, pctx *GetSubmissionCont
 		decision.Deny(policy.Violation{
 			Code:    policy.ViolationCodeForbidden,
 			Message: "user must be authenticated",
+		})
+		return decision
+	}
+
+	if !pctx.IsReadWindowStage() {
+		decision.Deny(policy.Violation{
+			Code:    policy.ViolationCodeStageRule,
+			Message: "submissions can only be viewed during RUNNING, JUDGING, or FINISHED stages",
 		})
 		return decision
 	}

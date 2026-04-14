@@ -21,6 +21,7 @@ type GetDownloadURLContext struct {
 	authenticated  bool
 	actorUserID    uuid.UUID
 	actorRoles     []string
+	hackathonStage string
 	ownerKind      string
 	ownerID        uuid.UUID
 	actorOwnerKind string
@@ -47,6 +48,10 @@ func (c *GetDownloadURLContext) SetActorRoles(roles []string) {
 	c.actorRoles = roles
 }
 
+func (c *GetDownloadURLContext) SetHackathonStage(stage string) {
+	c.hackathonStage = stage
+}
+
 func (c *GetDownloadURLContext) SetOwner(kind string, id uuid.UUID) {
 	c.ownerKind = kind
 	c.ownerID = id
@@ -68,6 +73,12 @@ func (c *GetDownloadURLContext) IsStaff() bool {
 
 func (c *GetDownloadURLContext) IsOwner() bool {
 	return c.ownerKind == c.actorOwnerKind && c.ownerID == c.actorOwnerID
+}
+
+func (c *GetDownloadURLContext) IsReadWindowStage() bool {
+	return c.hackathonStage == domain.HackathonStageRunning ||
+		c.hackathonStage == domain.HackathonStageJudging ||
+		c.hackathonStage == domain.HackathonStageFinished
 }
 
 type GetDownloadURLPolicy struct{}
@@ -94,6 +105,14 @@ func (p *GetDownloadURLPolicy) Check(ctx context.Context, pctx *GetDownloadURLCo
 		decision.Deny(policy.Violation{
 			Code:    policy.ViolationCodeForbidden,
 			Message: "user must be authenticated",
+		})
+		return decision
+	}
+
+	if !pctx.IsReadWindowStage() {
+		decision.Deny(policy.Violation{
+			Code:    policy.ViolationCodeStageRule,
+			Message: "download is only available during RUNNING, JUDGING, or FINISHED stages",
 		})
 		return decision
 	}

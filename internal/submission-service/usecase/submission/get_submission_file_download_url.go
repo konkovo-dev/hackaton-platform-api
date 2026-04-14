@@ -47,6 +47,11 @@ func (s *Service) GetSubmissionFileDownloadURL(ctx context.Context, in GetSubmis
 		return nil, fmt.Errorf("failed to get submission: %w", err)
 	}
 
+	stage, err := s.hackathonClient.GetHackathon(ctx, in.HackathonID.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get hackathon stage: %w", err)
+	}
+
 	_, _, roles, teamID, err := s.prClient.GetHackathonContext(ctx, in.HackathonID.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get hackathon context: %w", err)
@@ -79,6 +84,7 @@ func (s *Service) GetSubmissionFileDownloadURL(ctx context.Context, in GetSubmis
 	pctx.SetAuthenticated(true)
 	pctx.SetActorUserID(userUUID)
 	pctx.SetActorRoles(roles)
+	pctx.SetHackathonStage(stage)
 
 	decision := downloadPolicy.Check(ctx, pctx)
 	if !decision.Allowed {

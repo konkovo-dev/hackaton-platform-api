@@ -38,6 +38,11 @@ func (s *Service) GetFinalSubmission(ctx context.Context, in GetFinalSubmissionI
 		return nil, fmt.Errorf("failed to get final submission: %w", err)
 	}
 
+	stage, err := s.hackathonClient.GetHackathon(ctx, in.HackathonID.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get hackathon stage: %w", err)
+	}
+
 	_, _, roles, teamID, err := s.prClient.GetHackathonContext(ctx, in.HackathonID.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get hackathon context: %w", err)
@@ -70,6 +75,7 @@ func (s *Service) GetFinalSubmission(ctx context.Context, in GetFinalSubmissionI
 	pctx.SetAuthenticated(true)
 	pctx.SetActorUserID(userUUID)
 	pctx.SetActorRoles(roles)
+	pctx.SetHackathonStage(stage)
 
 	decision := getPolicy.Check(ctx, pctx)
 	if !decision.Allowed {
