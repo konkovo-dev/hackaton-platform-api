@@ -83,11 +83,16 @@ func (c *Client) GetHackathonContext(ctx context.Context, hackathonID string) (u
 
 	// Map participation status enum to string
 	switch resp.ParticipationStatus {
-	case participationandrolesv1.ParticipationStatus_PART_INDIVIDUAL,
-		participationandrolesv1.ParticipationStatus_PART_LOOKING_FOR_TEAM,
-		participationandrolesv1.ParticipationStatus_PART_TEAM_MEMBER,
-		participationandrolesv1.ParticipationStatus_PART_TEAM_CAPTAIN:
-		participationStatus = "active"
+	case participationandrolesv1.ParticipationStatus_PART_INDIVIDUAL:
+		participationStatus = "individual_active"
+	case participationandrolesv1.ParticipationStatus_PART_LOOKING_FOR_TEAM:
+		participationStatus = "looking_for_team"
+	case participationandrolesv1.ParticipationStatus_PART_TEAM_MEMBER:
+		participationStatus = "team_member"
+	case participationandrolesv1.ParticipationStatus_PART_TEAM_CAPTAIN:
+		participationStatus = "team_captain"
+	case participationandrolesv1.ParticipationStatus_PART_NONE:
+		participationStatus = "none"
 	default:
 		participationStatus = "none"
 	}
