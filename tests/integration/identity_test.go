@@ -511,6 +511,13 @@ func TestListUsersWithFilterSkills(t *testing.T) {
 				{
 					"filters": []map[string]interface{}{
 						{
+							"field":     "user_id",
+							"operation": "FILTER_OPERATION_IN",
+							"string_list": map[string]interface{}{
+								"values": []string{user2.UserID},
+							},
+						},
+						{
 							"field":        "skills",
 							"operation":    "FILTER_OPERATION_CONTAINS",
 							"string_value": "go",
@@ -519,7 +526,7 @@ func TestListUsersWithFilterSkills(t *testing.T) {
 				},
 			},
 			"page": map[string]interface{}{
-				"page_size": 200, // Increased page size
+				"page_size": 10,
 			},
 		},
 		"include_skills": true,

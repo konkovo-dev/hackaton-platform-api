@@ -116,9 +116,9 @@ func TestAvatarUpload_FullFlow(t *testing.T) {
 	// Step 1: Request avatar upload URL
 	idempotencyKey := fmt.Sprintf("avatar-upload-test-%d", time.Now().UnixNano())
 	reqBody := map[string]interface{}{
-		"filename":     "avatar.png",
-		"sizeBytes":    "1024",
-		"contentType":  "image/png",
+		"filename":    "avatar.png",
+		"sizeBytes":   "1024",
+		"contentType": "image/png",
 		"idempotencyKey": map[string]interface{}{
 			"key": idempotencyKey,
 		},
@@ -137,8 +137,11 @@ func TestAvatarUpload_FullFlow(t *testing.T) {
 	expiresAt, ok := uploadData["expiresAt"].(string)
 	require.True(t, ok && expiresAt != "", "Should return expiresAt")
 
-	// Verify presigned URL uses public endpoint
-	assert.Contains(t, uploadURL, "api.hackplatform.ru:9000", "Upload URL should use public endpoint")
+	expectedEndpoint := os.Getenv("S3_PUBLIC_ENDPOINT")
+	if expectedEndpoint == "" {
+		expectedEndpoint = "localhost:9000"
+	}
+	assert.Contains(t, uploadURL, expectedEndpoint, "Upload URL should use expected endpoint")
 
 	// Step 2: Upload file directly to MinIO (presigned URLs don't work in test environment)
 	fileContent := make([]byte, 1024)
@@ -278,8 +281,9 @@ func TestCompleteAvatarUpload_WithoutCreating_ShouldFail(t *testing.T) {
 	tc := NewTestContext(t)
 	user := tc.RegisterUser()
 
+	nonExistentUploadID := "00000000-0000-0000-0000-000000000001"
 	completeBody := map[string]interface{}{
-		"uploadId": "non-existent-upload-id",
+		"uploadId": nonExistentUploadID,
 		"idempotencyKey": map[string]interface{}{
 			"key": "avatar-complete-nonexistent-test",
 		},
@@ -287,7 +291,7 @@ func TestCompleteAvatarUpload_WithoutCreating_ShouldFail(t *testing.T) {
 
 	resp, body := tc.DoAuthenticatedRequest("POST", "/v1/users/me/avatar/complete", user.AccessToken, completeBody)
 	assert.Equal(t, http.StatusNotFound, resp.StatusCode,
-		"Should fail to complete non-existent upload: %s", string(body))
+		"Should fail to complete non-existent upload with 404: got %d, body: %s", resp.StatusCode, string(body))
 }
 
 func TestAvatarUpload_Idempotency(t *testing.T) {
@@ -326,5 +330,3 @@ func TestAvatarUpload_Idempotency(t *testing.T) {
 	// Should return the same upload ID
 	assert.Equal(t, uploadID1, uploadID2, "Idempotent requests should return same uploadId")
 }
-
-

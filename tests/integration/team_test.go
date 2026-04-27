@@ -1650,51 +1650,17 @@ func TestWriteOperations_OutsideRegistration_ShouldFail(t *testing.T) {
 	captain := tc.RegisterUser()
 	target := tc.RegisterUser()
 
-	hackathonBody := map[string]interface{}{
-		"name":              "Past Registration Hackathon",
-		"short_description": "Test",
-		"description":       "Test",
-		"location": map[string]interface{}{
-			"online": true,
-		},
-		"dates": map[string]interface{}{
-			"registration_opens_at":  time.Now().Add(-30 * 24 * time.Hour).Format(time.RFC3339), // 30 days ago
-			"registration_closes_at": time.Now().Add(-10 * 24 * time.Hour).Format(time.RFC3339), // 10 days ago (closed)
-			"starts_at":              time.Now().Add(-5 * 24 * time.Hour).Format(time.RFC3339),  // Started 5 days ago
-			"ends_at":                time.Now().Add(2 * 24 * time.Hour).Format(time.RFC3339),   // Ends in 2 days
-			"judging_ends_at":        time.Now().Add(5 * 24 * time.Hour).Format(time.RFC3339),
-		},
-		"registration_policy": map[string]interface{}{
-			"allow_individual": true,
-			"allow_team":       true,
-		},
-		"limits": map[string]interface{}{
-			"team_size_max": 5,
-		},
-	}
-
-	resp, body := tc.DoAuthenticatedRequest("POST", "/v1/hackathons", owner.AccessToken, hackathonBody)
-	require.Equal(t, http.StatusOK, resp.StatusCode)
-
-	data := tc.ParseJSON(body)
-	hackathonID := data["hackathonId"].(string)
-
-	tc.WaitForHackathonOwnerRole(hackathonID, owner.AccessToken)
-
-	taskBody := map[string]interface{}{
-		"task": "Build something",
-	}
-	tc.DoAuthenticatedRequest("PUT", fmt.Sprintf("/v1/hackathons/%s/task", hackathonID), owner.AccessToken, taskBody)
-	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/publish", hackathonID), owner.AccessToken, map[string]interface{}{})
-	time.Sleep(500 * time.Millisecond)
+	hackathonID := createHackathonInRegistration(tc, owner)
 
 	registerParticipant(tc, hackathonID, captain, "PART_LOOKING_FOR_TEAM")
 	registerParticipant(tc, hackathonID, target, "PART_INDIVIDUAL")
 
+	moveHackathonToRunningStage(tc, hackathonID)
+
 	teamBody := map[string]interface{}{
 		"name": "Test Team",
 	}
-	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/teams", hackathonID), captain.AccessToken, teamBody)
+	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/teams", hackathonID), captain.AccessToken, teamBody)
 	assert.NotEqual(t, http.StatusOK, resp.StatusCode, "Should not create team outside REGISTRATION: %s", string(body))
 
 	listBody := map[string]interface{}{}
@@ -1716,6 +1682,7 @@ func TestAllowTeamFalse_ShouldDenyWrites(t *testing.T) {
 	owner := tc.RegisterUser()
 	captain := tc.RegisterUser()
 
+	now := time.Now()
 	hackathonBody := map[string]interface{}{
 		"name":              "No Teams Hackathon",
 		"short_description": "Individual only",
@@ -1724,15 +1691,18 @@ func TestAllowTeamFalse_ShouldDenyWrites(t *testing.T) {
 			"online": true,
 		},
 		"dates": map[string]interface{}{
-			"registration_opens_at":  time.Now().Add(-24 * time.Hour).Format(time.RFC3339),
-			"registration_closes_at": time.Now().Add(15 * 24 * time.Hour).Format(time.RFC3339),
-			"starts_at":              time.Now().Add(20 * 24 * time.Hour).Format(time.RFC3339),
-			"ends_at":                time.Now().Add(22 * 24 * time.Hour).Format(time.RFC3339),
-			"judging_ends_at":        time.Now().Add(25 * 24 * time.Hour).Format(time.RFC3339),
+			"registration_opens_at":  now.Add(1 * time.Hour).Format(time.RFC3339),
+			"registration_closes_at": now.Add(15 * 24 * time.Hour).Format(time.RFC3339),
+			"starts_at":              now.Add(20 * 24 * time.Hour).Format(time.RFC3339),
+			"ends_at":                now.Add(22 * 24 * time.Hour).Format(time.RFC3339),
+			"judging_ends_at":        now.Add(25 * 24 * time.Hour).Format(time.RFC3339),
 		},
 		"registration_policy": map[string]interface{}{
 			"allow_individual": true,
 			"allow_team":       false, // Teams not allowed
+		},
+		"limits": map[string]interface{}{
+			"team_size_max": 5,
 		},
 	}
 
@@ -1747,8 +1717,20 @@ func TestAllowTeamFalse_ShouldDenyWrites(t *testing.T) {
 	taskBody := map[string]interface{}{
 		"task": "Build individually",
 	}
-	tc.DoAuthenticatedRequest("PUT", fmt.Sprintf("/v1/hackathons/%s/task", hackathonID), owner.AccessToken, taskBody)
-	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/publish", hackathonID), owner.AccessToken, map[string]interface{}{})
+	resp, body = tc.DoAuthenticatedRequest("PUT", fmt.Sprintf("/v1/hackathons/%s/task", hackathonID), owner.AccessToken, taskBody)
+	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to set task: %s", string(body))
+
+	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/publish", hackathonID), owner.AccessToken, map[string]interface{}{})
+	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to publish hackathon: %s", string(body))
+
+	// Update dates directly in DB to move to REGISTRATION stage
+	_, err := tc.DB.Exec(context.Background(), fmt.Sprintf(`
+		UPDATE %s 
+		SET registration_opens_at = $1
+		WHERE id = $2
+	`, tc.HackathonDBName), now.Add(-24*time.Hour), hackathonID)
+	require.NoError(t, err, "Failed to update hackathon dates in DB")
+
 	time.Sleep(500 * time.Millisecond)
 
 	registerParticipant(tc, hackathonID, captain, "PART_INDIVIDUAL")

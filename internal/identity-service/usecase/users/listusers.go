@@ -206,7 +206,7 @@ func (s *Service) matchesSkillFilter(skillName, filterValue string, operation co
 	case commonv1.FilterOperation_FILTER_OPERATION_EQUAL:
 		return skillNameLower == filterValueLower
 	case commonv1.FilterOperation_FILTER_OPERATION_CONTAINS:
-		return skillNameLower == filterValueLower
+		return strings.Contains(skillNameLower, filterValueLower)
 	case commonv1.FilterOperation_FILTER_OPERATION_PREFIX:
 		return strings.HasPrefix(skillNameLower, filterValueLower)
 	default:

@@ -373,8 +373,9 @@ func TestListHackathons(t *testing.T) {
 	tc := NewTestContext(t)
 	owner := tc.RegisterUser()
 
+	uniqueName := fmt.Sprintf("Public Hackathon Test %d", time.Now().UnixNano())
 	hackathonBody := map[string]interface{}{
-		"name":              "Public Hackathon",
+		"name":              uniqueName,
 		"short_description": "Test",
 		"description":       "Full description",
 		"location": map[string]interface{}{
@@ -403,11 +404,27 @@ func TestListHackathons(t *testing.T) {
 	taskBody := map[string]interface{}{
 		"task": "Build something cool",
 	}
-	tc.DoAuthenticatedRequest("PUT", fmt.Sprintf("/v1/hackathons/%s/task", hackathonID), owner.AccessToken, taskBody)
-	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/publish", hackathonID), owner.AccessToken, map[string]interface{}{})
+	resp, body = tc.DoAuthenticatedRequest("PUT", fmt.Sprintf("/v1/hackathons/%s/task", hackathonID), owner.AccessToken, taskBody)
+	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to set task: %s", string(body))
+
+	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/publish", hackathonID), owner.AccessToken, map[string]interface{}{})
+	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to publish hackathon: %s", string(body))
+
+	time.Sleep(1 * time.Second)
+
+	resp, body = tc.DoAuthenticatedRequest("GET", fmt.Sprintf("/v1/hackathons/%s", hackathonID), owner.AccessToken, nil)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+	hackathonData := tc.ParseJSON(body)
+	hackathon := hackathonData["hackathon"].(map[string]interface{})
+	require.Equal(t, "HACKATHON_STATE_PUBLISHED", hackathon["state"], "Hackathon should be published")
 
 	listBody := map[string]interface{}{
-		"pageSize": 10,
+		"query": map[string]interface{}{
+			"q": uniqueName,
+			"page": map[string]interface{}{
+				"page_size": 10,
+			},
+		},
 	}
 	resp, body = tc.DoRequest("POST", "/v1/hackathons/list", listBody, nil)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Failed to list hackathons: %s", string(body))
@@ -424,7 +441,7 @@ func TestListHackathons(t *testing.T) {
 			break
 		}
 	}
-	assert.True(t, found, "Published hackathon should appear in list")
+	assert.True(t, found, "Published hackathon should appear in list (found %d hackathons total)", len(hackathons))
 }
 
 func TestCreateHackathonAnnouncement(t *testing.T) {
@@ -451,7 +468,7 @@ func TestListHackathonAnnouncements(t *testing.T) {
 	owner := tc.RegisterUser()
 	participant := tc.RegisterUser()
 
-	hackathonID := createAndPublishHackathon(tc, owner)
+	hackathonID := createAndPublishHackathonForRegistration(tc, owner)
 
 	announcementBody := map[string]interface{}{
 		"title": "Test Announcement",
@@ -575,12 +592,12 @@ func TestListHackathonsWithFilters(t *testing.T) {
 		    judging_ends_at = $5,
 		    stage = 'running'
 		WHERE id = $6
-	`, tc.HackathonDBName), 
-		now.Add(-10*24*time.Hour),  // registration opened 10 days ago
-		now.Add(-5*24*time.Hour),   // registration closed 5 days ago
-		now.Add(-2*24*time.Hour),   // started 2 days ago
-		now.Add(3*24*time.Hour),    // ends in 3 days
-		now.Add(5*24*time.Hour),    // judging ends in 5 days
+	`, tc.HackathonDBName),
+		now.Add(-10*24*time.Hour), // registration opened 10 days ago
+		now.Add(-5*24*time.Hour),  // registration closed 5 days ago
+		now.Add(-2*24*time.Hour),  // started 2 days ago
+		now.Add(3*24*time.Hour),   // ends in 3 days
+		now.Add(5*24*time.Hour),   // judging ends in 5 days
 		hackathon1)
 	require.NoError(tc.T, err, "Failed to update hackathon1 to RUNNING stage")
 
@@ -1295,6 +1312,21 @@ func createAndPublishHackathonCustom(tc *TestContext, owner *UserCredentials, ha
 	tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/publish", hackathonID), owner.AccessToken, map[string]interface{}{})
 
 	time.Sleep(1 * time.Second)
+
+	return hackathonID
+}
+
+func createAndPublishHackathonForRegistration(tc *TestContext, owner *UserCredentials) string {
+	hackathonID := createAndPublishHackathon(tc, owner)
+
+	_, err := tc.DB.Exec(context.Background(), fmt.Sprintf(`
+		UPDATE %s
+		SET registration_opens_at = $1
+		WHERE id = $2
+	`, tc.HackathonDBName), time.Now().Add(-24*time.Hour), hackathonID)
+	require.NoError(tc.T, err, "Failed to update hackathon dates in DB")
+
+	time.Sleep(500 * time.Millisecond)
 
 	return hackathonID
 }

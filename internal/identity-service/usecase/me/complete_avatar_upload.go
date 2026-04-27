@@ -2,9 +2,11 @@ package me
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/belikoooova/hackaton-platform-api/pkg/auth"
+	pkgerrors "github.com/belikoooova/hackaton-platform-api/pkg/errors"
 	"github.com/google/uuid"
 )
 
@@ -30,6 +32,9 @@ func (s *Service) CompleteAvatarUpload(ctx context.Context, in CompleteAvatarUpl
 	// Get upload record
 	upload, err := s.avatarUploadRepo.GetAvatarUploadByID(ctx, in.UploadID)
 	if err != nil {
+		if errors.Is(err, pkgerrors.ErrNotFound) {
+			return nil, fmt.Errorf("%w: avatar upload not found", ErrUserNotFound)
+		}
 		return nil, fmt.Errorf("failed to get avatar upload: %w", err)
 	}
 

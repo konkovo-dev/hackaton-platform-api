@@ -59,6 +59,8 @@ func TestSendMessage_AsIndividualParticipant_ShouldCreateUserTicket(t *testing.T
 	hackathonID := createHackathonInRunning(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
 
+	moveHackathonToRunningStageForMentors(tc, hackathonID)
+
 	body := map[string]interface{}{
 		"text": "I need help with the API",
 	}
@@ -212,6 +214,8 @@ func TestSendMessage_SecondMessageToOpenTicket_ShouldReuseTicket(t *testing.T) {
 	hackathonID := createHackathonInRunning(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
 
+	moveHackathonToRunningStageForMentors(tc, hackathonID)
+
 	firstBody := map[string]interface{}{
 		"text": "First message",
 	}
@@ -294,6 +298,8 @@ func TestSendMessage_WithClientMessageID_ShouldBeIdempotent(t *testing.T) {
 	hackathonID := createHackathonInRunning(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
 
+	moveHackathonToRunningStageForMentors(tc, hackathonID)
+
 	clientMsgID := uuid.New().String()
 	body := map[string]interface{}{
 		"text":              "Test message",
@@ -347,6 +353,8 @@ func TestGetMyChatMessages_AsIndividualParticipant_ShouldReturnAllMessages(t *te
 
 	hackathonID := createHackathonInRunning(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+	moveHackathonToRunningStageForMentors(tc, hackathonID)
+
 	assignMentorRole(tc, hackathonID, mentor)
 
 	// Participant sends first message
@@ -439,6 +447,8 @@ func TestGetMyChatMessages_WithPagination_ShouldReturnCorrectly(t *testing.T) {
 	hackathonID := createHackathonInRunning(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
 
+	moveHackathonToRunningStageForMentors(tc, hackathonID)
+
 	// Send 10 messages to ensure we have enough for pagination
 	for i := 1; i <= 10; i++ {
 		sendMessage(tc, hackathonID, participant, fmt.Sprintf("Message %d", i))
@@ -511,6 +521,8 @@ func TestGetMyChatMessages_IncludesClosedTickets_ShouldReturnAll(t *testing.T) {
 
 	hackathonID := createHackathonInRunning(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+	moveHackathonToRunningStageForMentors(tc, hackathonID)
+
 	assignMentorRole(tc, hackathonID, mentor)
 
 	// First ticket
@@ -565,6 +577,8 @@ func TestGetTicketMessages_AsParticipant_ShouldFail(t *testing.T) {
 	hackathonID := createHackathonInRunning(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
 
+	moveHackathonToRunningStageForMentors(tc, hackathonID)
+
 	ticketID := sendMessage(tc, hackathonID, participant, "My message")
 	time.Sleep(200 * time.Millisecond)
 
@@ -587,6 +601,8 @@ func TestGetTicketMessages_AsUnassignedMentor_ShouldSucceed(t *testing.T) {
 
 	hackathonID := createHackathonInRunning(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+	moveHackathonToRunningStageForMentors(tc, hackathonID)
+
 	assignMentorRole(tc, hackathonID, mentor)
 
 	ticketID := sendMessage(tc, hackathonID, participant, "Private message")
@@ -618,6 +634,8 @@ func TestClaimTicket_AsMentor_ShouldAssignTicket(t *testing.T) {
 
 	hackathonID := createHackathonInRunning(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+	moveHackathonToRunningStageForMentors(tc, hackathonID)
+
 	assignMentorRole(tc, hackathonID, mentor)
 
 	ticketID := sendMessage(tc, hackathonID, participant, "Need help")
@@ -673,6 +691,8 @@ func TestClaimTicket_ParallelClaim_ShouldHaveOnlyOneWinner(t *testing.T) {
 
 	hackathonID := createHackathonInRunning(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+	moveHackathonToRunningStageForMentors(tc, hackathonID)
+
 	assignMentorRole(tc, hackathonID, mentor1)
 	assignMentorRole(tc, hackathonID, mentor2)
 
@@ -730,6 +750,8 @@ func TestClaimTicket_AsParticipant_ShouldFail(t *testing.T) {
 	hackathonID := createHackathonInRunning(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
 
+	moveHackathonToRunningStageForMentors(tc, hackathonID)
+
 	ticketID := sendMessage(tc, hackathonID, participant, "Need help")
 	time.Sleep(200 * time.Millisecond)
 
@@ -752,6 +774,8 @@ func TestClaimTicket_AlreadyClosed_ShouldFail(t *testing.T) {
 
 	hackathonID := createHackathonInRunning(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+	moveHackathonToRunningStageForMentors(tc, hackathonID)
+
 	assignMentorRole(tc, hackathonID, mentor)
 
 	ticketID := sendMessage(tc, hackathonID, participant, "Need help")
@@ -782,6 +806,8 @@ func TestReplyInTicket_UnassignedMentor_ShouldFail(t *testing.T) {
 
 	hackathonID := createHackathonInRunning(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+	moveHackathonToRunningStageForMentors(tc, hackathonID)
+
 	assignMentorRole(tc, hackathonID, mentor)
 
 	ticketID := sendMessage(tc, hackathonID, participant, "Need help")
@@ -810,6 +836,8 @@ func TestReplyInTicket_AssignedMentor_ShouldSucceed(t *testing.T) {
 
 	hackathonID := createHackathonInRunning(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+	moveHackathonToRunningStageForMentors(tc, hackathonID)
+
 	assignMentorRole(tc, hackathonID, mentor)
 
 	ticketID := sendMessage(tc, hackathonID, participant, "Need help")
@@ -853,6 +881,8 @@ func TestReplyInTicket_AsOrganizer_ShouldFail(t *testing.T) {
 	hackathonID := createHackathonInRunning(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
 
+	moveHackathonToRunningStageForMentors(tc, hackathonID)
+
 	ticketID := sendMessage(tc, hackathonID, participant, "Need help")
 	time.Sleep(200 * time.Millisecond)
 
@@ -879,6 +909,8 @@ func TestReplyInTicket_AsParticipant_ShouldFail(t *testing.T) {
 
 	hackathonID := createHackathonInRunning(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+	moveHackathonToRunningStageForMentors(tc, hackathonID)
+
 	assignMentorRole(tc, hackathonID, mentor)
 
 	ticketID := sendMessage(tc, hackathonID, participant, "Need help")
@@ -910,6 +942,8 @@ func TestReplyInTicket_WithClientMessageID_ShouldBeIdempotent(t *testing.T) {
 
 	hackathonID := createHackathonInRunning(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+	moveHackathonToRunningStageForMentors(tc, hackathonID)
+
 	assignMentorRole(tc, hackathonID, mentor)
 
 	ticketID := sendMessage(tc, hackathonID, participant, "Need help")
@@ -970,6 +1004,8 @@ func TestCloseTicket_AsAssignedMentor_ShouldCloseAndCreateSystemMessage(t *testi
 
 	hackathonID := createHackathonInRunning(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+	moveHackathonToRunningStageForMentors(tc, hackathonID)
+
 	assignMentorRole(tc, hackathonID, mentor)
 
 	ticketID := sendMessage(tc, hackathonID, participant, "Need help")
@@ -1049,6 +1085,8 @@ func TestCloseTicket_AsUnassignedMentor_ShouldFail(t *testing.T) {
 
 	hackathonID := createHackathonInRunning(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+	moveHackathonToRunningStageForMentors(tc, hackathonID)
+
 	assignMentorRole(tc, hackathonID, mentor)
 
 	ticketID := sendMessage(tc, hackathonID, participant, "Need help")
@@ -1073,6 +1111,8 @@ func TestCloseTicket_AsOrganizer_ShouldFail(t *testing.T) {
 	hackathonID := createHackathonInRunning(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
 
+	moveHackathonToRunningStageForMentors(tc, hackathonID)
+
 	ticketID := sendMessage(tc, hackathonID, participant, "Need help")
 	time.Sleep(200 * time.Millisecond)
 
@@ -1095,6 +1135,8 @@ func TestCloseTicket_Idempotent_ShouldReturnSuccessOnSecondCall(t *testing.T) {
 
 	hackathonID := createHackathonInRunning(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+	moveHackathonToRunningStageForMentors(tc, hackathonID)
+
 	assignMentorRole(tc, hackathonID, mentor)
 
 	ticketID := sendMessage(tc, hackathonID, participant, "Need help")
@@ -1141,6 +1183,8 @@ func TestSystemMessages_ClaimTicket_ShouldHaveNullAuthorUserId(t *testing.T) {
 
 	hackathonID := createHackathonInRunning(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+	moveHackathonToRunningStageForMentors(tc, hackathonID)
+
 	assignMentorRole(tc, hackathonID, mentor)
 
 	ticketID := sendMessage(tc, hackathonID, participant, "Need help")
@@ -1172,6 +1216,8 @@ func TestSystemMessages_AssignTicket_ShouldCreateSystemMessage(t *testing.T) {
 
 	hackathonID := createHackathonInRunning(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+	moveHackathonToRunningStageForMentors(tc, hackathonID)
+
 	assignMentorRole(tc, hackathonID, mentor)
 
 	ticketID := sendMessage(tc, hackathonID, participant, "Need help")
@@ -1215,6 +1261,8 @@ func TestSendMessage_AfterClose_ShouldCreateNewTicket(t *testing.T) {
 
 	hackathonID := createHackathonInRunning(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+	moveHackathonToRunningStageForMentors(tc, hackathonID)
+
 	assignMentorRole(tc, hackathonID, mentor)
 
 	firstTicketID := sendMessage(tc, hackathonID, participant, "First issue")
@@ -1267,6 +1315,8 @@ func TestListAssignedTickets_AsMentor_ShouldReturnOnlyAssignedTickets(t *testing
 	hackathonID := createHackathonInRunning(tc, owner)
 	registerParticipant(tc, hackathonID, participant1, "PART_INDIVIDUAL")
 	registerParticipant(tc, hackathonID, participant2, "PART_INDIVIDUAL")
+	moveHackathonToRunningStageForMentors(tc, hackathonID)
+
 	assignMentorRole(tc, hackathonID, mentor)
 
 	ticket1ID := sendMessage(tc, hackathonID, participant1, "Ticket 1")
@@ -1310,6 +1360,8 @@ func TestListAllTickets_AsOrganizer_ShouldReturnAllTickets(t *testing.T) {
 	hackathonID := createHackathonInRunning(tc, owner)
 	registerParticipant(tc, hackathonID, participant1, "PART_INDIVIDUAL")
 	registerParticipant(tc, hackathonID, participant2, "PART_INDIVIDUAL")
+	moveHackathonToRunningStageForMentors(tc, hackathonID)
+
 	assignMentorRole(tc, hackathonID, mentor)
 
 	ticket1ID := sendMessage(tc, hackathonID, participant1, "Ticket 1")
@@ -1368,6 +1420,8 @@ func TestListAllTickets_AsMentor_ShouldSucceed(t *testing.T) {
 
 	hackathonID := createHackathonInRunning(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+	moveHackathonToRunningStageForMentors(tc, hackathonID)
+
 	assignMentorRole(tc, hackathonID, mentor)
 
 	ticketID := sendMessage(tc, hackathonID, participant, "Test ticket")
@@ -1411,6 +1465,8 @@ func TestInvariant_OnlyOneOpenTicketPerOwner(t *testing.T) {
 	hackathonID := createHackathonInRunning(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
 
+	moveHackathonToRunningStageForMentors(tc, hackathonID)
+
 	for i := 1; i <= 3; i++ {
 		sendMessage(tc, hackathonID, participant, fmt.Sprintf("Message %d", i))
 		time.Sleep(100 * time.Millisecond)
@@ -1442,6 +1498,8 @@ func TestSendMessage_ParallelFirstMessages_ShouldCreateOnlyOneTicket(t *testing.
 
 	hackathonID := createHackathonInRunning(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+
+	moveHackathonToRunningStageForMentors(tc, hackathonID)
 
 	results := make(chan string, 5)
 
@@ -1631,13 +1689,18 @@ func transitionToRunning(tc *TestContext, hackathonID string, owner *UserCredent
 
 	_, err := tc.DB.Exec(context.Background(), fmt.Sprintf(`
 		UPDATE %s 
-		SET starts_at = $1,
-		    stage = 'running'
-		WHERE id = $2
-	`, tc.HackathonDBName), now.Add(-1*time.Hour), hackathonID)
+		SET registration_opens_at = $1,
+		    registration_closes_at = $2,
+		    starts_at = $3,
+		    ends_at = $4
+		WHERE id = $5
+	`, tc.HackathonDBName),
+		now.Add(-10*24*time.Hour), // registration opened 10 days ago
+		now.Add(-2*24*time.Hour),  // registration closed 2 days ago
+		now.Add(-1*24*time.Hour),  // started 1 day ago
+		now.Add(5*24*time.Hour),   // ends in 5 days
+		hackathonID)
 	require.NoError(tc.T, err, "Failed to update hackathon to RUNNING stage")
-
-	time.Sleep(500 * time.Millisecond)
 }
 
 func createHackathonInRunning(tc *TestContext, owner *UserCredentials) string {
@@ -1682,15 +1745,31 @@ func createHackathonInRunning(tc *TestContext, owner *UserCredentials) string {
 	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/publish", hackathonID), owner.AccessToken, map[string]interface{}{})
 	require.Equal(tc.T, http.StatusOK, resp.StatusCode, "Failed to publish hackathon: %s", string(body))
 
+	// First, put hackathon in REGISTRATION stage by setting registration_opens_at to past
 	_, err := tc.DB.Exec(context.Background(), fmt.Sprintf(`
 		UPDATE %s 
-		SET starts_at = $1,
-		    stage = 'running'
+		SET registration_opens_at = $1
 		WHERE id = $2
-	`, tc.HackathonDBName), now.Add(-1*time.Hour), hackathonID)
-	require.NoError(tc.T, err, "Failed to update hackathon to RUNNING stage")
-
-	time.Sleep(500 * time.Millisecond)
+	`, tc.HackathonDBName), now.Add(-10*24*time.Hour), hackathonID)
+	require.NoError(tc.T, err, "Failed to update hackathon dates in DB")
 
 	return hackathonID
+}
+
+func moveHackathonToRunningStageForMentors(tc *TestContext, hackathonID string) {
+	now := time.Now()
+	_, err := tc.DB.Exec(context.Background(), fmt.Sprintf(`
+		UPDATE %s 
+		SET registration_opens_at = $1,
+		    registration_closes_at = $2,
+		    starts_at = $3,
+		    ends_at = $4
+		WHERE id = $5
+	`, tc.HackathonDBName),
+		now.Add(-10*24*time.Hour), // registration opened 10 days ago
+		now.Add(-2*24*time.Hour),  // registration closed 2 days ago
+		now.Add(-1*24*time.Hour),  // started 1 day ago
+		now.Add(5*24*time.Hour),   // ends in 5 days
+		hackathonID)
+	require.NoError(tc.T, err, "Failed to move hackathon to RUNNING stage")
 }

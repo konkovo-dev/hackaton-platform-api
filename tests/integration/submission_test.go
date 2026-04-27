@@ -123,6 +123,8 @@ func TestGetSubmission_AsOwner_ShouldSucceed(t *testing.T) {
 	hackathonID := createHackathonInRunningForSubmissions(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
 
+	moveHackathonToRunningStage(tc, hackathonID)
+
 	submissionID := createSubmission(tc, hackathonID, participant, "My Solution", "Description")
 
 	submission := getSubmission(tc, hackathonID, submissionID, participant)
@@ -140,6 +142,8 @@ func TestGetSubmission_AsStaff_ShouldSucceed(t *testing.T) {
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
 	assignOrganizerRole(tc, hackathonID, organizer)
 
+	moveHackathonToRunningStage(tc, hackathonID)
+
 	submissionID := createSubmission(tc, hackathonID, participant, "Participant Solution", "Description")
 
 	submission := getSubmission(tc, hackathonID, submissionID, organizer)
@@ -156,6 +160,8 @@ func TestGetSubmission_AsOtherParticipant_ShouldFail(t *testing.T) {
 	hackathonID := createHackathonInRunningForSubmissions(tc, owner)
 	registerParticipant(tc, hackathonID, participant1, "PART_INDIVIDUAL")
 	registerParticipant(tc, hackathonID, participant2, "PART_INDIVIDUAL")
+
+	moveHackathonToRunningStage(tc, hackathonID)
 
 	submissionID := createSubmission(tc, hackathonID, participant1, "Private Solution", "Description")
 
@@ -202,15 +208,16 @@ func TestCreateSubmission_InRunningStage_ShouldSucceed(t *testing.T) {
 	hackathonID := createHackathonInRunningForSubmissions(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
 
+	moveHackathonToRunningStage(tc, hackathonID)
+
 	submissionID := createSubmission(tc, hackathonID, participant, "Running Stage Submission", "Created during RUNNING")
 
-	var stage string
-	err := tc.DB.QueryRow(context.Background(),
-		fmt.Sprintf("SELECT stage FROM %s WHERE id = $1", tc.HackathonDBName),
-		hackathonID,
-	).Scan(&stage)
-	require.NoError(t, err)
-	assert.Equal(t, "running", stage)
+	// Verify hackathon is in RUNNING stage by checking through API
+	resp, body := tc.DoAuthenticatedRequest("GET", fmt.Sprintf("/v1/hackathons/%s", hackathonID), owner.AccessToken, nil)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+	hackData := tc.ParseJSON(body)
+	hackathon := hackData["hackathon"].(map[string]interface{})
+	assert.Equal(t, "HACKATHON_STAGE_RUNNING", hackathon["stage"])
 
 	submission := getSubmission(tc, hackathonID, submissionID, participant)
 	assert.Equal(t, "Running Stage Submission", submission["title"])
@@ -223,6 +230,8 @@ func TestGetSubmission_AfterRunning_ShouldSucceed(t *testing.T) {
 
 	hackathonID := createHackathonInRunningForSubmissions(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+
+	moveHackathonToRunningStage(tc, hackathonID)
 
 	submissionID := createSubmission(tc, hackathonID, participant, "Solution", "Description")
 
@@ -239,6 +248,8 @@ func TestSelectFinalSubmission_AfterRunning_ShouldFail(t *testing.T) {
 
 	hackathonID := createHackathonInRunningForSubmissions(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+
+	moveHackathonToRunningStage(tc, hackathonID)
 
 	submissionID := createSubmission(tc, hackathonID, participant, "Solution", "Description")
 
@@ -263,6 +274,8 @@ func TestCreateSubmission_AsIndividual_ShouldSucceed(t *testing.T) {
 	hackathonID := createHackathonInRunningForSubmissions(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
 
+	moveHackathonToRunningStage(tc, hackathonID)
+
 	submissionID := createSubmission(tc, hackathonID, participant, "MVP Implementation", "This is my solution")
 
 	var ownerKind, ownerID, createdByUserID string
@@ -286,6 +299,8 @@ func TestUpdateSubmission_AsCreator_ShouldUpdateDescription(t *testing.T) {
 
 	hackathonID := createHackathonInRunningForSubmissions(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+
+	moveHackathonToRunningStage(tc, hackathonID)
 
 	submissionID := createSubmission(tc, hackathonID, participant, "Solution v1", "Initial description")
 
@@ -334,6 +349,8 @@ func TestUpdateSubmission_AsNonCreator_ShouldFail(t *testing.T) {
 	registerParticipant(tc, hackathonID, participant1, "PART_INDIVIDUAL")
 	registerParticipant(tc, hackathonID, participant2, "PART_INDIVIDUAL")
 
+	moveHackathonToRunningStage(tc, hackathonID)
+
 	submissionID := createSubmission(tc, hackathonID, participant1, "Solution", "Description")
 
 	body := map[string]interface{}{
@@ -359,6 +376,8 @@ func TestListSubmissions_AsIndividual_ShouldReturnOwnSubmissions(t *testing.T) {
 	hackathonID := createHackathonInRunningForSubmissions(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
 
+	moveHackathonToRunningStage(tc, hackathonID)
+
 	submissionID1 := createSubmission(tc, hackathonID, participant, "Solution v1", "First version")
 	time.Sleep(100 * time.Millisecond)
 	submissionID2 := createSubmission(tc, hackathonID, participant, "Solution v2", "Second version")
@@ -383,6 +402,8 @@ func TestGetFinalSubmission_AsIndividual_ShouldReturnLatest(t *testing.T) {
 
 	hackathonID := createHackathonInRunningForSubmissions(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+
+	moveHackathonToRunningStage(tc, hackathonID)
 
 	createSubmission(tc, hackathonID, participant, "Solution v1", "First")
 	time.Sleep(100 * time.Millisecond)
@@ -521,6 +542,8 @@ func TestCreateMultipleSubmissions_ShouldMarkLatestAsFinal(t *testing.T) {
 	hackathonID := createHackathonInRunningForSubmissions(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
 
+	moveHackathonToRunningStage(tc, hackathonID)
+
 	submissionID1 := createSubmission(tc, hackathonID, participant, "Solution v1", "First version")
 	time.Sleep(100 * time.Millisecond)
 	submissionID2 := createSubmission(tc, hackathonID, participant, "Solution v2", "Second version")
@@ -555,6 +578,8 @@ func TestSelectFinalSubmission_ShouldUnmarkPrevious(t *testing.T) {
 
 	hackathonID := createHackathonInRunningForSubmissions(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+
+	moveHackathonToRunningStage(tc, hackathonID)
 
 	submissionID1 := createSubmission(tc, hackathonID, participant, "Solution v1", "First")
 	time.Sleep(100 * time.Millisecond)
@@ -593,6 +618,8 @@ func TestListSubmissions_ShouldReturnAllVersions(t *testing.T) {
 	hackathonID := createHackathonInRunningForSubmissions(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
 
+	moveHackathonToRunningStage(tc, hackathonID)
+
 	submissionID1 := createSubmission(tc, hackathonID, participant, "Solution v1", "First")
 	time.Sleep(100 * time.Millisecond)
 	submissionID2 := createSubmission(tc, hackathonID, participant, "Solution v2", "Second")
@@ -621,6 +648,8 @@ func TestCreateSubmissionUpload_ShouldReturnPresignedURL(t *testing.T) {
 	hackathonID := createHackathonInRunningForSubmissions(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
 
+	moveHackathonToRunningStage(tc, hackathonID)
+
 	submissionID := createSubmission(tc, hackathonID, participant, "Solution", "Description")
 
 	fileID, uploadURL := createSubmissionUpload(tc, hackathonID, submissionID, participant, "test-document.pdf", 102400, "application/pdf")
@@ -645,6 +674,8 @@ func TestUploadFile_ToMinIO_ShouldSucceed(t *testing.T) {
 
 	hackathonID := createHackathonInRunningForSubmissions(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+
+	moveHackathonToRunningStage(tc, hackathonID)
 
 	submissionID := createSubmission(tc, hackathonID, participant, "Solution", "Description")
 
@@ -693,6 +724,8 @@ func TestCompleteSubmissionUpload_ShouldMarkCompleted(t *testing.T) {
 	hackathonID := createHackathonInRunningForSubmissions(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
 
+	moveHackathonToRunningStage(tc, hackathonID)
+
 	submissionID := createSubmission(tc, hackathonID, participant, "Solution", "Description")
 
 	testContent := generateTestFile(50000)
@@ -716,6 +749,8 @@ func TestGetSubmissionFileDownloadURL_ShouldReturnPresignedURL(t *testing.T) {
 	hackathonID := createHackathonInRunningForSubmissions(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
 
+	moveHackathonToRunningStage(tc, hackathonID)
+
 	submissionID := createSubmission(tc, hackathonID, participant, "Solution", "Description")
 
 	testContent := generateTestFile(50000)
@@ -733,6 +768,8 @@ func TestDownloadFile_FromMinIO_ShouldSucceed(t *testing.T) {
 
 	hackathonID := createHackathonInRunningForSubmissions(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+
+	moveHackathonToRunningStage(tc, hackathonID)
 
 	submissionID := createSubmission(tc, hackathonID, participant, "Solution", "Description")
 
@@ -761,6 +798,8 @@ func TestCompleteSubmissionUpload_WithoutS3File_ShouldFail(t *testing.T) {
 
 	hackathonID := createHackathonInRunningForSubmissions(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+
+	moveHackathonToRunningStage(tc, hackathonID)
 
 	submissionID := createSubmission(tc, hackathonID, participant, "Solution", "Description")
 
@@ -795,6 +834,8 @@ func TestCreateSubmissionUpload_ExceedMaxFileSize_ShouldFail(t *testing.T) {
 	hackathonID := createHackathonInRunningForSubmissions(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
 
+	moveHackathonToRunningStage(tc, hackathonID)
+
 	submissionID := createSubmission(tc, hackathonID, participant, "Solution", "Description")
 
 	body := map[string]interface{}{
@@ -821,6 +862,8 @@ func TestCreateSubmissionUpload_ExceedMaxTotalSize_ShouldFail(t *testing.T) {
 
 	hackathonID := createHackathonInRunningForSubmissions(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+
+	moveHackathonToRunningStage(tc, hackathonID)
 
 	submissionID := createSubmission(tc, hackathonID, participant, "Solution", "Description")
 
@@ -866,6 +909,8 @@ func TestCreateSubmissionUpload_ExceedMaxFilesCount_ShouldFail(t *testing.T) {
 	hackathonID := createHackathonInRunningForSubmissions(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
 
+	moveHackathonToRunningStage(tc, hackathonID)
+
 	submissionID := createSubmission(tc, hackathonID, participant, "Solution", "Description")
 
 	smallContent := generateTestFile(1000)
@@ -899,6 +944,8 @@ func TestCreateSubmission_ExceedMaxSubmissionsPerOwner_ShouldFail(t *testing.T) 
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
 
 	for i := 0; i < 50; i++ {
+	moveHackathonToRunningStage(tc, hackathonID)
+
 		createSubmission(tc, hackathonID, participant, fmt.Sprintf("Solution v%d", i+1), fmt.Sprintf("Version %d", i+1))
 	}
 
@@ -925,6 +972,8 @@ func TestCreateSubmissionUpload_InvalidFileType_ShouldFail(t *testing.T) {
 
 	hackathonID := createHackathonInRunningForSubmissions(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+
+	moveHackathonToRunningStage(tc, hackathonID)
 
 	submissionID := createSubmission(tc, hackathonID, participant, "Solution", "Description")
 
@@ -957,6 +1006,8 @@ func TestListSubmissions_AsOrganizer_WithOwnerFilter_ShouldReturnFiltered(t *tes
 	registerParticipant(tc, hackathonID, participant2, "PART_INDIVIDUAL")
 	assignOrganizerRole(tc, hackathonID, organizer)
 
+	moveHackathonToRunningStage(tc, hackathonID)
+
 	submissionID1 := createSubmission(tc, hackathonID, participant1, "Solution by P1", "By participant 1")
 	_ = createSubmission(tc, hackathonID, participant2, "Solution by P2", "By participant 2")
 
@@ -976,6 +1027,7 @@ func TestGetFinalSubmission_AsJudge_ShouldSucceed(t *testing.T) {
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
 	assignJudgeRole(tc, hackathonID, judge)
 
+	moveHackathonToRunningStage(tc, hackathonID)
 	submissionID := createSubmission(tc, hackathonID, participant, "Final Solution", "Description")
 
 	transitionToJudging(tc, hackathonID)
@@ -996,6 +1048,7 @@ func TestListSubmissions_AsJudge_InRunningStage_ShouldSeeAll(t *testing.T) {
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
 	assignJudgeRole(tc, hackathonID, judge)
 
+	moveHackathonToRunningStage(tc, hackathonID)
 	submissionID1 := createSubmission(tc, hackathonID, participant, "Solution v1", "First")
 	time.Sleep(100 * time.Millisecond)
 	submissionID2 := createSubmission(tc, hackathonID, participant, "Solution v2", "Second")
@@ -1020,6 +1073,8 @@ func TestCompleteSubmissionWorkflow_WithMultipleFiles(t *testing.T) {
 
 	hackathonID := createHackathonInRunningForSubmissions(tc, owner)
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+
+	moveHackathonToRunningStage(tc, hackathonID)
 
 	submissionID := createSubmission(tc, hackathonID, participant, "Complete Solution", "Full implementation with docs")
 
@@ -1513,13 +1568,13 @@ func createHackathonInRunningForSubmissions(tc *TestContext, owner *UserCredenti
 	resp, body = tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/publish", hackathonID), owner.AccessToken, map[string]interface{}{})
 	require.Equal(tc.T, http.StatusOK, resp.StatusCode, "Failed to publish hackathon: %s", string(body))
 
+	// Update dates to put hackathon in REGISTRATION stage first (for participant registration)
 	_, err := tc.DB.Exec(context.Background(), fmt.Sprintf(`
 		UPDATE %s 
-		SET starts_at = $1,
-		    stage = 'running'
+		SET registration_opens_at = $1
 		WHERE id = $2
-	`, tc.HackathonDBName), now.Add(-1*time.Hour), hackathonID)
-	require.NoError(tc.T, err, "Failed to update hackathon to RUNNING stage")
+	`, tc.HackathonDBName), now.Add(-24*time.Hour), hackathonID)
+	require.NoError(tc.T, err, "Failed to update hackathon to REGISTRATION stage")
 
 	time.Sleep(500 * time.Millisecond)
 
@@ -1602,4 +1657,25 @@ func createHackathonInRunningWithTeam(tc *TestContext, owner *UserCredentials, c
 	transitionToRunning(tc, hackathonID, owner)
 
 	return hackathonID, teamID
+}
+
+// moveHackathonToRunningStage moves a hackathon to RUNNING stage by updating dates in DB
+func moveHackathonToRunningStage(tc *TestContext, hackathonID string) {
+	now := time.Now()
+	_, err := tc.DB.Exec(context.Background(), fmt.Sprintf(`
+		UPDATE %s 
+		SET registration_opens_at = $1,
+		    registration_closes_at = $2,
+		    starts_at = $3,
+		    ends_at = $4
+		WHERE id = $5
+	`, tc.HackathonDBName),
+		now.Add(-10*24*time.Hour), // registration opened 10 days ago
+		now.Add(-5*24*time.Hour),  // registration closed 5 days ago
+		now.Add(-1*time.Hour),     // hackathon started 1 hour ago (RUNNING)
+		now.Add(5*24*time.Hour),   // ends in 5 days
+		hackathonID)
+	require.NoError(tc.T, err, "Failed to move hackathon to RUNNING stage")
+
+	time.Sleep(500 * time.Millisecond)
 }

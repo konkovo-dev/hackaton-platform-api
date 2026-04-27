@@ -34,7 +34,7 @@ func TestRegisterForHackathonIndividual(t *testing.T) {
 	owner := tc.RegisterUser()
 	participant := tc.RegisterUser()
 
-	hackathonID := createAndPublishHackathon(tc, owner)
+	hackathonID := createAndPublishHackathonForRegistration(tc, owner)
 
 	resp, body := tc.DoAuthenticatedRequest("GET", "/v1/team-roles", participant.AccessToken, nil)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
@@ -71,7 +71,7 @@ func TestRegisterForHackathonLookingForTeam(t *testing.T) {
 	owner := tc.RegisterUser()
 	participant := tc.RegisterUser()
 
-	hackathonID := createAndPublishHackathon(tc, owner)
+	hackathonID := createAndPublishHackathonForRegistration(tc, owner)
 
 	registerBody := map[string]interface{}{
 		"desired_status":  "PART_LOOKING_FOR_TEAM",
@@ -92,7 +92,7 @@ func TestRegisterTwiceShouldFail(t *testing.T) {
 	owner := tc.RegisterUser()
 	participant := tc.RegisterUser()
 
-	hackathonID := createAndPublishHackathon(tc, owner)
+	hackathonID := createAndPublishHackathonForRegistration(tc, owner)
 
 	registerBody := map[string]interface{}{
 		"desired_status":  "PART_INDIVIDUAL",
@@ -111,7 +111,7 @@ func TestGetMyParticipation(t *testing.T) {
 	owner := tc.RegisterUser()
 	participant := tc.RegisterUser()
 
-	hackathonID := createAndPublishHackathon(tc, owner)
+	hackathonID := createAndPublishHackathonForRegistration(tc, owner)
 
 	registerBody := map[string]interface{}{
 		"desired_status":  "PART_INDIVIDUAL",
@@ -136,7 +136,7 @@ func TestUpdateMyParticipation(t *testing.T) {
 	owner := tc.RegisterUser()
 	participant := tc.RegisterUser()
 
-	hackathonID := createAndPublishHackathon(tc, owner)
+	hackathonID := createAndPublishHackathonForRegistration(tc, owner)
 
 	registerBody := map[string]interface{}{
 		"desired_status":  "PART_INDIVIDUAL",
@@ -185,7 +185,7 @@ func TestSwitchParticipationMode(t *testing.T) {
 	owner := tc.RegisterUser()
 	participant := tc.RegisterUser()
 
-	hackathonID := createAndPublishHackathon(tc, owner)
+	hackathonID := createAndPublishHackathonForRegistration(tc, owner)
 
 	registerBody := map[string]interface{}{
 		"desired_status":  "PART_INDIVIDUAL",
@@ -213,7 +213,7 @@ func TestSwitchToSameStatusShouldFail(t *testing.T) {
 	owner := tc.RegisterUser()
 	participant := tc.RegisterUser()
 
-	hackathonID := createAndPublishHackathon(tc, owner)
+	hackathonID := createAndPublishHackathonForRegistration(tc, owner)
 
 	registerBody := map[string]interface{}{
 		"desired_status":  "PART_INDIVIDUAL",
@@ -235,7 +235,7 @@ func TestGetUserParticipation(t *testing.T) {
 	participant1 := tc.RegisterUser()
 	participant2 := tc.RegisterUser()
 
-	hackathonID := createAndPublishHackathon(tc, owner)
+	hackathonID := createAndPublishHackathonForRegistration(tc, owner)
 
 	registerBody := map[string]interface{}{
 		"desired_status":  "PART_INDIVIDUAL",
@@ -258,7 +258,7 @@ func TestListHackathonParticipants(t *testing.T) {
 	participant1 := tc.RegisterUser()
 	participant2 := tc.RegisterUser()
 
-	hackathonID := createAndPublishHackathon(tc, owner)
+	hackathonID := createAndPublishHackathonForRegistration(tc, owner)
 
 	registerBody := map[string]interface{}{
 		"desired_status":  "PART_INDIVIDUAL",
@@ -285,7 +285,7 @@ func TestListHackathonParticipantsWithStatusFilter(t *testing.T) {
 	participant1 := tc.RegisterUser()
 	participant2 := tc.RegisterUser()
 
-	hackathonID := createAndPublishHackathon(tc, owner)
+	hackathonID := createAndPublishHackathonForRegistration(tc, owner)
 
 	registerBody1 := map[string]interface{}{
 		"desired_status":  "PART_INDIVIDUAL",
@@ -323,7 +323,7 @@ func TestListParticipantsAsNonParticipantShouldFail(t *testing.T) {
 	owner := tc.RegisterUser()
 	nonParticipant := tc.RegisterUser()
 
-	hackathonID := createAndPublishHackathon(tc, owner)
+	hackathonID := createAndPublishHackathonForRegistration(tc, owner)
 
 	listBody := map[string]interface{}{}
 	resp, body := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/participations/list", hackathonID), nonParticipant.AccessToken, listBody)
@@ -335,7 +335,7 @@ func TestUnregisterFromHackathon(t *testing.T) {
 	owner := tc.RegisterUser()
 	participant := tc.RegisterUser()
 
-	hackathonID := createAndPublishHackathon(tc, owner)
+	hackathonID := createAndPublishHackathonForRegistration(tc, owner)
 
 	registerBody := map[string]interface{}{
 		"desired_status":  "PART_INDIVIDUAL",

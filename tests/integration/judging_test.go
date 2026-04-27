@@ -21,10 +21,12 @@ func TestAssignSubmissionsToJudges_AsOrganizer_ShouldSucceed(t *testing.T) {
 
 	participant1 := tc.RegisterUser()
 	registerParticipant(tc, hackathonID, participant1, "PART_INDIVIDUAL")
-	submission1 := createSubmissionForJudging(tc, hackathonID, participant1)
 
 	participant2 := tc.RegisterUser()
 	registerParticipant(tc, hackathonID, participant2, "PART_INDIVIDUAL")
+
+	moveHackathonToJudgingStage(tc, hackathonID)
+	submission1 := createSubmissionForJudging(tc, hackathonID, participant1)
 	submission2 := createSubmissionForJudging(tc, hackathonID, participant2)
 
 	judge1 := tc.RegisterUser()
@@ -73,6 +75,8 @@ func TestAssignSubmissionsToJudges_Idempotent_ShouldReturnSuccess(t *testing.T) 
 
 	participant := tc.RegisterUser()
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+
+	moveHackathonToJudgingStage(tc, hackathonID)
 	createSubmissionForJudging(tc, hackathonID, participant)
 
 	judge := tc.RegisterUser()
@@ -150,6 +154,8 @@ func TestAssignSubmissionsToJudges_NoJudges_ShouldFail(t *testing.T) {
 
 	participant := tc.RegisterUser()
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+
+	moveHackathonToJudgingStage(tc, hackathonID)
 	createSubmissionForJudging(tc, hackathonID, participant)
 
 	body := map[string]interface{}{
@@ -169,6 +175,8 @@ func TestAssignSubmissionsToJudges_NoSubmissions_ShouldFail(t *testing.T) {
 
 	owner := tc.RegisterUser()
 	hackathonID := createHackathonInJudgingStage(tc, owner)
+
+	moveHackathonToJudgingStage(tc, hackathonID)
 
 	judge := tc.RegisterUser()
 	addJudgeToHackathon(tc, hackathonID, judge)
@@ -193,6 +201,8 @@ func TestGetMyAssignments_AsJudge_ShouldSucceed(t *testing.T) {
 
 	participant := tc.RegisterUser()
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+
+	moveHackathonToJudgingStage(tc, hackathonID)
 	submissionID := createSubmissionForJudging(tc, hackathonID, participant)
 
 	judge := tc.RegisterUser()
@@ -238,10 +248,12 @@ func TestGetMyAssignments_FilterEvaluated_ShouldWork(t *testing.T) {
 
 	participant1 := tc.RegisterUser()
 	registerParticipant(tc, hackathonID, participant1, "PART_INDIVIDUAL")
-	submission1 := createSubmissionForJudging(tc, hackathonID, participant1)
 
 	participant2 := tc.RegisterUser()
 	registerParticipant(tc, hackathonID, participant2, "PART_INDIVIDUAL")
+
+	moveHackathonToJudgingStage(tc, hackathonID)
+	submission1 := createSubmissionForJudging(tc, hackathonID, participant1)
 	submission2 := createSubmissionForJudging(tc, hackathonID, participant2)
 
 	judge := tc.RegisterUser()
@@ -331,6 +343,8 @@ func TestSubmitEvaluation_AsJudge_ShouldSucceed(t *testing.T) {
 
 	participant := tc.RegisterUser()
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+
+	moveHackathonToJudgingStage(tc, hackathonID)
 	submissionID := createSubmissionForJudging(tc, hackathonID, participant)
 
 	judge := tc.RegisterUser()
@@ -381,6 +395,8 @@ func TestSubmitEvaluation_UpdateExisting_ShouldSucceed(t *testing.T) {
 
 	participant := tc.RegisterUser()
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+
+	moveHackathonToJudgingStage(tc, hackathonID)
 	submissionID := createSubmissionForJudging(tc, hackathonID, participant)
 
 	judge := tc.RegisterUser()
@@ -445,6 +461,8 @@ func TestSubmitEvaluation_InvalidScore_ShouldFail(t *testing.T) {
 
 	participant := tc.RegisterUser()
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+
+	moveHackathonToJudgingStage(tc, hackathonID)
 	submissionID := createSubmissionForJudging(tc, hackathonID, participant)
 
 	judge := tc.RegisterUser()
@@ -481,6 +499,8 @@ func TestSubmitEvaluation_EmptyComment_ShouldFail(t *testing.T) {
 
 	participant := tc.RegisterUser()
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+
+	moveHackathonToJudgingStage(tc, hackathonID)
 	submissionID := createSubmissionForJudging(tc, hackathonID, participant)
 
 	judge := tc.RegisterUser()
@@ -517,6 +537,8 @@ func TestSubmitEvaluation_NotAssigned_ShouldFail(t *testing.T) {
 
 	participant := tc.RegisterUser()
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+
+	moveHackathonToJudgingStage(tc, hackathonID)
 	submissionID := createSubmissionForJudging(tc, hackathonID, participant)
 
 	judge1 := tc.RegisterUser()
@@ -562,6 +584,8 @@ func TestGetMyEvaluations_AsJudge_ShouldSucceed(t *testing.T) {
 
 	participant := tc.RegisterUser()
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+
+	moveHackathonToJudgingStage(tc, hackathonID)
 	submissionID := createSubmissionForJudging(tc, hackathonID, participant)
 
 	judge := tc.RegisterUser()
@@ -618,6 +642,8 @@ func TestGetSubmissionEvaluations_AsOrganizer_ShouldSucceed(t *testing.T) {
 
 	participant := tc.RegisterUser()
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+
+	moveHackathonToJudgingStage(tc, hackathonID)
 	submissionID := createSubmissionForJudging(tc, hackathonID, participant)
 
 	judge1 := tc.RegisterUser()
@@ -676,6 +702,8 @@ func TestGetSubmissionEvaluations_AsJudge_ShouldSucceed(t *testing.T) {
 
 	participant := tc.RegisterUser()
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+
+	moveHackathonToJudgingStage(tc, hackathonID)
 	submissionID := createSubmissionForJudging(tc, hackathonID, participant)
 
 	judge := tc.RegisterUser()
@@ -720,6 +748,8 @@ func TestGetSubmissionEvaluations_AsParticipant_ShouldFail(t *testing.T) {
 
 	participant := tc.RegisterUser()
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+
+	moveHackathonToJudgingStage(tc, hackathonID)
 	submissionID := createSubmissionForJudging(tc, hackathonID, participant)
 
 	resp, respBody := tc.DoAuthenticatedRequest("GET", fmt.Sprintf("/v1/hackathons/%s/submissions/%s/evaluations", hackathonID, submissionID), participant.AccessToken, nil)
@@ -813,6 +843,8 @@ func TestGetLeaderboard_AsJudge_ShouldSucceed(t *testing.T) {
 
 	participant := tc.RegisterUser()
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+
+	moveHackathonToJudgingStage(tc, hackathonID)
 	createSubmissionForJudging(tc, hackathonID, participant)
 
 	judge := tc.RegisterUser()
@@ -870,6 +902,8 @@ func TestGetMyEvaluationResult_BeforePublish_ShouldFail(t *testing.T) {
 
 	participant := tc.RegisterUser()
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+
+	moveHackathonToJudgingStage(tc, hackathonID)
 	submissionID := createSubmissionForJudging(tc, hackathonID, participant)
 
 	judge := tc.RegisterUser()
@@ -909,6 +943,8 @@ func TestGetMyEvaluationResult_AfterPublish_ShouldSucceed(t *testing.T) {
 
 	participant := tc.RegisterUser()
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+
+	moveHackathonToJudgingStage(tc, hackathonID)
 	submissionID := createSubmissionForJudging(tc, hackathonID, participant)
 
 	judge1 := tc.RegisterUser()
@@ -979,6 +1015,8 @@ func TestGetMyEvaluationResult_AsNonOwner_ShouldFail(t *testing.T) {
 
 	participant := tc.RegisterUser()
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+
+	moveHackathonToJudgingStage(tc, hackathonID)
 	submissionID := createSubmissionForJudging(tc, hackathonID, participant)
 
 	otherUser := tc.RegisterUser()
@@ -1098,6 +1136,8 @@ func TestAssignSubmissionsToJudges_WithFewerJudgesThanMin_ShouldAssignAll(t *tes
 
 	participant := tc.RegisterUser()
 	registerParticipant(tc, hackathonID, participant, "PART_INDIVIDUAL")
+
+	moveHackathonToJudgingStage(tc, hackathonID)
 	createSubmissionForJudging(tc, hackathonID, participant)
 
 	judge1 := tc.RegisterUser()
@@ -1131,14 +1171,16 @@ func TestCompleteJudgingWorkflow_MultipleSubmissions_ShouldWork(t *testing.T) {
 
 	participant1 := tc.RegisterUser()
 	registerParticipant(tc, hackathonID, participant1, "PART_INDIVIDUAL")
-	submission1 := createSubmissionForJudging(tc, hackathonID, participant1)
 
 	participant2 := tc.RegisterUser()
 	registerParticipant(tc, hackathonID, participant2, "PART_INDIVIDUAL")
-	submission2 := createSubmissionForJudging(tc, hackathonID, participant2)
 
 	participant3 := tc.RegisterUser()
 	registerParticipant(tc, hackathonID, participant3, "PART_INDIVIDUAL")
+
+	moveHackathonToJudgingStage(tc, hackathonID)
+	submission1 := createSubmissionForJudging(tc, hackathonID, participant1)
+	submission2 := createSubmissionForJudging(tc, hackathonID, participant2)
 	submission3 := createSubmissionForJudging(tc, hackathonID, participant3)
 
 	judge1 := tc.RegisterUser()
@@ -1226,12 +1268,77 @@ func TestCompleteJudgingWorkflow_MultipleSubmissions_ShouldWork(t *testing.T) {
 	assert.Equal(t, float64(1), result["rank"], "Participant1 should be rank 1")
 }
 
+// createHackathonInJudgingStage creates a hackathon in REGISTRATION stage.
+// Tests need to register participants, then call moveHackathonToJudgingStage before creating submissions.
 func createHackathonInJudgingStage(tc *TestContext, owner *UserCredentials) string {
+	return createHackathonInRegistrationStage(tc, owner)
+}
+
+func createSubmissionForJudging(tc *TestContext, hackathonID string, participant *UserCredentials) string {
+	// Temporarily move hackathon to RUNNING stage by updating dates
+	now := time.Now()
+	_, err := tc.DB.Exec(context.Background(),
+		fmt.Sprintf(`UPDATE %s 
+			SET starts_at = $1,
+			    ends_at = $2
+			WHERE id = $3`, tc.HackathonDBName),
+		now.Add(-1*time.Hour), // started 1 hour ago
+		now.Add(1*time.Hour),  // ends in 1 hour (RUNNING)
+		hackathonID,
+	)
+	require.NoError(tc.T, err, "Failed to update hackathon to RUNNING stage")
+
+	time.Sleep(300 * time.Millisecond)
+
+	body := map[string]interface{}{
+		"title":       fmt.Sprintf("Test Submission %s", uuid.New().String()[:8]),
+		"description": "Test submission for judging",
+	}
+
+	resp, respBody := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/submissions", hackathonID), participant.AccessToken, body)
+	require.Equal(tc.T, http.StatusOK, resp.StatusCode,
+		"Failed to create submission: %s", string(respBody))
+
+	data := tc.ParseJSON(respBody)
+	submissionID := data["submissionId"].(string)
+
+	_, err = tc.SubmissionDB.Exec(context.Background(),
+		fmt.Sprintf("UPDATE %s.submissions SET is_final = true WHERE id = $1", tc.SubmissionDBName),
+		submissionID,
+	)
+	require.NoError(tc.T, err, "Failed to mark submission as final")
+
+	// Move back to JUDGING stage by updating dates
+	_, err = tc.DB.Exec(context.Background(),
+		fmt.Sprintf(`UPDATE %s 
+			SET ends_at = $1,
+			    judging_ends_at = $2
+			WHERE id = $3`, tc.HackathonDBName),
+		now.Add(-1*time.Hour),   // ended 1 hour ago (now in JUDGING)
+		now.Add(5*24*time.Hour), // judging ends in 5 days
+		hackathonID,
+	)
+	require.NoError(tc.T, err, "Failed to move hackathon back to JUDGING stage")
+
+	time.Sleep(300 * time.Millisecond)
+
+	return submissionID
+}
+
+func addJudgeToHackathon(tc *TestContext, hackathonID string, judge *UserCredentials) {
+	_, err := tc.ParticipationDB.Exec(context.Background(),
+		fmt.Sprintf("INSERT INTO %s (hackathon_id, user_id, role) VALUES ($1, $2, 'judge') ON CONFLICT DO NOTHING", tc.ParticipationDBName),
+		hackathonID, judge.UserID,
+	)
+	require.NoError(tc.T, err, "Failed to add judge")
+}
+
+func createHackathonInRegistrationStage(tc *TestContext, owner *UserCredentials) string {
 	now := time.Now()
 	hackathonBody := map[string]interface{}{
-		"name":              fmt.Sprintf("Judging Test Hackathon %s", uuid.New().String()[:8]),
-		"short_description": "Test hackathon for judging",
-		"description":       "Full description for judging testing",
+		"name":              fmt.Sprintf("Registration Test Hackathon %s", uuid.New().String()[:8]),
+		"short_description": "Test hackathon in registration",
+		"description":       "Full description for registration testing",
 		"location": map[string]interface{}{
 			"online": true,
 		},
@@ -1270,59 +1377,35 @@ func createHackathonInJudgingStage(tc *TestContext, owner *UserCredentials) stri
 
 	_, err := tc.DB.Exec(context.Background(), fmt.Sprintf(`
 		UPDATE %s 
-		SET ends_at = $1,
-		    stage = 'judging'
+		SET registration_opens_at = $1
 		WHERE id = $2
-	`, tc.HackathonDBName), now.Add(-1*time.Hour), hackathonID)
-	require.NoError(tc.T, err, "Failed to update hackathon to JUDGING stage")
+	`, tc.HackathonDBName), now.Add(-24*time.Hour), hackathonID)
+	require.NoError(tc.T, err, "Failed to update hackathon to REGISTRATION stage")
 
 	time.Sleep(500 * time.Millisecond)
 
 	return hackathonID
 }
 
-func createSubmissionForJudging(tc *TestContext, hackathonID string, participant *UserCredentials) string {
-	_, err := tc.DB.Exec(context.Background(),
-		fmt.Sprintf("UPDATE %s SET stage = 'running' WHERE id = $1", tc.HackathonDBName),
-		hackathonID,
-	)
-	require.NoError(tc.T, err, "Failed to update hackathon stage to running")
+// moveHackathonToJudgingStage moves a hackathon to JUDGING stage by updating dates in DB
+func moveHackathonToJudgingStage(tc *TestContext, hackathonID string) {
+	now := time.Now()
+	_, err := tc.DB.Exec(context.Background(), fmt.Sprintf(`
+		UPDATE %s 
+		SET registration_opens_at = $1,
+		    registration_closes_at = $2,
+		    starts_at = $3,
+		    ends_at = $4,
+		    judging_ends_at = $5
+		WHERE id = $6
+	`, tc.HackathonDBName),
+		now.Add(-10*24*time.Hour), // registration opened 10 days ago
+		now.Add(-5*24*time.Hour),  // registration closed 5 days ago
+		now.Add(-3*24*time.Hour),  // hackathon started 3 days ago
+		now.Add(-1*24*time.Hour),  // hackathon ended 1 day ago (now in JUDGING)
+		now.Add(5*24*time.Hour),   // judging ends in 5 days
+		hackathonID)
+	require.NoError(tc.T, err, "Failed to move hackathon to JUDGING stage")
 
-	time.Sleep(300 * time.Millisecond)
-
-	body := map[string]interface{}{
-		"title":       fmt.Sprintf("Test Submission %s", uuid.New().String()[:8]),
-		"description": "Test submission for judging",
-	}
-
-	resp, respBody := tc.DoAuthenticatedRequest("POST", fmt.Sprintf("/v1/hackathons/%s/submissions", hackathonID), participant.AccessToken, body)
-	require.Equal(tc.T, http.StatusOK, resp.StatusCode,
-		"Failed to create submission: %s", string(respBody))
-
-	data := tc.ParseJSON(respBody)
-	submissionID := data["submissionId"].(string)
-
-	_, err = tc.SubmissionDB.Exec(context.Background(),
-		fmt.Sprintf("UPDATE %s.submissions SET is_final = true WHERE id = $1", tc.SubmissionDBName),
-		submissionID,
-	)
-	require.NoError(tc.T, err, "Failed to mark submission as final")
-
-	_, err = tc.DB.Exec(context.Background(),
-		fmt.Sprintf("UPDATE %s SET stage = 'judging' WHERE id = $1", tc.HackathonDBName),
-		hackathonID,
-	)
-	require.NoError(tc.T, err, "Failed to update hackathon stage back to judging")
-
-	time.Sleep(300 * time.Millisecond)
-
-	return submissionID
-}
-
-func addJudgeToHackathon(tc *TestContext, hackathonID string, judge *UserCredentials) {
-	_, err := tc.ParticipationDB.Exec(context.Background(),
-		fmt.Sprintf("INSERT INTO %s (hackathon_id, user_id, role) VALUES ($1, $2, 'judge') ON CONFLICT DO NOTHING", tc.ParticipationDBName),
-		hackathonID, judge.UserID,
-	)
-	require.NoError(tc.T, err, "Failed to add judge")
+	time.Sleep(500 * time.Millisecond)
 }

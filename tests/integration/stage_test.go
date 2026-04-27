@@ -167,8 +167,14 @@ func TestStageCalculation_InList(t *testing.T) {
 
 	now := time.Now().UTC()
 
-	// Create UPCOMING hackathon (manually)
-	hackathonID1 := createDraftHackathon(tc, owner)
+	// Create UPCOMING hackathon (manually) with unique name
+	uniqueName1 := fmt.Sprintf("StageTest_Upcoming_%d", now.Unix())
+	hackathonID1 := createDraftHackathonWithName(tc, owner, uniqueName1)
+	
+	// Set task first
+	taskBody := map[string]interface{}{"task": "Build something"}
+	tc.DoAuthenticatedRequest("PUT", fmt.Sprintf("/v1/hackathons/%s/task", hackathonID1), owner.AccessToken, taskBody)
+	
 	regOpens1 := now.Add(5 * 24 * time.Hour)
 	regCloses1 := now.Add(10 * 24 * time.Hour)
 	starts1 := now.Add(11 * 24 * time.Hour)
@@ -183,14 +189,18 @@ func TestStageCalculation_InList(t *testing.T) {
 		    registration_closes_at = $4,
 		    starts_at = $5,
 		    ends_at = $6,
-		    judging_ends_at = $7,
-		    stage = 'upcoming'
+		    judging_ends_at = $7
 		WHERE id = $1
 	`, hackathonID1, now, regOpens1, regCloses1, starts1, ends1, judgingEnds1)
 	require.NoError(t, err)
 
-	// Create RUNNING hackathon (manually)
-	hackathonID2 := createDraftHackathon(tc, owner)
+	// Create RUNNING hackathon (manually) with unique name
+	uniqueName2 := fmt.Sprintf("StageTest_Running_%d", now.Unix()+1)
+	hackathonID2 := createDraftHackathonWithName(tc, owner, uniqueName2)
+	
+	// Set task first
+	tc.DoAuthenticatedRequest("PUT", fmt.Sprintf("/v1/hackathons/%s/task", hackathonID2), owner.AccessToken, taskBody)
+	
 	regOpens2 := now.Add(-10 * 24 * time.Hour)
 	regCloses2 := now.Add(-5 * 24 * time.Hour)
 	starts2 := now.Add(-2 * 24 * time.Hour)
@@ -205,18 +215,29 @@ func TestStageCalculation_InList(t *testing.T) {
 		    registration_closes_at = $4,
 		    starts_at = $5,
 		    ends_at = $6,
-		    judging_ends_at = $7,
-		    stage = 'running'
+		    judging_ends_at = $7
 		WHERE id = $1
 	`, hackathonID2, now, regOpens2, regCloses2, starts2, ends2, judgingEnds2)
 	require.NoError(t, err)
 
-	// List hackathons
-	resp, body := tc.DoAuthenticatedRequest("GET", "/v1/hackathons", owner.AccessToken, nil)
+	// List hackathons with search by name prefix
+	listBody := map[string]interface{}{
+		"query": map[string]interface{}{
+			"q": "StageTest_",
+			"page": map[string]interface{}{
+				"page_size": 100,
+			},
+		},
+	}
+	resp, body := tc.DoAuthenticatedRequest("POST", "/v1/hackathons/list", owner.AccessToken, listBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
 	listData := tc.ParseJSON(body)
 	hackathons := listData["hackathons"].([]interface{})
+
+	t.Logf("Total hackathons in list: %d", len(hackathons))
+	t.Logf("Looking for hackathonID1: %s (name: %s)", hackathonID1, uniqueName1)
+	t.Logf("Looking for hackathonID2: %s (name: %s)", hackathonID2, uniqueName2)
 
 	// Find our hackathons and verify stages
 	foundUpcoming := false
@@ -224,13 +245,15 @@ func TestStageCalculation_InList(t *testing.T) {
 
 	for _, h := range hackathons {
 		hackathon := h.(map[string]interface{})
-		hID := hackathon["id"].(string)
+		hID := hackathon["hackathonId"].(string)
 
 		if hID == hackathonID1 {
+			t.Logf("Found hackathon1 with stage: %v", hackathon["stage"])
 			assert.Equal(t, "HACKATHON_STAGE_UPCOMING", hackathon["stage"], "First hackathon should be UPCOMING")
 			foundUpcoming = true
 		}
 		if hID == hackathonID2 {
+			t.Logf("Found hackathon2 with stage: %v", hackathon["stage"])
 			assert.Equal(t, "HACKATHON_STAGE_RUNNING", hackathon["stage"], "Second hackathon should be RUNNING")
 			foundRunning = true
 		}
@@ -240,9 +263,9 @@ func TestStageCalculation_InList(t *testing.T) {
 	assert.True(t, foundRunning, "Should find running hackathon in list")
 }
 
-func createDraftHackathon(tc *TestContext, owner *UserCredentials) string {
+func createDraftHackathonWithName(tc *TestContext, owner *UserCredentials, name string) string {
 	hackathonBody := map[string]interface{}{
-		"name":              "Draft Hackathon",
+		"name":              name,
 		"short_description": "Draft",
 		"allow_individual":  true,
 		"allow_team":        true,
@@ -259,4 +282,8 @@ func createDraftHackathon(tc *TestContext, owner *UserCredentials) string {
 	tc.WaitForHackathonOwnerRole(hackathonID, owner.AccessToken)
 
 	return hackathonID
+}
+
+func createDraftHackathon(tc *TestContext, owner *UserCredentials) string {
+	return createDraftHackathonWithName(tc, owner, "Draft Hackathon")
 }
