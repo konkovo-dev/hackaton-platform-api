@@ -24,9 +24,9 @@ const (
 )
 
 const (
-	ScoreWeightSkills = 0.63
-	ScoreWeightRoles  = 0.27
-	ScoreWeightText   = 0.10
+	ScoreWeightSkills = 0.5
+	ScoreWeightRoles  = 0.25
+	ScoreWeightText   = 0.25
 )
 
 const (

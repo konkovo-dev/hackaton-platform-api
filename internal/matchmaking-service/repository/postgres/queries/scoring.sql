@@ -62,12 +62,12 @@ scored AS (
 SELECT
     team_id,
     vacancy_id,
-    (skills_score * 0.63 + roles_score * 0.27 + text_score * 0.10) AS total_score,
+    (skills_score * 0.5 + roles_score * 0.25 + text_score * 0.25) AS total_score,
     skills_score,
     roles_score,
     text_score
 FROM scored
-WHERE (skills_score * 0.63 + roles_score * 0.27 + text_score * 0.10) > 0
+WHERE (skills_score * 0.5 + roles_score * 0.25 + text_score * 0.25) > 0
 ORDER BY total_score DESC
 LIMIT $3;
 
@@ -130,11 +130,11 @@ scored AS (
 )
 SELECT
     user_id,
-    (skills_score * 0.63 + roles_score * 0.27 + text_score * 0.10) AS total_score,
+    (skills_score * 0.5 + roles_score * 0.25 + text_score * 0.25) AS total_score,
     skills_score,
     roles_score,
     text_score
 FROM scored
-WHERE (skills_score * 0.63 + roles_score * 0.27 + text_score * 0.10) > 0
+WHERE (skills_score * 0.5 + roles_score * 0.25 + text_score * 0.25) > 0
 ORDER BY total_score DESC
 LIMIT $3;

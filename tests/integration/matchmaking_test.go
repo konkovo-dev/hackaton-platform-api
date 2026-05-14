@@ -623,9 +623,9 @@ func TestMatchmakingScoring_CombinedWeights_ShouldCalculateCorrectly(t *testing.
 
 	assert.InDelta(t, expectedTotal, totalScore, 0.01, "Total score should match weighted sum")
 
-	assert.InDelta(t, 0.63, skillsWeight, 0.01, "Skills weight should be ~0.63")
-	assert.InDelta(t, 0.27, rolesWeight, 0.01, "Roles weight should be ~0.27")
-	assert.InDelta(t, 0.10, textWeight, 0.01, "Text weight should be ~0.10")
+	assert.InDelta(t, 0.5, skillsWeight, 0.01, "Skills weight should be ~0.5")
+	assert.InDelta(t, 0.25, rolesWeight, 0.01, "Roles weight should be ~0.25")
+	assert.InDelta(t, 0.25, textWeight, 0.01, "Text weight should be ~0.25")
 }
 
 func TestMatchmakingScoring_CandidateSkillsMatch_ShouldRankCorrectly(t *testing.T) {
